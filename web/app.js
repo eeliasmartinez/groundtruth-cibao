@@ -323,6 +323,9 @@
 
     prepareGuide();
     $("zone").value = state.zone;
+    $("farm-settings-values").textContent = zone().name + " · " + MONTHS[state.lang][state.month - 1] +
+      " · " + tareasText(state.area) + " " + T[state.lang].tareas + " · " + T[state.lang].soils[state.soil] +
+      " · " + Math.round(state.allocation * 100) + "%";
     $("month").value = state.month;
     if (document.activeElement !== $("area")) $("area").value = state.area;
     $("salty").checked = state.salty;
@@ -1775,6 +1778,8 @@
     if (ready && !returning && view !== state.view) remember();
     state.view = view;
     document.body.setAttribute("data-view", view);
+    var farmSettings = $("farm-settings");
+    if (farmSettings) farmSettings.open = view === "plan";
     document.querySelectorAll("[data-view]").forEach(function (el) {
       if (el !== document.body) el.hidden = el.getAttribute("data-view").split(" ").indexOf(view) < 0;
     });

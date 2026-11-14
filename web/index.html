@@ -111,6 +111,12 @@
 
   <!-- ============ MY PLAN · ROTATION · OPTIONS · DATA (share the three steps) ============ -->
   <main class="layout" data-view="plan rotation options data">
+    <details class="farm-settings" id="farm-settings" open>
+      <summary class="farm-settings-bar">
+        <span class="farm-settings-title" data-t="farm_conditions"></span>
+        <span class="farm-settings-values" id="farm-settings-values"></span>
+        <span class="farm-settings-action"><b class="farm-settings-edit" data-t="edit_conditions"></b><b class="farm-settings-hide" data-t="hide_conditions"></b><i aria-hidden="true"></i></span>
+      </summary>
     <aside class="panel controls" id="steps" aria-labelledby="farm-title">
       <h2 id="farm-title" data-t="farm"></h2>
 
@@ -170,9 +176,11 @@
       </div>
     </aside>
 
+    </details>
+
     <div class="results">
       <button type="button" class="btn back" data-go="plan" data-view="rotation options data" data-t="back_plan"></button>
-      <p class="headline" id="headline" aria-live="polite" data-view="plan rotation options"></p>
+      <p class="headline" id="headline" aria-live="polite" data-view="plan"></p>
 
       <section class="panel plan" aria-labelledby="parcel-title" data-view="plan">
         <div>

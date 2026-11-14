@@ -114,6 +114,10 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
 - **Relieve durante el recorrido:** al iniciar desde “Empezar con mi finca”, elegir una
   provincia o zona muestra de inmediato su relieve 3D junto al mapa y lo conserva al avanzar
   por las preguntas. Elegir otra zona actualiza el relieve.
+- **Navegación de resultados:** “Mi plan” mantiene el editor de finca abierto; Rotación,
+  Opciones y Datos muestran una franja resumida de la finca con el editor plegado. Se puede
+  abrir desde esa franja sin salir de la sección. El titular de recomendación aparece solo
+  en “Mi plan” para evitar repetirlo en cada pantalla.
 - **Guardado en el dispositivo:** en “Mi plan”, la persona puede guardar el plan localmente
   y sus respuestas se actualizan allí al cambiar. No crea cuenta ni transmite ubicación.
   El botón permite borrar el guardado. El módulo está en `web/storage.js`.

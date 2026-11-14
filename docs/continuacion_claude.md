@@ -155,3 +155,29 @@ agente pueda continuar sin volver a investigar ni asumir que los dibujos son dat
 - Validación manual pendiente: elegir “Empezar con mi finca”, tocar una provincia, comprobar
   relieve 3D a la izquierda del mapa y avanzar; cambiar la selección y confirmar que la zona
   3D también cambia. Probar en escritorio y teléfono.
+
+## Rediseño de Mi plan, Rotación, Opciones y Datos (14-nov-2026)
+
+- Contexto: las capturas mostraban el panel alto de controles en todas las vistas. En las
+  pantallas de rotación, comparación y clima ocupaba casi un tercio del ancho y repetía la
+  recomendación azul en cada sección.
+- Dirección: mantener el sistema de GroundTruth (ultramar, rojo, papel blanco, tipografías
+  locales y bordes directos) y tratar cada pantalla como herramienta de trabajo, no como una
+  colección de tarjetas. Sin cristal nuevo ni imágenes decorativas.
+- `web/index.html`: el editor común ahora vive dentro de `details#farm-settings`. La franja
+  muestra zona, mes, tareas, suelo y asignación de agua. En “Mi plan” queda abierto; en
+  Rotación, Opciones y Datos se pliega y puede abrirse para ajustar datos sin perder la vista;
+  la etiqueta cambia entre “Editar condiciones” y “Cerrar ajustes”.
+  Se mantiene un solo juego de campos y los IDs que usa el motor.
+- `web/app.js`: la franja se actualiza con las respuestas actuales. `setView()` abre o pliega
+  el editor según la sección. El consejo principal solo se muestra en Mi plan; Rotación,
+  Opciones y Datos ya no repiten ese bloque.
+- `web/style.css`: las tres secciones pasan a ancho completo. Rotación destaca el calendario
+  de dos ciclos; Opciones usa ese ancho para comparar los cuatro planes; Datos da espacio a
+  las gráficas. El editor se puede desplegar también en móvil. La apertura tiene movimiento
+  breve y respeta `prefers-reduced-motion`.
+- `web/copy.js`: nuevas etiquetas de la franja en español e inglés.
+- `web/sw.js`: caché actualizada a `plan-b-v14`.
+- No cambió el motor, los datos de NASA POWER, los coeficientes de cultivos ni el resultado
+  agronómico. Validar visualmente cada sección en escritorio y móvil y confirmar navegación
+  ES/EN antes de considerar terminado el rediseño.
