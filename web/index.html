@@ -53,6 +53,33 @@
     <ul class="facts" id="facts"></ul>
   </section>
 
+  <section class="journey" data-view="home" aria-labelledby="journey-title">
+    <header class="journey-head">
+      <h2 id="journey-title" data-t="journey_title"></h2>
+      <p data-t="journey_intro"></p>
+    </header>
+    <div class="journey-layout">
+      <div class="journey-visual" id="journey-visual" data-beat="1">
+        <div class="journey-map" id="j-map"></div>
+        <div class="journey-readout" aria-live="polite">
+          <b id="journey-kicker" data-t="journey_kicker_1"></b>
+          <span id="journey-copy" data-t="journey_copy_1"></span>
+        </div>
+      </div>
+      <div class="journey-chapters">
+        <article class="journey-chapter" data-beat="1">
+          <span>01</span><h3 data-t="journey_step_1"></h3><p data-t="journey_text_1"></p>
+        </article>
+        <article class="journey-chapter" data-beat="2">
+          <span>02</span><h3 data-t="journey_step_2"></h3><p data-t="journey_text_2"></p>
+        </article>
+        <article class="journey-chapter" data-beat="3">
+          <span>03</span><h3 data-t="journey_step_3"></h3><p data-t="journey_text_3"></p>
+        </article>
+      </div>
+    </div>
+  </section>
+
   <!-- ===================== GUIDED WALKTHROUGH ===================== -->
   <section class="guide" id="guide" data-view="guide">
     <div class="g-top">
@@ -63,6 +90,7 @@
       <aside class="g-scene" id="g-scene-panel" hidden>
         <div class="z-stage">
           <canvas id="g-canvas" aria-hidden="true"></canvas>
+          <div class="scene-context" id="g-scene-context" aria-live="polite"></div>
           <p class="note" data-t="z_note"></p>
         </div>
         <p class="g-scene-label" data-t="g_scene_label"></p>
@@ -147,6 +175,7 @@
           <h2 id="parcel-title" data-t="parcel_title"></h2>
           <p class="sub" id="parcel-sub"></p>
           <div class="plot big" id="parcel" aria-hidden="true"></div>
+          <div class="parcel-context" id="parcel-context" aria-live="polite"></div>
         </div>
         <div class="plan-side">
           <div class="mix" id="plan-mix"></div>
@@ -234,6 +263,7 @@
     <div class="zone-grid">
       <div class="z-stage">
         <canvas id="z-canvas" aria-hidden="true"></canvas>
+        <div class="scene-context" id="z-scene-context" aria-live="polite"></div>
         <p class="note" data-t="z_note"></p>
       </div>
       <div class="panel z-info">

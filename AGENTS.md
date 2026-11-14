@@ -96,8 +96,15 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
 - **Cuestionario con relieve:** al continuar desde la ficha de una zona, el siguiente
   paso y las preguntas siguientes mantienen el mismo relieve 3D en una columna lateral.
   La vista se puede girar allí; el botón Atrás conserva la navegación.
+- **Historia de portada:** tres capítulos de scroll nativo mantienen el mapa a la vista y
+  explican clima, agua y rotación. El scroll no se secuestra; los cambios son breves y se
+  respetan las preferencias de movimiento reducido.
+- **Mapa de la finca:** el dibujo de 100 cuadros sigue representando el plan de cultivos.
+  Junto a él y sobre el relieve 3D se actualizan el mes, clima mensual de NASA POWER,
+  suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
+  mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js`.
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v8`).
 - **Un solo período:** todo usa 2001–2025.
 - Explicación completa del proceso y de dónde están los datos: `docs/como_funciona.md`.
 

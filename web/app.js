@@ -28,7 +28,8 @@
     view: "home", // which section of the app is on screen
     gstep: 0, // question of the guided walkthrough (5 = the result)
     farmPlaced: false,
-    guideWithScene: false
+    guideWithScene: false,
+    journeyBeat: 1
   };
 
   var STRATEGY_ORDER = ["current", "mixed", "rotation", "green"];
@@ -292,6 +293,25 @@
       g_result: "Este es tu plan", g_full: "Ver mi plan completo", g_rot: "Ver la rotación", g_restart: "Empezar de nuevo",
       g_zone: "Tu zona:", g_month: "Mes de siembra", g_area: "Tareas de tu finca",
       g_scene_label: "Tu zona arrocera sigue a la vista. La casita marca una referencia ilustrativa, no el lindero real.",
+    journey_title: "Del cielo a la parcela",
+    journey_intro: "Sigue el recorrido: una señal del clima se convierte en una decisión de siembra.",
+    journey_kicker_1: "01 · OBSERVAR",
+    journey_kicker_2: "02 · MEDIR EL AGUA",
+    journey_kicker_3: "03 · CAMBIAR EL CICLO",
+    journey_copy_1: "NASA POWER aporta el contexto climático de la zona seleccionada.",
+    journey_copy_2: "La lluvia y el agua asignada cambian cuánto arroz cabe en el plan.",
+    journey_copy_3: "El calendario compara cultivos entre ciclos en los mismos lotes.",
+    journey_step_1: "El clima de tu zona",
+    journey_text_1: "Temperatura y lluvia históricas ayudan a entender el momento de siembra.",
+    journey_step_2: "El agua que llega",
+    journey_text_2: "Comparamos la lluvia y la necesidad estimada del cultivo con el agua disponible.",
+    journey_step_3: "La tierra vuelve a producir",
+    journey_text_3: "Explora cómo alternar cultivos para que cada lote tenga otro siguiente ciclo.",
+    field_water: "Agua disponible",
+    field_water_target: "del objetivo de riego",
+    field_weather: "Este mes en la zona",
+    field_rain: "lluvia media",
+    field_soil: "Suelo elegido",
       g_fit: "Con esa agua alcanza para {n} de tus {area} tareas de arroz.",
       g_fit_ban: "Este ciclo no se puede sembrar arroz.",
       how: [["Dime tu finca", "Zona, mes de siembra, tareas y tipo de suelo."],
@@ -575,6 +595,25 @@
       g_result: "This is your plan", g_full: "See my full plan", g_rot: "See the rotation", g_restart: "Start again",
       g_zone: "Your zone:", g_month: "Planting month", g_area: "Tareas on your farm",
       g_scene_label: "Your rice-growing zone stays in view. The house is an illustrative marker, not a surveyed farm boundary.",
+    journey_title: "From sky to field",
+    journey_intro: "Follow the path: a climate signal becomes a planting decision.",
+    journey_kicker_1: "01 · OBSERVE",
+    journey_kicker_2: "02 · MEASURE WATER",
+    journey_kicker_3: "03 · CHANGE THE CYCLE",
+    journey_copy_1: "NASA POWER provides climate context for the selected zone.",
+    journey_copy_2: "Rain and allocated water change how much rice fits the plan.",
+    journey_copy_3: "The calendar compares crops across cycles on the same plots.",
+    journey_step_1: "Your zone’s climate",
+    journey_text_1: "Historical temperature and rainfall help explain the planting window.",
+    journey_step_2: "Water that reaches the farm",
+    journey_text_2: "We compare rainfall and estimated crop needs with available irrigation.",
+    journey_step_3: "Keep the land in production",
+    journey_text_3: "Explore how crops can alternate so each plot changes in the next cycle.",
+    field_water: "Water available",
+    field_water_target: "of irrigation target",
+    field_weather: "This month in the zone",
+    field_rain: "average rain",
+    field_soil: "Selected soil",
       g_fit: "That water is enough for {n} of your {area} tareas of rice.",
       g_fit_ban: "Rice cannot be planted this cycle.",
       how: [["Tell us your farm", "Zone, planting month, tareas and soil type."],
@@ -840,6 +879,29 @@
     $("sources").innerHTML = SOURCES.map(function (s) {
       return "<li><a href=\"" + s[1] + "\" target=\"_blank\" rel=\"noopener\">" + esc(s[0]) + "</a></li>";
     }).join("");
+    setJourneyBeat(state.journeyBeat);
+  }
+
+  function setJourneyBeat(beat) {
+    state.journeyBeat = beat;
+    var L = T[state.lang];
+    $("journey-visual").setAttribute("data-beat", beat);
+    $("journey-kicker").textContent = L["journey_kicker_" + beat];
+    $("journey-copy").textContent = L["journey_copy_" + beat];
+    document.querySelectorAll(".journey-chapter").forEach(function (chapter) {
+      chapter.classList.toggle("current", +chapter.getAttribute("data-beat") === beat);
+    });
+  }
+
+  function initJourney() {
+    var chapters = document.querySelectorAll(".journey-chapter");
+    if (!("IntersectionObserver" in window)) return;
+    var observer = new IntersectionObserver(function (entries) {
+      var active = entries.filter(function (entry) { return entry.isIntersecting; })
+        .sort(function (a, b) { return b.intersectionRatio - a.intersectionRatio; })[0];
+      if (active) setJourneyBeat(+active.target.getAttribute("data-beat"));
+    }, { rootMargin: "-28% 0px -38% 0px", threshold: [0, 0.15, 0.35, 0.6] });
+    chapters.forEach(function (chapter) { observer.observe(chapter); });
   }
 
   function segmented(id, labels, field) {
@@ -886,6 +948,7 @@
     drawRotation(selected, result);
     updateGuide(result, best, byKey);
     drawZoneInfo();
+    drawSceneContexts();
     drawBasin(selected, result, byKey);
     drawLimits();
   }
@@ -1534,6 +1597,10 @@
     $("map").innerHTML = svg;
     if ($("g-map")) $("g-map").innerHTML = svg.replace(/landclip/g, "landclip-g");
     $("h-map").innerHTML = svg.replace(/landclip/g, "landclip-h");
+    if ($("j-map")) {
+      $("j-map").innerHTML = svg.replace(/landclip/g, "landclip-j").replace(/ tabindex="0"/g, "").replace(/ role="button"/g, "");
+      $("j-map").setAttribute("aria-hidden", "true");
+    }
 
     var key = "<span><i class=\"k-zone\"></i>" + L.zone_dot + "</span><span><i class=\"k-zone mine\"></i>" + L.selected_dot + "</span>";
     if (plain) {
@@ -2047,6 +2114,13 @@
     var L = T[state.lang];
     paintCells($("parcel").children, s, true);
     $("parcel-sub").textContent = tr("parcel_sub", { name: strategyName(s), area: tareasText(state.area) });
+    var climate = zone().climate, monthIndex = state.month - 1;
+    $("parcel-context").innerHTML =
+      "<div class=\"parcel-weather\"><b>" + esc(L.field_weather) + " · " + esc(MONTHS[state.lang][monthIndex]) + "</b>" +
+      "<span>" + num(climate.tmax[monthIndex], 1) + " °C</span><small>" + num(climate.rain[monthIndex]) + " mm " + esc(L.field_rain) + "</small></div>" +
+      "<div class=\"parcel-soil\">" + SOIL_ART[state.soil] + "<span><b>" + esc(L.field_soil) + "</b><small>" + esc(L.soils[state.soil]) + "</small></span></div>" +
+      "<div class=\"parcel-water\"><div><b>" + esc(L.field_water) + "</b><span>" + Math.round(state.allocation * 100) + "%</span></div>" +
+      "<i><u style=\"width:" + Math.round(state.allocation * 100) + "%\"></u></i><small>" + esc(L.field_water_target) + "</small></div>";
     var lines = s.plots.map(function (p) {
       return "<span>" + cropBadge(p.crop) + "<b>" + tareasText(p.tareas) + "</b> " + tr("tareas") + " · " +
         esc(cropName(p.crop)) + "</span>";
@@ -2060,6 +2134,21 @@
       tile(num(s.urea_sacks), L.impact_n) +
       tile(num(Math.max(0, s.saved_m3)), L.impact_water) +
       tile(tareasText(state.area - s.idle_tareas) + " / " + tareasText(state.area), L.impact_land);
+  }
+
+  function drawSceneContexts() {
+    var L = T[state.lang], climate = zone().climate, monthIndex = state.month - 1;
+    ["z-scene-context", "g-scene-context"].forEach(function (id) {
+      var panel = $(id);
+      if (!panel) return;
+      panel.innerHTML =
+        "<div class=\"scene-context-head\"><b>" + esc(L.field_weather) + " · " + esc(MONTHS[state.lang][monthIndex]) + "</b>" +
+        "<strong>" + num(climate.tmax[monthIndex], 1) + "°</strong><span>" + num(climate.rain[monthIndex]) + " mm " + esc(L.field_rain) + "</span></div>" +
+        "<div class=\"scene-context-soil\">" + SOIL_ART[state.soil] + "<span><b>" + esc(L.field_soil) + "</b><small>" +
+        esc(L.soils[state.soil]) + "</small></span></div>" +
+        "<div class=\"scene-context-water\"><div><b>" + esc(L.field_water) + "</b><strong>" + Math.round(state.allocation * 100) + "%</strong></div>" +
+        "<i><u style=\"width:" + Math.round(state.allocation * 100) + "%\"></u></i></div>";
+    });
   }
 
   // ------------------------------------------------------------------
@@ -2269,6 +2358,7 @@
   };
 
   drawStatic();
+  initJourney();
   listen();
   draw();
   setView(location.hash.slice(1) || "home", true);

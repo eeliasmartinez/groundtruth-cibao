@@ -96,39 +96,64 @@ h2 { font-size: clamp(26px, 3vw, 36px); line-height: 1; }
 .facts b { font-family: var(--display); font-weight: 900; font-size: 44px; line-height: 1; color: var(--blue); display: block; margin-bottom: 6px; }
 .facts a { font-size: 13px; color: var(--muted); white-space: nowrap; }
 
+/* One scroll-led story: the map stays still while each cause and effect advances. */
+.journey { padding: clamp(38px, 6vw, 82px) var(--edge); background: var(--ground); }
+.journey-head, .journey-layout { max-width: 1320px; margin: 0 auto; }
+.journey-head { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: end; margin-bottom: 26px; }
+.journey-head h2 { font-size: clamp(34px, 5vw, 60px); }
+.journey-head p { max-width: 48ch; color: var(--ink-2); font-size: 17px; }
+.journey-layout { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(300px, .8fr); gap: clamp(24px, 5vw, 70px); align-items: start; }
+.journey-visual { position: sticky; top: 82px; align-self: start; min-width: 0; background: var(--blue); border: 2px solid var(--ink); }
+.journey-map { padding: 16px; }
+#j-map { pointer-events: none; }
+#j-map svg { width: 100%; height: auto; display: block; }
+#j-map :is(.sq, .value, .dam-name, .dam-mark, .river, .place) { display: none; }
+#j-map .zone text { font-size: 13px; }
+.journey-readout { min-height: 84px; display: grid; align-content: center; gap: 3px; padding: 13px 18px; border-top: 2px solid rgba(255,255,255,.3); color: #fff; transition: opacity 220ms var(--ease-out), transform 220ms var(--ease-out); }
+.journey-readout b { color: var(--yellow); font-size: 12px; letter-spacing: .08em; }
+.journey-readout span { font-size: 15px; max-width: 62ch; }
+.journey-visual[data-beat="2"] .zone.mine .dot { fill: var(--water); }
+.journey-visual[data-beat="3"] .zone.mine .dot { fill: var(--green); }
+.journey-chapters { display: grid; }
+.journey-chapter { min-height: 52vh; display: grid; align-content: center; gap: 10px; padding: 22px 0 22px 22px; border-left: 4px solid var(--hair); color: var(--muted); opacity: .55; transform: translateX(0); transition: opacity 240ms var(--ease-out), transform 240ms var(--ease-out), border-color 240ms var(--ease-out); }
+.journey-chapter.current { opacity: 1; transform: translateX(6px); border-left-color: var(--red); color: var(--ink); }
+.journey-chapter > span { font-family: var(--display); font-size: 28px; font-weight: 900; color: var(--blue); }
+.journey-chapter h3 { font-family: var(--display); font-size: clamp(28px, 3.5vw, 42px); line-height: 1; text-transform: uppercase; }
+.journey-chapter p { max-width: 42ch; font-size: 16px; color: var(--ink-2); }
+
 /* ---- the map (home, walkthrough and Map section) ---- */
-:is(#map, .g-map, #h-map) svg { width: 100%; height: auto; display: block; }
-:is(#map, .g-map, #h-map) text { font-family: var(--body); font-size: 12px; }
-:is(#map, .g-map, #h-map) .sea { fill: var(--blue); }
-:is(#map, .g-map, #h-map) .neighbor { fill: #2e52c4; }
-:is(#map, .g-map, #h-map) .land { fill: #fff; }
-:is(#map, .g-map, #h-map) .place { fill: rgba(255, 255, 255, 0.75); font-style: italic; font-size: 11.5px; }
-:is(#map, .g-map, #h-map) .river { fill: var(--blue); font-style: italic; font-weight: 600; font-size: 11px; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
-:is(#map, .g-map, #h-map) .dam-name { fill: var(--ink); font-size: 10.5px; font-weight: 700; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
-:is(#map, .g-map, #h-map) .dam-mark { fill: var(--ink); stroke: #fff; stroke-width: 1.5; }
-:is(#map, .g-map, #h-map) .value { font-weight: 800; font-size: 12.5px; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 3px; }
-:is(#map, .g-map, #h-map) .rv { fill: none; stroke: var(--blue); stroke-width: 0.8; stroke-linecap: round; stroke-linejoin: round; opacity: 0.7; }
-:is(#map, .g-map, #h-map) .rv.main { stroke-width: 2.8; opacity: 1; }
-:is(#map, .g-map, #h-map) .province-line { fill: transparent; stroke: rgba(16, 19, 26, .58); stroke-width: 1.1; vector-effect: non-scaling-stroke; cursor: pointer; }
-:is(#map, .g-map, #h-map) .province-line:hover { stroke: var(--red); stroke-width: 2; }
-:is(#map, .g-map, #h-map) .highway-casing { fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-:is(#map, .g-map, #h-map) .highway { fill: none; stroke: var(--red); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-:is(#map, .g-map, #h-map) .highway-label { fill: var(--ink); font-size: 10px; font-weight: 800; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
-:is(#map, .g-map, #h-map) .map-car { pointer-events: none; filter: drop-shadow(1px 1px 1px rgba(0,0,0,.4)); }
-:is(#map, .g-map, #h-map) .map-car circle { fill: #10131a; }
-:is(#map, .g-map, #h-map) .rice-shadow { fill: rgba(0,0,0,.18); }
-:is(#map, .g-map, #h-map) .rice-sprout { fill: none; stroke: #527632; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(1px 1px 1px rgba(0,0,0,.4)); }
-:is(#map, .g-map, #h-map) .rv-flow { fill: none; stroke: #fff; stroke-width: 1.2; stroke-linecap: round; stroke-dasharray: 2 9; animation: mapflow 1.4s linear infinite; pointer-events: none; }
+:is(#map, .g-map, #h-map, #j-map) svg { width: 100%; height: auto; display: block; }
+:is(#map, .g-map, #h-map, #j-map) text { font-family: var(--body); font-size: 12px; }
+:is(#map, .g-map, #h-map, #j-map) .sea { fill: var(--blue); }
+:is(#map, .g-map, #h-map, #j-map) .neighbor { fill: #2e52c4; }
+:is(#map, .g-map, #h-map, #j-map) .land { fill: #fff; }
+:is(#map, .g-map, #h-map, #j-map) .place { fill: rgba(255, 255, 255, 0.75); font-style: italic; font-size: 11.5px; }
+:is(#map, .g-map, #h-map, #j-map) .river { fill: var(--blue); font-style: italic; font-weight: 600; font-size: 11px; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
+:is(#map, .g-map, #h-map, #j-map) .dam-name { fill: var(--ink); font-size: 10.5px; font-weight: 700; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
+:is(#map, .g-map, #h-map, #j-map) .dam-mark { fill: var(--ink); stroke: #fff; stroke-width: 1.5; }
+:is(#map, .g-map, #h-map, #j-map) .value { font-weight: 800; font-size: 12.5px; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 3px; }
+:is(#map, .g-map, #h-map, #j-map) .rv { fill: none; stroke: var(--blue); stroke-width: 0.8; stroke-linecap: round; stroke-linejoin: round; opacity: 0.7; }
+:is(#map, .g-map, #h-map, #j-map) .rv.main { stroke-width: 2.8; opacity: 1; }
+:is(#map, .g-map, #h-map, #j-map) .province-line { fill: transparent; stroke: rgba(16, 19, 26, .58); stroke-width: 1.1; vector-effect: non-scaling-stroke; cursor: pointer; }
+:is(#map, .g-map, #h-map, #j-map) .province-line:hover { stroke: var(--red); stroke-width: 2; }
+:is(#map, .g-map, #h-map, #j-map) .highway-casing { fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+:is(#map, .g-map, #h-map, #j-map) .highway { fill: none; stroke: var(--red); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+:is(#map, .g-map, #h-map, #j-map) .highway-label { fill: var(--ink); font-size: 10px; font-weight: 800; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
+:is(#map, .g-map, #h-map, #j-map) .map-car { pointer-events: none; filter: drop-shadow(1px 1px 1px rgba(0,0,0,.4)); }
+:is(#map, .g-map, #h-map, #j-map) .map-car circle { fill: #10131a; }
+:is(#map, .g-map, #h-map, #j-map) .rice-shadow { fill: rgba(0,0,0,.18); }
+:is(#map, .g-map, #h-map, #j-map) .rice-sprout { fill: none; stroke: #527632; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(1px 1px 1px rgba(0,0,0,.4)); }
+:is(#map, .g-map, #h-map, #j-map) .rv-flow { fill: none; stroke: #fff; stroke-width: 1.2; stroke-linecap: round; stroke-dasharray: 2 9; animation: mapflow 1.4s linear infinite; pointer-events: none; }
 @keyframes mapflow { to { stroke-dashoffset: -11; } }
-:is(#map, .g-map, #h-map) .zone { cursor: pointer; }
-:is(#map, .g-map, #h-map) .zone .dot { fill: var(--red); stroke: #fff; stroke-width: 2; transform-box: fill-box; transform-origin: center; transition: transform 160ms var(--ease-out); }
-:is(#map, .g-map, #h-map) .zone:hover .dot { transform: scale(1.35); }
-:is(#map, .g-map, #h-map) .zone.mine .dot { stroke: var(--ink); stroke-width: 2.5; }
-:is(#map, .g-map, #h-map) .zone .pulse { fill: var(--red); transform-box: fill-box; transform-origin: center; animation: pulse 1.8s ease-out infinite; }
+:is(#map, .g-map, #h-map, #j-map) .zone { cursor: pointer; }
+:is(#map, .g-map, #h-map, #j-map) .zone .dot { fill: var(--red); stroke: #fff; stroke-width: 2; transform-box: fill-box; transform-origin: center; transition: transform 160ms var(--ease-out); }
+:is(#map, .g-map, #h-map, #j-map) .zone:hover .dot { transform: scale(1.35); }
+:is(#map, .g-map, #h-map, #j-map) .zone.mine .dot { stroke: var(--ink); stroke-width: 2.5; }
+:is(#map, .g-map, #h-map, #j-map) .zone .pulse { fill: var(--red); transform-box: fill-box; transform-origin: center; animation: pulse 1.8s ease-out infinite; }
 @keyframes pulse { from { transform: scale(0.8); opacity: 0.55; } to { transform: scale(2.8); opacity: 0; } }
-:is(#map, .g-map, #h-map) .zone text { font-weight: 700; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 3.5px; }
-:is(#map, .g-map, #h-map) .zone:focus-visible { outline: none; }
-:is(#map, .g-map, #h-map) .zone:focus-visible .dot { stroke: var(--yellow); stroke-width: 4; }
+:is(#map, .g-map, #h-map, #j-map) .zone text { font-weight: 700; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 3.5px; }
+:is(#map, .g-map, #h-map, #j-map) .zone:focus-visible { outline: none; }
+:is(#map, .g-map, #h-map, #j-map) .zone:focus-visible .dot { stroke: var(--yellow); stroke-width: 4; }
 /* on the home page the map is a picture first: no grid, no small labels */
 #h-map :is(.sq, .value, .dam-name, .dam-mark, .river, .place) { display: none; }
 #h-map .zone text { font-size: 13px; }
@@ -192,6 +217,19 @@ details.more p { margin-top: 6px; max-width: 75ch; }
 .plot.big { gap: 3px; margin-top: 14px; max-width: 440px; }
 .plot.big span { display: grid; place-items: center; color: rgba(255, 255, 255, 0.95); font-size: clamp(13px, 1.9vw, 22px); }
 .plot.big span.cash { color: var(--ink); }
+.parcel-context { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 8px; margin-top: 12px; max-width: 440px; }
+.parcel-context > div { min-width: 0; min-height: 86px; padding: 9px 10px; border-top: 3px solid var(--ink); background: var(--ground); display: grid; align-content: start; gap: 2px; }
+.parcel-context b { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.parcel-context small { color: var(--ink-2); font-size: 12px; }
+.parcel-weather > span { font-family: var(--display); font-size: 27px; font-weight: 900; line-height: 1; color: var(--blue); }
+.parcel-soil { grid-template-columns: 42px 1fr; align-items: center; }
+.parcel-soil svg { width: 42px; height: 38px; }
+.parcel-soil span { display: grid; }
+.parcel-soil span small { font-weight: 700; }
+.parcel-water > div { display: flex; justify-content: space-between; gap: 6px; align-items: baseline; }
+.parcel-water > div span { font-family: var(--display); color: var(--blue); font-size: 23px; font-weight: 900; }
+.parcel-water > i { display: block; height: 9px; margin: 5px 0 3px; background: #fff; border: 1px solid var(--blue); overflow: hidden; }
+.parcel-water > i u { display: block; height: 100%; background: var(--water); transition: width 260ms var(--ease-in-out); }
 .plan-side { display: grid; gap: 16px; align-content: start; }
 .mix { font-size: 15px; color: var(--ink-2); display: grid; gap: 7px; align-content: start; }
 .mix b { color: var(--ink); }
@@ -415,6 +453,13 @@ body.sheet-mode #sheet { display: block; max-width: 720px; margin: 0 auto; paddi
   body { padding-bottom: 64px; }
   .hero { min-height: 0; }
   .hero-in, .layout, .plan, .basin-head, .facts, .g-options, .g-water, .g-result { grid-template-columns: 1fr; }
+  .journey-head, .journey-layout { grid-template-columns: 1fr; }
+  .journey-head { align-items: start; }
+  .journey-visual { position: static; top: auto; z-index: auto; }
+  .journey-map { padding: 8px; }
+  .journey-readout { min-height: 68px; padding: 9px 12px; }
+  .journey-chapter { min-height: 38vh; }
+  .parcel-context { grid-template-columns: 1fr 1fr; }
   .hero-map { order: -1; }
   .controls { position: static; max-height: none; }
   body:not([data-view="plan"]) .controls { display: none; }
@@ -433,14 +478,15 @@ body.sheet-mode #sheet { display: block; max-width: 720px; margin: 0 auto; paddi
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
+  .journey-chapter, .journey-chapter.current { opacity: 1; transform: none; }
 }
 
 /* ---- moving sea, raised land, satellite photo ---- */
-:is(#map, .g-map, #h-map) .wave { fill: none; stroke: rgba(255, 255, 255, 0.22); stroke-width: 1.3; stroke-linecap: round; animation: drift 5s linear infinite; }
-:is(#map, .g-map, #h-map) .wave.w1 { animation-duration: 7s; stroke: rgba(255, 255, 255, 0.14); }
-:is(#map, .g-map, #h-map) .wave.w2 { animation-duration: 9s; animation-direction: reverse; stroke: rgba(255, 255, 255, 0.18); }
+:is(#map, .g-map, #h-map, #j-map) .wave { fill: none; stroke: rgba(255, 255, 255, 0.22); stroke-width: 1.3; stroke-linecap: round; animation: drift 5s linear infinite; }
+:is(#map, .g-map, #h-map, #j-map) .wave.w1 { animation-duration: 7s; stroke: rgba(255, 255, 255, 0.14); }
+:is(#map, .g-map, #h-map, #j-map) .wave.w2 { animation-duration: 9s; animation-direction: reverse; stroke: rgba(255, 255, 255, 0.18); }
 @keyframes drift { to { transform: translateX(-40px); } }
-:is(#map, .g-map, #h-map) .land-side { fill: #071d63; }
+:is(#map, .g-map, #h-map, #j-map) .land-side { fill: #071d63; }
 :is(#h-map, .g-map) :is(.sat-img, .sq, .value) { display: none; }
 #map, #h-map { overflow: hidden; }
 :is(#map, #h-map) svg { transition: transform 600ms var(--ease-in-out), opacity 600ms ease; }
@@ -456,9 +502,22 @@ body.sheet-mode #sheet { display: block; max-width: 720px; margin: 0 auto; paddi
 .zone-head { display: grid; gap: 6px; }
 .zone-head h2 { font-size: clamp(34px, 5vw, 64px); animation: g-in 340ms var(--ease-out) backwards; }
 .zone-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 22px; align-items: start; }
-.z-stage { background: var(--blue); border: 2px solid var(--ink); padding: 0; }
+.z-stage { position: relative; background: var(--blue); border: 2px solid var(--ink); padding: 0; }
 #z-canvas { display: block; width: 100%; height: auto; aspect-ratio: 10 / 7; cursor: grab; touch-action: pan-y; }
 #z-canvas:active { cursor: grabbing; }
+.scene-context { position: absolute; z-index: 2; top: 10px; left: 10px; width: clamp(158px, 35%, 230px); padding: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: rgba(255,255,255,.94); border: 1px solid var(--ink); pointer-events: none; }
+.scene-context-head, .scene-context-soil, .scene-context-water { min-width: 0; display: grid; gap: 1px; }
+.scene-context-head { grid-column: 1 / -1; grid-template-columns: 1fr auto; align-items: baseline; border-bottom: 1px solid var(--hair); padding-bottom: 4px; }
+.scene-context-head b, .scene-context-soil b, .scene-context-water b { font-size: 9px; line-height: 1.1; text-transform: uppercase; letter-spacing: .035em; }
+.scene-context-head strong, .scene-context-water strong { color: var(--blue); font-family: var(--display); font-weight: 900; font-size: 19px; line-height: 1; }
+.scene-context-head span { grid-column: 1 / -1; color: var(--ink-2); font-size: 10px; }
+.scene-context-soil { grid-template-columns: 30px 1fr; align-items: center; }
+.scene-context-soil svg { width: 30px; height: 23px; }
+.scene-context-soil span { display: grid; }
+.scene-context-soil small { color: var(--ink-2); font-size: 10px; }
+.scene-context-water > div { display: flex; align-items: baseline; justify-content: space-between; gap: 3px; }
+.scene-context-water > i { height: 5px; border: 1px solid var(--blue); background: var(--paper); overflow: hidden; }
+.scene-context-water > i u { display: block; height: 100%; background: var(--water); transition: width 260ms var(--ease-in-out); }
 .z-stage .note { color: rgba(255, 255, 255, 0.82); margin: 0; padding: 10px 14px 12px; border-top: 2px solid rgba(255, 255, 255, 0.25); }
 .z-info { display: grid; gap: 14px; }
 .z-info .impact div { grid-template-columns: 6.6em 1fr; padding: 7px 0; }

@@ -64,6 +64,13 @@ de la pregunta. El usuario puede girarlo allí y volver a la ficha de zona con e
 Atrás. Los brotes dibujados indican las 14 zonas arroceras y la marca de finca; no son
 parcelas ni cultivos detectados por satélite.
 
+La portada cuenta el recorrido en tres capítulos mientras el mapa queda fijo: clima,
+agua y rotación. El desplazamiento es nativo del navegador. En el dibujo de la finca y en
+el recuadro del relieve se actualizan el mes elegido, temperatura máxima media y lluvia
+histórica de ese mes para la zona, tipo de suelo seleccionado por el usuario y porcentaje
+de agua indicado. El suelo y el agua son entradas del usuario; no se presentan como
+mediciones satelitales del lindero.
+
 ## 4. Dónde está publicada (no hace falta Vercel)
 
 La página son archivos estáticos (HTML, CSS y JavaScript), sin servidor. Está en

@@ -1,5 +1,23 @@
 # Handoff para Claude Code — 14-nov-2026
 
+## Actualización Codex — narrativa de scroll y mapa que responde
+
+- La portada suma la sección journey con tres capítulos: clima, agua y rotación. En
+  escritorio el mapa se queda fijo mientras el capítulo activo cambia al entrar en
+  pantalla. En móvil el mapa aparece primero y el scroll sigue nativo. No hay bloqueo de
+  scroll ni librerías externas.
+- El mapa narrativo j-map reutiliza las capas locales existentes; es decorativo y no
+  interactivo para evitar que parezca un segundo selector de finca.
+- El resumen debajo del mosaico de 100 tareas y el panel sobre el relieve z-canvas y
+  g-canvas muestran el mes elegido, Tmax media mensual y lluvia media histórica del mes
+  para la zona, suelo elegido por el usuario y porcentaje de agua configurado. Cambian al
+  modificar las respuestas; el suelo y el agua no son datos satelitales de la parcela.
+- web/sw.js cambió a plan-b-v8. No se agregaron cuentas ni base de datos, ni se amplió a
+  escala mundial: siguen siendo decisiones para después de la evaluación y requieren
+  diseño de privacidad y validación agronómica por región.
+- Al continuar: probar el scroll en desktop y móvil, cambiar idioma, mes, suelo y agua
+  con la escena 3D visible, y comprobar la actualización del cache PWA sin conexión.
+
 Este documento resume el último cambio pedido por Elias. Está escrito para que otro
 agente pueda continuar sin volver a investigar ni asumir que los dibujos son datos.
 
