@@ -98,6 +98,20 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
 - Reglas de animación aplicadas: las cosas entran con desaceleración, solo se animan
   posición y opacidad, los botones responden al toque y nada bloquea al usuario.
 
+## Dirección visual actual (rediseño del 14-nov, noche)
+- **Idea:** la impresión de un saco de arroz dominicano. Azul ultramar plano y rojo de
+  sello sobre blanco, mayúsculas condensadas gruesas, reglas negras, esquinas rectas.
+  Sin cristal, sin desenfoques, sin degradados decorativos y sin emojis.
+- **Tipografías** (guardadas en `web/fonts/`, licencia abierta SIL OFL): Big Shoulders
+  Display para títulos y números, Archivo para el texto.
+- **Iconos:** dibujados en SVG con un solo grosor de línea (`VIEW_ICONS`,
+  `PRIORITY_ICONS`, `ICONS` en `web/app.js`).
+- **Dos momentos animados a propósito:** el mapa de la portada entra como una
+  serigrafía y el plan recibe un sello rojo "Plan B". El resto del movimiento es mínimo.
+- Reglas tomadas de las skills: no usar rótulo encima del título, no usar tarjetas de
+  icono + título + texto como estructura, no usar cristal como adorno, un solo sistema
+  de iconos, tipografía propia (no la del sistema) y revisar el resultado en pantalla.
+
 ## Cómo correrlo
 ```bash
 cd ~/NASA

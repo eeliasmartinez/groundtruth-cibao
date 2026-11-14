@@ -79,6 +79,8 @@ open web/index.html
 
 Full links are listed in the page's "Sources" section and in `docs/investigacion.md`.
 Built with Python, pandas, NumPy, requests, Streamlit and Altair (open source).
+Map coastline: Natural Earth (public domain). Map rivers: © OpenStreetMap contributors (ODbL).
+Typefaces: Big Shoulders Display and Archivo (SIL Open Font License), via Fontsource.
 
 ## Use of AI
 

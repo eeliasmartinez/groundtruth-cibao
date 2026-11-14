@@ -42,8 +42,21 @@
     loam: '<svg viewBox="0 0 120 64" aria-hidden="true"><rect width="120" height="64" rx="10" fill="#8f6238"/><g fill="#6f4a27"><circle cx="20" cy="40" r="4"/><circle cx="52" cy="50" r="5"/><circle cx="88" cy="38" r="4"/><circle cx="104" cy="54" r="3"/><circle cx="36" cy="56" r="3"/></g><path d="M60 30V10m0 8c-7-1-11-5-12-11m12 9c7-1 11-5 12-11" fill="none" stroke="#2f9e52" stroke-width="3.5" stroke-linecap="round"/><path d="M60 30c-3 6-8 9-12 10m12-10c3 6 8 9 12 10" fill="none" stroke="#e9d3b0" stroke-width="2" stroke-linecap="round"/></svg>',
     sandy: '<svg viewBox="0 0 120 64" aria-hidden="true"><rect width="120" height="64" rx="10" fill="#dcb97c"/><g fill="#c39a58"><circle cx="16" cy="18" r="2.5"/><circle cx="40" cy="34" r="2.5"/><circle cx="70" cy="20" r="2.5"/><circle cx="96" cy="40" r="2.5"/><circle cx="26" cy="50" r="2.5"/><circle cx="60" cy="52" r="2.5"/><circle cx="108" cy="14" r="2.5"/></g><g fill="#4fa3f0"><path d="M50 6c3 4 4.5 6 4.5 8a4.5 4.5 0 0 1-9 0c0-2 1.5-4 4.5-8z"/><path d="M76 26c3 4 4.5 6 4.5 8a4.5 4.5 0 0 1-9 0c0-2 1.5-4 4.5-8z"/><path d="M60 44c3 4 4.5 6 4.5 8a4.5 4.5 0 0 1-9 0c0-2 1.5-4 4.5-8z"/></g></svg>'
   };
-  var PRIORITY_ICONS = { water: "💧", soil: "🌱", income: "💰" };
-  var VIEW_ICONS = { home: "🏠", plan: "🌾", rotation: "🔄", options: "⚖️", map: "🗺️", data: "📊", help: "❓" };
+  var PRIORITY_ICONS = {
+    water: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c4 5 6.5 8.5 6.5 12a6.5 6.5 0 0 1-13 0c0-3.5 2.5-7 6.5-12z"/></svg>',
+    soil: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V9M12 13c-4 0-6-2.5-6.5-6 4 0 6 2.5 6.5 6zM12 10c0-3.5 2-5.5 6-6 0 3.5-2 6-6 6zM4 21h16"/></svg>',
+    income: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h10l2 12H5zM9 8c0-3 1.5-4 3-4s3 1 3 4M9.5 14h5"/></svg>'
+  };
+  // Line icons drawn for this page, one stroke weight everywhere.
+  var VIEW_ICONS = {
+    home: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg>',
+    plan: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>',
+    rotation: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9a8 8 0 0 1 14-3l2-2v6h-6l2.5-2.5A5 5 0 0 0 7 10M20 15a8 8 0 0 1-14 3l-2 2v-6h6l-2.5 2.5A5 5 0 0 0 17 14"/></svg>',
+    options: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>',
+    map: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 0 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+    data: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M7 16v-5M12 16V6M17 16v-8"/></svg>',
+    help: '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/></svg>'
+  };
   // Coastline and rivers come from geo.js (Natural Earth and OpenStreetMap).
   var GEO = {
     // where each dam's name goes
@@ -114,7 +127,8 @@
     ["Montecristi 24 Horas, 28 Aug 2026: Racionan el agua para la agricultura por falta de lluvias", "https://montecristi24horas.com/2026/08/racionan-el-agua-para-la-agricultura-por-falta-de-lluvias/"],
     ["Presidencia de la República Dominicana: INDRHI informa sobre volúmenes en el sistema nacional de presas", "https://presidencia.gob.do/noticias/indrhi-informa-sobre-volumenes-en-sistema-nacional-de-presas"],
     ["Map rivers: © OpenStreetMap contributors (ODbL)", "https://www.openstreetmap.org/copyright"],
-    ["Map coastline: Natural Earth (public domain)", "https://www.naturalearthdata.com/"]
+    ["Map coastline: Natural Earth (public domain)", "https://www.naturalearthdata.com/"],
+    ["Typefaces: Big Shoulders Display and Archivo (SIL Open Font License), via Fontsource", "https://fontsource.org/"]
   ];
 
   // ------------------------------------------------------------------
@@ -122,7 +136,10 @@
   // ------------------------------------------------------------------
   var T = {
     es: {
-      hero_title: "El Plan B del arrocero",
+      hero_title: "Si falta el agua, ¿qué se siembra?",
+      hero_map_note: "Toca tu zona para empezar",
+      why_title: "El Plan B del arrocero dominicano",
+      stamp: "Plan B",
       hero_lead: "Cuando el agua de riego no alcanza, al productor le dicen que no siembre arroz. Esta herramienta le muestra qué sí puede sembrar con el agua que le toca, usando 25 años de datos de la NASA (2001–2025).",
       facts: [
         ["91.5%", "del arroz dominicano se produce en el Cibao, casi todo bajo riego.", 4],
@@ -372,7 +389,10 @@
       impact_land: "tareas sembradas, sin suelo desnudo"
     },
     en: {
-      hero_title: "The rice farmer's Plan B",
+      hero_title: "When the water runs short, what do you plant?",
+      hero_map_note: "Tap your zone to start",
+      why_title: "Plan B for the Dominican rice farmer",
+      stamp: "Plan B",
       hero_lead: "When irrigation water runs short, rice farmers are told not to plant. This tool shows what they can still grow with the water they are given, using 25 years of NASA data (2001–2025).",
       facts: [
         ["91.5%", "of Dominican rice is grown in the Cibao valley, almost all of it irrigated.", 4],
@@ -697,9 +717,6 @@
         return "<a href=\"" + SOURCES[index][1] + "\" target=\"_blank\" rel=\"noopener\">" + tr("source") + "</a>";
       }).join(" · ");
       return "<li><b>" + f[0] + "</b><span>" + esc(f[1]) + "</span> " + links + "</li>";
-    }).join("");
-    $("how").innerHTML = T[state.lang].how.map(function (item, i) {
-      return "<li class=\"glass\"><b>" + (i + 1) + "</b><span><strong>" + esc(item[0]) + "</strong>" + esc(item[1]) + "</span></li>";
     }).join("");
     $("nav").innerHTML = NAV_VIEWS.map(function (view) {
       return "<button type=\"button\" data-go=\"" + view + "\">" + T[state.lang].nav[view] + "</button>";
@@ -1132,10 +1149,10 @@
     var svg = "<svg viewBox=\"0 0 " + W + " " + H + "\" role=\"img\" aria-label=\"" + esc(L.climate_title) + "\">";
 
     Object.keys(shares).forEach(function (m) {
-      svg += "<rect x=\"" + (left + m * step) + "\" y=\"" + top + "\" width=\"" + step + "\" height=\"" + plotH + "\" fill=\"#e3f0e9\"/>";
+      svg += "<rect x=\"" + (left + m * step) + "\" y=\"" + top + "\" width=\"" + step + "\" height=\"" + plotH + "\" fill=\"#e8edfb\"/>";
     });
     for (var g = 0; g <= max; g += 50) {
-      svg += "<line x1=\"" + left + "\" x2=\"" + (W - right) + "\" y1=\"" + y(g) + "\" y2=\"" + y(g) + "\" stroke=\"#e2dfd5\"/>" +
+      svg += "<line x1=\"" + left + "\" x2=\"" + (W - right) + "\" y1=\"" + y(g) + "\" y2=\"" + y(g) + "\" stroke=\"#d9dde6\"/>" +
         "<text x=\"" + (left - 5) + "\" y=\"" + (y(g) + 4) + "\" text-anchor=\"end\">" + g + "</text>";
     }
     var points = [];
@@ -1148,13 +1165,13 @@
           (y(rain) - y(et0) - 2) + "\" rx=\"3\" fill=\"#f5aeae\"><title>" + tip + "</title></rect>";
       }
       svg += "<rect x=\"" + (x + step * 0.22) + "\" y=\"" + y(rain) + "\" width=\"" + (step * 0.56) + "\" height=\"" +
-        (plotBottom - y(rain)) + "\" rx=\"3\" fill=\"#2a78d6\"><title>" + tip + "</title></rect>" +
+        (plotBottom - y(rain)) + "\" rx=\"3\" fill=\"#1238a8\"><title>" + tip + "</title></rect>" +
         "<text x=\"" + (x + step / 2) + "\" y=\"" + (plotBottom + 15) + "\" text-anchor=\"middle\">" + MONTHS_SHORT[state.lang][i] + "</text>";
       points.push((x + step / 2) + "," + y(et0));
     });
-    svg += "<polyline points=\"" + points.join(" ") + "\" fill=\"none\" stroke=\"#17160f\" stroke-width=\"2\"/>";
+    svg += "<polyline points=\"" + points.join(" ") + "\" fill=\"none\" stroke=\"#10131a\" stroke-width=\"2\"/>";
     c.et0.forEach(function (et0, i) {
-      svg += "<circle cx=\"" + (left + i * step + step / 2) + "\" cy=\"" + y(et0) + "\" r=\"3.5\" fill=\"#17160f\" stroke=\"#fff\" stroke-width=\"1.5\"/>";
+      svg += "<circle cx=\"" + (left + i * step + step / 2) + "\" cy=\"" + y(et0) + "\" r=\"3.5\" fill=\"#10131a\" stroke=\"#fff\" stroke-width=\"1.5\"/>";
     });
 
     // Heat strip: average daily maximum of each month (28 C light to 38 C dark).
@@ -1335,12 +1352,12 @@
     function rings(list) { return list.map(function (ring) { return mapPath(ring, true); }).join(""); }
 
     var svg = "<svg viewBox=\"0 0 " + MAP.w + " " + MAP.h + "\" role=\"group\" aria-label=\"" + esc(L.map_aria) + "\">" +
-      "<defs><linearGradient id=\"sea\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#d5e9fb\"/><stop offset=\"1\" stop-color=\"#a9d0f5\"/></linearGradient>" +
+      "<defs><clipPath id=\"landclip\"><path d=\"" + rings(G.land) + "\"/></clipPath><linearGradient id=\"sea\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#d5e9fb\"/><stop offset=\"1\" stop-color=\"#a9d0f5\"/></linearGradient>" +
       "<linearGradient id=\"landfill\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f6f3e4\"/><stop offset=\"1\" stop-color=\"#dfead0\"/></linearGradient>" +
       "<filter id=\"coast\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feDropShadow dx=\"0\" dy=\"3\" stdDeviation=\"4\" flood-color=\"#1c4f8a\" flood-opacity=\"0.3\"/></filter></defs>" +
-      "<rect width=\"" + MAP.w + "\" height=\"" + MAP.h + "\" fill=\"url(#sea)\"/>" +
-      "<path d=\"" + rings(G.haiti) + "\" fill=\"#dde2d8\" opacity=\"0.85\"/>" +
-      "<path d=\"" + rings(G.land) + "\" fill=\"url(#landfill)\" stroke=\"#aab89c\" stroke-width=\"0.8\" filter=\"url(#coast)\"/>" +
+      "<rect class=\"sea\" width=\"" + MAP.w + "\" height=\"" + MAP.h + "\"/>" +
+      "<path d=\"" + rings(G.haiti) + "\" class=\"neighbor\"/>" +
+      "<path d=\"" + rings(G.land) + "\" class=\"land\"/>" +
       "<text class=\"place\" x=\"" + mx(-70.75) + "\" y=\"" + my(19.99) + "\">" + L.ocean + "</text>" +
       "<text class=\"place\" x=\"" + mx(-72.07) + "\" y=\"" + my(19.20) + "\">" + L.haiti + "</text>" +
       "<text class=\"place\" x=\"" + mx(-70.25) + "\" y=\"" + my(17.85) + "\">" + L.caribbean + "</text>";
@@ -1352,9 +1369,9 @@
       var mine = sq.zones.indexOf(state.zone) >= 0;
       var value = layer === "basins" ? null :
         total(sq.zones.map(function (i) { return values[i]; })) / sq.zones.length;
-      svg += "<rect x=\"" + x + "\" y=\"" + y + "\" width=\"" + w + "\" height=\"" + h + "\" fill=\"" +
-        (value === null ? "none" : color(value)) + "\" fill-opacity=\"0.7\" stroke=\"" +
-        (mine ? "#0b3a82" : "#8a8778") + "\" stroke-width=\"" + (mine ? 2.2 : 0.8) + "\"" +
+      svg += "<rect class=\"sq\" x=\"" + x + "\" y=\"" + y + "\" width=\"" + w + "\" height=\"" + h + "\" fill=\"" +
+        (value === null ? "none" : color(value)) + "\" fill-opacity=\"0.9\" clip-path=\"url(#landclip)\" stroke=\"" +
+        (mine ? "#e2231a" : "#1238a8") + "\" stroke-width=\"" + (mine ? 2.2 : 0.8) + "\"" +
         (mine ? "" : " stroke-dasharray=\"3 4\"") + "/>";
       if (value !== null) {
         var atLeft = sq.lon < -71;
@@ -1379,7 +1396,7 @@
 
     G.dams.forEach(function (dam) {
       var x = mx(dam.lon), y = my(dam.lat), at = GEO.damLabels[dam.name] || { dx: 9, dy: 4, anchor: "start" };
-      svg += "<rect x=\"" + (x - 4.5) + "\" y=\"" + (y - 4.5) + "\" width=\"9\" height=\"9\" fill=\"#174f96\" stroke=\"#fff\" stroke-width=\"1.5\" transform=\"rotate(45 " +
+      svg += "<rect x=\"" + (x - 4.5) + "\" y=\"" + (y - 4.5) + "\" width=\"9\" height=\"9\" class=\"dam-mark\" transform=\"rotate(45 " +
         x + " " + y + ")\"/><text class=\"dam-name\" text-anchor=\"" + at.anchor + "\" x=\"" + (x + at.dx) + "\" y=\"" + (y + at.dy) + "\">" + dam.name + "</text>";
     });
 
@@ -1392,8 +1409,11 @@
         "<text text-anchor=\"" + label.anchor + "\" x=\"" + (x + label.dx) + "\" y=\"" + (y + label.dy) + "\">" +
         esc(shortName(z.name)) + "</text><title>" + esc(z.name) + "</title></g>";
     });
-    $("map").innerHTML = svg + "</svg>";
-    if ($("g-map")) $("g-map").innerHTML = svg + "</svg>";
+    // Each copy of the map needs its own name for the land outline it is clipped to.
+    svg += "</svg>";
+    $("map").innerHTML = svg;
+    if ($("g-map")) $("g-map").innerHTML = svg.replace(/landclip/g, "landclip-g");
+    $("h-map").innerHTML = svg.replace(/landclip/g, "landclip-h");
 
     var key = "<span><i class=\"k-zone\"></i>" + L.zone_dot + "</span><span><i class=\"k-zone mine\"></i>" + L.selected_dot + "</span>";
     if (layer === "basins") {
@@ -1450,7 +1470,8 @@
         // squares appear as a diagonal wave, with a little irregularity so it does not look mechanical
         cells += "<span style=\"animation-delay:" + ((Math.floor(i / 10) + i % 10) * 22 + (i * 7) % 5 * 9) + "ms\"></span>";
       }
-      body = "<div class=\"g-result\"><div class=\"plot big\" id=\"g-parcel\" aria-hidden=\"true\">" + cells + "</div>" +
+      body = "<div class=\"stamp\" aria-hidden=\"true\"><span>" + L.stamp + "</span></div>" +
+        "<div class=\"g-result\"><div class=\"plot big\" id=\"g-parcel\" aria-hidden=\"true\">" + cells + "</div>" +
         "<div class=\"plan-side\"><div class=\"mix\" id=\"g-mix\"></div><div class=\"impact\" id=\"g-impact\"></div><div class=\"actions\">" +
         "<button type=\"button\" class=\"btn primary\" data-go=\"plan\">" + L.g_full + "</button>" +
         "<button type=\"button\" class=\"btn\" data-go=\"rotation\">" + L.g_rot + "</button>" +
@@ -1659,6 +1680,14 @@
         var value = parseFloat(event.target.value);
         if (value > 0) { state.area = Math.min(value, 20000); draw(); }
       }
+    };
+    $("h-map").onclick = function (event) {
+      var mark = event.target.closest("[data-zone]");
+      if (!mark) return;
+      state.zone = +mark.getAttribute("data-zone");
+      state.gstep = 1;
+      draw();
+      setView("guide");
     };
     $("detail").onclick = function (event) {
       var tab = event.target.getAttribute("data-tab");

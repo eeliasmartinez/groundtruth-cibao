@@ -5,15 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>GroundTruth Cibao · Plan B</title>
   <meta name="description" content="Crop-rotation decision support for rice farmers of the Dominican Republic, powered by NASA POWER data.">
-  <meta name="theme-color" content="#0b3a82">
+  <meta name="theme-color" content="#1238a8">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body data-view="home">
-  <div class="bg" aria-hidden="true"></div>
-
   <header class="top">
     <a class="brand" href="#home" data-go="home">
       <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
@@ -34,50 +32,25 @@
 
   <!-- ===================== HOME ===================== -->
   <section class="hero" data-view="home">
-    <!-- Animated landscape: sun, clouds, mountains, river and rice fields. Drawn by hand, no photos. -->
-    <svg class="scene" viewBox="0 0 1200 460" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <defs>
-        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#8fc8ff"/><stop offset="0.55" stop-color="#d9efff"/><stop offset="1" stop-color="#fff1cf"/>
-        </linearGradient>
-        <linearGradient id="field" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#9bd67f"/><stop offset="1" stop-color="#3f9d5a"/>
-        </linearGradient>
-        <radialGradient id="sun"><stop offset="0" stop-color="#fff3b0"/><stop offset="0.6" stop-color="#ffd35c"/><stop offset="1" stop-color="#ffd35c" stop-opacity="0"/></radialGradient>
-      </defs>
-      <rect width="1200" height="460" fill="url(#sky)"/>
-      <circle class="sun" cx="1010" cy="110" r="120" fill="url(#sun)"/>
-      <g class="cloud slow" fill="#fff" opacity="0.85"><ellipse cx="220" cy="90" rx="70" ry="22"/><ellipse cx="270" cy="76" rx="48" ry="20"/><ellipse cx="180" cy="80" rx="36" ry="15"/></g>
-      <g class="cloud" fill="#fff" opacity="0.7"><ellipse cx="700" cy="60" rx="56" ry="17"/><ellipse cx="742" cy="50" rx="36" ry="15"/></g>
-      <path d="M0 290L120 200l90 50 110-110 120 100 100-70 130 90 120-120 150 110 110-70 150 110v130H0z" fill="#7fa6c9" opacity="0.75"/>
-      <path d="M0 330l160-80 120 50 140-90 150 80 130-50 160 70 150-70 190 90v100H0z" fill="#4c8f78"/>
-      <path d="M0 350c200-30 420-20 640-8s400 14 560-6v124H0z" fill="url(#field)"/>
-      <path d="M620 318c-40 26-130 30-170 60s-10 60 60 82" fill="none" stroke="#5fb0f5" stroke-width="26" stroke-linecap="round" opacity="0.9"/>
-      <path class="river-flow" d="M620 318c-40 26-130 30-170 60s-10 60 60 82" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-dasharray="14 26" opacity="0.8"/>
-      <g stroke="#2f7f48" stroke-width="2" opacity="0.5" fill="none">
-        <path d="M0 392c300-22 520-14 700-4M0 426c330-20 600-14 820-2M760 380c160 6 300 2 440-12M880 420c120 4 220 2 320-8"/>
-      </g>
-      <g class="sprouts" stroke="#1f6b3a" stroke-width="3" stroke-linecap="round" fill="none">
-        <path d="M90 440v-22m0 8c-8-2-12-8-13-15m13 11c8-2 12-8 13-15"/><path d="M210 448v-24m0 9c-8-2-12-8-13-15m13 11c8-2 12-8 13-15"/>
-        <path d="M930 440v-22m0 8c-8-2-12-8-13-15m13 11c8-2 12-8 13-15"/><path d="M1080 446v-24m0 9c-8-2-12-8-13-15m13 11c8-2 12-8 13-15"/>
-      </g>
-    </svg>
-
-    <div class="hero-grid">
-      <div class="glass hero-copy">
-        <p class="eyebrow" data-t="eyebrow"></p>
+    <div class="hero-in">
+      <div class="hero-copy">
         <h1 data-t="hero_title"></h1>
-        <span class="flag-rule" aria-hidden="true"><i></i><i></i><i></i></span>
         <p class="lead" data-t="hero_lead"></p>
         <div class="hero-actions">
-          <button type="button" class="btn primary big" id="don-pedro" data-t="pedro_btn"></button>
-          <button type="button" class="btn big" id="start" data-t="start_btn"></button>
+          <button type="button" class="btn primary big" id="start" data-t="start_btn"></button>
+          <button type="button" class="btn big" id="don-pedro" data-t="pedro_btn"></button>
         </div>
         <p class="hero-note" data-t="pedro_note"></p>
       </div>
-      <ol class="how" id="how"></ol>
+      <div class="hero-map">
+        <div id="h-map"></div>
+        <p class="hero-map-note" data-t="hero_map_note"></p>
+      </div>
     </div>
+  </section>
 
+  <section class="why" data-view="home">
+    <h2 data-t="why_title"></h2>
     <ul class="facts" id="facts"></ul>
   </section>
 
@@ -87,7 +60,7 @@
       <span id="g-count"></span>
       <div class="g-progress"><i id="g-bar"></i></div>
     </div>
-    <div class="glass g-card">
+    <div class="panel g-card">
       <div id="g-stage" aria-live="polite"></div>
       <div class="g-foot">
         <button type="button" class="btn big" data-g-back></button>
@@ -98,7 +71,7 @@
 
   <!-- ============ MY PLAN · ROTATION · OPTIONS · DATA (share the three steps) ============ -->
   <main class="layout" data-view="plan rotation options data">
-    <aside class="glass controls" id="steps" aria-labelledby="farm-title">
+    <aside class="panel controls" id="steps" aria-labelledby="farm-title">
       <h2 id="farm-title" data-t="farm"></h2>
 
       <div class="step">
@@ -160,7 +133,7 @@
     <div class="results">
       <p class="headline" id="headline" aria-live="polite" data-view="plan rotation options"></p>
 
-      <section class="glass plan" aria-labelledby="parcel-title" data-view="plan">
+      <section class="panel plan" aria-labelledby="parcel-title" data-view="plan">
         <div>
           <h2 id="parcel-title" data-t="parcel_title"></h2>
           <p class="sub" id="parcel-sub"></p>
@@ -177,7 +150,7 @@
         </div>
       </section>
 
-      <section class="glass" aria-labelledby="rotation-title" data-view="rotation">
+      <section class="panel" aria-labelledby="rotation-title" data-view="rotation">
         <h2 id="rotation-title" data-t="rotation_title"></h2>
         <p class="sub" data-t="rotation_sub"></p>
         <div id="rotation"></div>
@@ -194,29 +167,29 @@
         </details>
       </section>
 
-      <section class="glass detail" id="detail" aria-live="polite" data-view="options"></section>
+      <section class="panel detail" id="detail" aria-live="polite" data-view="options"></section>
 
       <div data-view="data">
         <h2 data-t="data_title"></h2>
         <p class="sub" data-t="data_sub"></p>
       </div>
 
-      <details class="glass fold" data-view="data" open>
-        <summary><span class="fold-ico" aria-hidden="true">💧</span><span><b data-t="needs_title"></b><small data-t="needs_fx"></small></span></summary>
+      <details class="panel fold" data-view="data" open>
+        <summary><span><b data-t="needs_title"></b><small data-t="needs_fx"></small></span></summary>
         <p class="sub" id="needs-sub"></p>
         <div id="needs"></div>
         <p class="note" data-t="needs_note"></p>
       </details>
 
-      <details class="glass fold" data-view="data">
-        <summary><span class="fold-ico" aria-hidden="true">🌧️</span><span><b data-t="climate_title"></b><small data-t="climate_fx"></small></span></summary>
+      <details class="panel fold" data-view="data">
+        <summary><span><b data-t="climate_title"></b><small data-t="climate_fx"></small></span></summary>
         <p class="sub" id="climate-sub"></p>
         <div id="climate"></div>
         <p class="note" id="climate-note"></p>
       </details>
 
-      <details class="glass fold" data-view="data">
-        <summary><span class="fold-ico" aria-hidden="true">🌡️</span><span><b data-t="heat_title"></b><small data-t="heat_fx"></small></span></summary>
+      <details class="panel fold" data-view="data">
+        <summary><span><b data-t="heat_title"></b><small data-t="heat_fx"></small></span></summary>
         <p class="sub" id="heat-sub"></p>
         <div class="heat" id="heat"></div>
         <div class="key" id="heat-key"></div>
@@ -227,7 +200,7 @@
 
   <!-- ===================== MAP ===================== -->
   <section class="page" data-view="map">
-    <div class="glass map-card" aria-labelledby="map-title">
+    <div class="panel map-card" aria-labelledby="map-title">
       <h2 id="map-title" data-t="map_title"></h2>
       <p class="sub" data-t="map_sub"></p>
       <div class="seg layers" id="layers" role="group"></div>
@@ -235,7 +208,7 @@
       <div class="key" id="map-key"></div>
       <p class="note" data-t="map_note"></p>
     </div>
-    <div class="glass" id="basin-section" aria-labelledby="basin-title">
+    <div class="panel" id="basin-section" aria-labelledby="basin-title">
       <h2 id="basin-title" data-t="basin_title"></h2>
       <p class="sub" data-t="basin_fx"></p>
       <div id="basin"></div>
@@ -244,12 +217,12 @@
 
   <!-- ===================== HELP ===================== -->
   <section class="page" data-view="help">
-    <div class="glass">
+    <div class="panel">
       <h2 data-t="faq_title"></h2>
       <p class="sub" data-t="faq_sub"></p>
       <div id="faq"></div>
     </div>
-    <div class="glass trust">
+    <div class="panel trust">
       <h2 data-t="trust_title"></h2>
       <p class="sub" data-t="trust_fx"></p>
       <details open>
