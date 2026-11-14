@@ -81,6 +81,21 @@
     <ul class="facts" id="facts"></ul>
   </section>
 
+  <!-- ===================== GUIDED WALKTHROUGH ===================== -->
+  <section class="guide" id="guide" data-view="guide">
+    <div class="g-top">
+      <span id="g-count"></span>
+      <div class="g-progress"><i id="g-bar"></i></div>
+    </div>
+    <div class="glass g-card">
+      <div id="g-stage" aria-live="polite"></div>
+      <div class="g-foot">
+        <button type="button" class="btn big" data-g-back></button>
+        <button type="button" class="btn primary big" data-g-next></button>
+      </div>
+    </div>
+  </section>
+
   <!-- ============ MY PLAN · ROTATION · OPTIONS · DATA (share the three steps) ============ -->
   <main class="layout" data-view="plan rotation options data">
     <aside class="glass controls" id="steps" aria-labelledby="farm-title">

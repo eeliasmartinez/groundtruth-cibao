@@ -396,3 +396,77 @@ body.sheet-mode #sheet { display: block; max-width: 720px; margin: 0 auto; paddi
   /* on a phone the three steps live only in "My plan"; the other sections show their content first */
   body:not([data-view="plan"]) .controls { display: none; }
 }
+
+/* ---- guided walkthrough: one question per screen ----
+   Motion rules: things enter with ease-out, only transform and opacity move,
+   buttons answer to the press, and nothing waits on an animation. */
+:root { --ease-out: cubic-bezier(0.23, 1, 0.32, 1); --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); }
+.guide { max-width: calc(940px + 2 * clamp(16px, 4vw, 40px)); margin: 0 auto; padding: 18px clamp(16px, 4vw, 40px) 40px; min-height: calc(100vh - 62px); display: grid; align-content: start; gap: 14px; }
+.guide::before { content: ""; position: fixed; inset: 0; z-index: -1; opacity: 0.55; transition: background-color 500ms ease; background-color: #8fc8ff; -webkit-mask-image: radial-gradient(70vw 60vh at 50% 0, #000, transparent); mask-image: radial-gradient(70vw 60vh at 50% 0, #000, transparent); }
+.guide[data-step="1"]::before { background-color: #ffd98a; }
+.guide[data-step="2"]::before { background-color: #d7b48a; }
+.guide[data-step="3"]::before { background-color: #7fc0ff; }
+.guide[data-step="4"]::before { background-color: #a5e0a8; }
+.guide[data-step="5"]::before { background-color: #9db8f5; }
+.g-top { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; font-size: 13.5px; font-weight: 700; color: var(--brand); }
+.g-progress { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.7); overflow: hidden; }
+.g-progress i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #1a6fd6, var(--brand)); transition: width 400ms var(--ease-in-out); }
+.g-card { padding: clamp(18px, 3vw, 32px); }
+.g-q { font-size: clamp(26px, 4vw, 42px); line-height: 1.08; letter-spacing: -0.03em; animation: g-in 320ms var(--ease-out) backwards; }
+.g-sub { font-size: clamp(15px, 1.6vw, 18px); color: var(--ink-2); margin-top: 8px; max-width: 60ch; animation: g-in 320ms var(--ease-out) 40ms backwards; }
+.g-sub b { color: var(--brand); }
+.g-body { margin-top: 20px; display: grid; gap: 14px; animation: g-in 380ms var(--ease-out) 90ms backwards; }
+@keyframes g-in { from { opacity: 0; transform: translateY(14px); } }
+.g-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); }
+.g-label { font-size: 13px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.05em; }
+.g-map svg { width: 100%; height: auto; display: block; border-radius: 16px; box-shadow: 0 10px 28px rgba(15, 40, 80, 0.16); }
+.g-map text { font-family: inherit; font-size: 12px; }
+.g-map .place { fill: #6f8aa6; font-style: italic; font-size: 11.5px; }
+.g-map .river, .g-map .dam-name { fill: #174f96; font-size: 11px; paint-order: stroke; stroke: #f8f5ec; stroke-width: 3px; }
+.g-map .rv { fill: none; stroke: #3d8de8; stroke-width: 0.9; stroke-linecap: round; opacity: 0.8; }
+.g-map .rv.main { stroke-width: 2.6; opacity: 1; }
+.g-map .rv-flow { fill: none; stroke: #fff; stroke-width: 1.1; stroke-dasharray: 2 9; animation: mapflow 1.4s linear infinite; pointer-events: none; }
+.g-map .zone { cursor: pointer; }
+.g-map .zone .dot { fill: #fff; stroke: var(--ink); stroke-width: 2.5; transform-box: fill-box; transform-origin: center; transition: transform 160ms var(--ease-out); }
+.g-map .zone:hover .dot { transform: scale(1.3); }
+.g-map .zone.mine .dot { fill: var(--brand-2); stroke: #fff; stroke-width: 3; }
+.g-map .zone .pulse { fill: var(--brand-2); transform-box: fill-box; transform-origin: center; animation: pulse 1.8s ease-out infinite; }
+.g-map .zone text { font-weight: 700; fill: var(--ink); paint-order: stroke; stroke: #fff; stroke-width: 3.5px; }
+.g-pick { font-size: 17px; }
+.g-pick b { color: var(--brand); }
+.g-months { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.g-months button, .g-area button { border: 2px solid rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.7); border-radius: 14px; padding: 12px 4px; font-size: 16px; font-weight: 700; cursor: pointer; color: var(--ink-2); transition: transform 140ms var(--ease-out), background-color 160ms ease, border-color 160ms ease; }
+.g-months button:hover, .g-option:hover { transform: translateY(-2px); }
+.g-months button:active, .g-option:active, .g-area button:active, .btn:active { transform: scale(0.97); }
+.g-months button.on { background: var(--brand); border-color: var(--brand); color: #fff; box-shadow: 0 6px 16px rgba(11, 58, 130, 0.3); }
+.g-area { display: grid; grid-template-columns: 64px minmax(0, 220px) 64px; gap: 10px; align-items: stretch; }
+.g-area button { font-size: 26px; padding: 6px; }
+.g-area input { border: 2px solid rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.85); border-radius: 14px; font-size: 30px; font-weight: 800; letter-spacing: -0.02em; text-align: center; padding: 8px; width: 100%; color: var(--brand); }
+.g-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.g-option { border: 2px solid rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.66); border-radius: 20px; padding: 14px; cursor: pointer; display: grid; gap: 8px; justify-items: center; text-align: center; color: var(--ink); transition: transform 160ms var(--ease-out), box-shadow 200ms ease, border-color 160ms ease, background-color 160ms ease; }
+.g-option svg { width: 100%; max-width: 190px; height: auto; border-radius: 12px; }
+.g-option i { font-style: normal; font-size: 44px; line-height: 1; }
+.g-option b { font-size: 19px; letter-spacing: -0.01em; }
+.g-option span { font-size: 13.5px; color: var(--ink-2); }
+.g-option.on { border-color: var(--brand-2); background: #fff; box-shadow: 0 12px 28px rgba(20, 99, 196, 0.25); }
+.g-water { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: center; }
+.g-tank { position: relative; height: 240px; border-radius: 26px; border: 3px solid rgba(255, 255, 255, 0.95); background: rgba(255, 255, 255, 0.5); overflow: hidden; box-shadow: inset 0 0 0 1px rgba(23, 79, 150, 0.15), 0 10px 26px rgba(15, 40, 80, 0.14); }
+.g-level { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #5aa9f5, #1f6fd0); transition: height 450ms var(--ease-in-out); }
+.g-wave { position: absolute; left: 0; bottom: 100%; width: 200%; height: 14px; fill: #5aa9f5; animation: wave 3.2s linear infinite; margin-bottom: -1px; }
+@keyframes wave { to { transform: translateX(-50%); } }
+.g-tank b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 56px; letter-spacing: -0.04em; color: var(--ink); text-shadow: 0 0 10px #fff, 0 0 10px #fff; }
+.g-water-side { display: grid; gap: 12px; }
+.g-water-side input[type="range"] { width: 100%; accent-color: var(--water); height: 30px; }
+.g-fit { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.g-result { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+.g-result .plot span { animation: cell-in 420ms var(--ease-out) backwards; }
+@keyframes cell-in { from { opacity: 0; transform: scale(0.9); } }
+@media (max-width: 860px) {
+  .g-months { grid-template-columns: repeat(4, 1fr); }
+  .g-options, .g-water, .g-result { grid-template-columns: 1fr; }
+  .g-tank { height: 170px; max-width: 220px; }
+  .g-option svg { max-width: 150px; }
+}
+
+/* keep the map and the Next button on one screen */
+.g-map svg { max-height: 54vh; width: auto; max-width: 100%; margin: 0 auto; }

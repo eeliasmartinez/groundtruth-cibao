@@ -85,6 +85,19 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
 - **Un solo período:** todo usa 2001–2025.
 - Explicación completa del proceso y de dónde están los datos: `docs/como_funciona.md`.
 
+## Recorrido guiado y skills de diseño (14-nov, tarde)
+- **Recorrido guiado:** "Empezar con mi finca" y "Ver el caso de Don Pedro" abren 5
+  preguntas, una por pantalla (zona en el mapa, mes y tareas, suelo, agua, prioridad), y
+  al final revelan el plan. El código está en `prepareGuide` y `updateGuide` de
+  `web/app.js`. Las mismas respuestas se pueden cambiar después en "Mi plan".
+- **Skills de diseño** en `.claude/skills/` (esa carpeta no se sube a GitHub):
+  las de Emil Kowalski completas (solo texto), y `taste-skill` e `impeccable` **solo
+  como texto**: se dejaron fuera sus programas, un enganche que se ejecutaba solo al
+  terminar cada sesión y un ejecutable, porque correrían código de terceros en esta
+  computadora.
+- Reglas de animación aplicadas: las cosas entran con desaceleración, solo se animan
+  posición y opacidad, los botones responden al toque y nada bloquea al usuario.
+
 ## Cómo correrlo
 ```bash
 cd ~/NASA

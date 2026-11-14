@@ -2,7 +2,7 @@
 // internet. It answers from the saved copy at once and refreshes that copy in
 // the background, so a new version shows up the next time the app is opened.
 // Code written with the assistance of Claude Code (Anthropic).
-var CACHE = "plan-b-v1";
+var CACHE = "plan-b-v2";
 var FILES = ["./", "index.html", "style.css", "app.js", "engine.js", "data.js", "geo.js",
   "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png"];
 

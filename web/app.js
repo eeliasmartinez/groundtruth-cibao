@@ -25,7 +25,8 @@
     basinShare: 0.25,
     layer: "basins", // what the map shows: basins, balance, soil or heat
     whyTab: "why", // which explanation of the plan is open
-    view: "home" // which section of the app is on screen
+    view: "home", // which section of the app is on screen
+    gstep: 0 // question of the guided walkthrough (5 = the result)
   };
 
   var STRATEGY_ORDER = ["current", "mixed", "rotation", "green"];
@@ -33,7 +34,15 @@
   // Schematic map of the northern Dominican Republic. Points are [longitude, latitude],
   // placed by hand from general geographic knowledge: good for orientation, not surveyed.
   var MAP = { w: 760, h: 546, lon0: -72.1, lat0: 20.05, k: 206, cos: 0.947 };
-  var VIEWS = ["home", "plan", "rotation", "options", "map", "data", "help"];
+  var NAV_VIEWS = ["home", "plan", "rotation", "options", "map", "data", "help"];
+  var VIEWS = NAV_VIEWS.concat(["guide"]); // the walkthrough is opened from Home, not from the menu
+  // Small drawings for the soil question: water stays on clay, sinks through sand.
+  var SOIL_ART = {
+    clay: '<svg viewBox="0 0 120 64" aria-hidden="true"><rect width="120" height="64" rx="10" fill="#7a4a2b"/><path d="M0 26h120M0 46h120" stroke="#5d3518" stroke-width="2"/><path d="M34 8v18M72 26v20M98 46v18M18 46v18" stroke="#5d3518" stroke-width="2"/><ellipse cx="60" cy="9" rx="38" ry="6" fill="#6db8f7"/></svg>',
+    loam: '<svg viewBox="0 0 120 64" aria-hidden="true"><rect width="120" height="64" rx="10" fill="#8f6238"/><g fill="#6f4a27"><circle cx="20" cy="40" r="4"/><circle cx="52" cy="50" r="5"/><circle cx="88" cy="38" r="4"/><circle cx="104" cy="54" r="3"/><circle cx="36" cy="56" r="3"/></g><path d="M60 30V10m0 8c-7-1-11-5-12-11m12 9c7-1 11-5 12-11" fill="none" stroke="#2f9e52" stroke-width="3.5" stroke-linecap="round"/><path d="M60 30c-3 6-8 9-12 10m12-10c3 6 8 9 12 10" fill="none" stroke="#e9d3b0" stroke-width="2" stroke-linecap="round"/></svg>',
+    sandy: '<svg viewBox="0 0 120 64" aria-hidden="true"><rect width="120" height="64" rx="10" fill="#dcb97c"/><g fill="#c39a58"><circle cx="16" cy="18" r="2.5"/><circle cx="40" cy="34" r="2.5"/><circle cx="70" cy="20" r="2.5"/><circle cx="96" cy="40" r="2.5"/><circle cx="26" cy="50" r="2.5"/><circle cx="60" cy="52" r="2.5"/><circle cx="108" cy="14" r="2.5"/></g><g fill="#4fa3f0"><path d="M50 6c3 4 4.5 6 4.5 8a4.5 4.5 0 0 1-9 0c0-2 1.5-4 4.5-8z"/><path d="M76 26c3 4 4.5 6 4.5 8a4.5 4.5 0 0 1-9 0c0-2 1.5-4 4.5-8z"/><path d="M60 44c3 4 4.5 6 4.5 8a4.5 4.5 0 0 1-9 0c0-2 1.5-4 4.5-8z"/></g></svg>'
+  };
+  var PRIORITY_ICONS = { water: "💧", soil: "🌱", income: "💰" };
   var VIEW_ICONS = { home: "🏠", plan: "🌾", rotation: "🔄", options: "⚖️", map: "🗺️", data: "📊", help: "❓" };
   // Coastline and rivers come from geo.js (Natural Earth and OpenStreetMap).
   var GEO = {
@@ -240,6 +249,19 @@
       eyebrow: "NASA Space Apps 2026 · República Dominicana",
       nav: { home: "Inicio", plan: "Mi plan", rotation: "Rotación", options: "Opciones", map: "Mapa", data: "Datos", help: "Ayuda" },
       install: "Instalar app",
+      g_step: "Pregunta {n} de 5", g_done: "Tu plan",
+      g_q: ["¿Dónde está tu finca?", "¿Cuándo siembras y cuánta tierra tienes?", "¿Cómo es tu suelo?",
+        "¿Cuánta agua te toca este ciclo?", "¿Qué te importa más?"],
+      g_sub: ["Toca tu zona en el mapa. Usamos el clima que la NASA midió ahí.",
+        "El mes cambia el calor y la lluvia que va a recibir el cultivo.",
+        "El suelo decide cuánta agua se pierde y qué cultivos aguantan.",
+        "Es lo que anuncia el INDRHI o tu junta de regantes antes de sembrar.",
+        "Con eso elegimos cuál de los planes va primero."],
+      g_next: "Siguiente", g_back: "Atrás", g_see: "Ver mi plan",
+      g_result: "Este es tu plan", g_full: "Ver mi plan completo", g_rot: "Ver la rotación", g_restart: "Empezar de nuevo",
+      g_zone: "Tu zona:", g_month: "Mes de siembra", g_area: "Tareas de tu finca",
+      g_fit: "Con esa agua alcanza para {n} de tus {area} tareas de arroz.",
+      g_fit_ban: "Este ciclo no se puede sembrar arroz.",
       how: [["Dime tu finca", "Zona, mes de siembra, tareas y tipo de suelo."],
         ["Dime tu agua", "Normal, tandeo o veda: lo que anunció el INDRHI o tu junta de regantes."],
         ["Mira tu plan", "Qué sembrar, cuánta agua usa y cómo rotar en el ciclo siguiente."]],
@@ -477,6 +499,19 @@
       eyebrow: "NASA Space Apps 2026 · Dominican Republic",
       nav: { home: "Home", plan: "My plan", rotation: "Rotation", options: "Options", map: "Map", data: "Data", help: "Help" },
       install: "Install app",
+      g_step: "Question {n} of 5", g_done: "Your plan",
+      g_q: ["Where is your farm?", "When do you plant and how much land do you have?", "What is your soil like?",
+        "How much water do you get this cycle?", "What matters most to you?"],
+      g_sub: ["Tap your zone on the map. We use the climate NASA measured there.",
+        "The month changes the heat and rain the crop will get.",
+        "Soil decides how much water is lost and which crops cope.",
+        "It is what the water authority or your irrigation board announces before planting.",
+        "With that we choose which plan goes first."],
+      g_next: "Next", g_back: "Back", g_see: "See my plan",
+      g_result: "This is your plan", g_full: "See my full plan", g_rot: "See the rotation", g_restart: "Start again",
+      g_zone: "Your zone:", g_month: "Planting month", g_area: "Tareas on your farm",
+      g_fit: "That water is enough for {n} of your {area} tareas of rice.",
+      g_fit_ban: "Rice cannot be planted this cycle.",
       how: [["Tell us your farm", "Zone, planting month, tareas and soil type."],
         ["Tell us your water", "Normal, turns or ban: what the water authority or your irrigation board announced."],
         ["See your plan", "What to plant, how much water it uses and how to rotate in the next cycle."]],
@@ -666,10 +701,10 @@
     $("how").innerHTML = T[state.lang].how.map(function (item, i) {
       return "<li class=\"glass\"><b>" + (i + 1) + "</b><span><strong>" + esc(item[0]) + "</strong>" + esc(item[1]) + "</span></li>";
     }).join("");
-    $("nav").innerHTML = VIEWS.map(function (view) {
+    $("nav").innerHTML = NAV_VIEWS.map(function (view) {
       return "<button type=\"button\" data-go=\"" + view + "\">" + T[state.lang].nav[view] + "</button>";
     }).join("");
-    $("tabbar").innerHTML = VIEWS.map(function (view) {
+    $("tabbar").innerHTML = NAV_VIEWS.map(function (view) {
       return "<button type=\"button\" data-go=\"" + view + "\"><i>" + VIEW_ICONS[view] + "</i>" + T[state.lang].nav[view] + "</button>";
     }).join("");
 
@@ -730,6 +765,11 @@
     result.strategies.forEach(function (s) { byKey[s.key] = s; });
     var selected = byKey[state.selected] || best;
 
+    prepareGuide();
+    $("zone").value = state.zone;
+    $("month").value = state.month;
+    if (document.activeElement !== $("area")) $("area").value = state.area;
+    $("salty").checked = state.salty;
     $("allocation-out").textContent = Math.round(state.allocation * 100) + "%";
     $("allocation").value = Math.round(state.allocation * 100);
     document.querySelectorAll("#soil button").forEach(function (b) {
@@ -753,6 +793,7 @@
     drawSheet(selected, result);
     drawHelp(result);
     drawRotation(selected, result);
+    updateGuide(result, best, byKey);
     drawBasin(selected, result, byKey);
     drawLimits();
   }
@@ -1238,6 +1279,7 @@
         "\" aria-pressed=\"" + (status === key) + "\"><i></i><b>" + L.light[key] + "</b><span>" +
         L.light_desc[key] + "</span></button>";
     }).join("");
+    if ($("g-light")) $("g-light").innerHTML = $("light").innerHTML;
   }
 
   function mx(lon) { return (lon - MAP.lon0) * MAP.cos * MAP.k; }
@@ -1351,6 +1393,7 @@
         esc(shortName(z.name)) + "</text><title>" + esc(z.name) + "</title></g>";
     });
     $("map").innerHTML = svg + "</svg>";
+    if ($("g-map")) $("g-map").innerHTML = svg + "</svg>";
 
     var key = "<span><i class=\"k-zone\"></i>" + L.zone_dot + "</span><span><i class=\"k-zone mine\"></i>" + L.selected_dot + "</span>";
     if (layer === "basins") {
@@ -1364,6 +1407,101 @@
     }
     $("map-key").innerHTML = key + "<span class=\"k-text\">" + esc(L.layer_desc[layer]) +
       (layer === "basins" ? "" : " " + esc(L.layer_source)) + "</span>";
+  }
+
+  // ------------------------------------------------------------------
+  // Guided walkthrough: one question per screen, then the plan
+  // ------------------------------------------------------------------
+
+  // Builds the screen of the current question (only when the question changes,
+  // so its entrance animation plays once and typing is never interrupted).
+  function prepareGuide() {
+    var L = T[state.lang], step = state.gstep, stage = $("g-stage");
+    var tag = step + "|" + state.lang;
+    if (stage.getAttribute("data-step") === tag) return;
+    var body;
+    if (step === 0) {
+      body = "<div id=\"g-map\" class=\"g-map\"></div><p class=\"g-pick\">" + L.g_zone + " <b id=\"g-zone\"></b></p>";
+    } else if (step === 1) {
+      body = "<p class=\"g-label\">" + L.g_month + "</p><div class=\"g-months\">" + MONTHS_SHORT[state.lang].map(function (m, i) {
+        return "<button type=\"button\" data-g-month=\"" + (i + 1) + "\">" + m + "</button>";
+      }).join("") + "</div><p class=\"help\" id=\"g-month-help\"></p><p class=\"g-label\">" + L.g_area + "</p>" +
+        "<div class=\"g-area\"><button type=\"button\" data-g-area=\"-10\" aria-label=\"-10\">−</button>" +
+        "<input id=\"g-area\" type=\"number\" min=\"1\" max=\"20000\" inputmode=\"decimal\">" +
+        "<button type=\"button\" data-g-area=\"10\" aria-label=\"+10\">+</button></div>";
+    } else if (step === 2) {
+      body = "<div class=\"g-options\">" + ["clay", "loam", "sandy"].map(function (key) {
+        return "<button type=\"button\" class=\"g-option\" data-g-soil=\"" + key + "\">" + SOIL_ART[key] + "<b>" + L.soils[key] + "</b></button>";
+      }).join("") + "</div><p class=\"help\" id=\"g-soil-help\"></p>" +
+        "<label class=\"check\"><input id=\"g-salty\" type=\"checkbox\"><span>" + L.salty + "</span></label>";
+    } else if (step === 3) {
+      body = "<div class=\"g-water\"><div class=\"g-tank\" aria-hidden=\"true\"><div class=\"g-level\" id=\"g-level\">" +
+        "<svg class=\"g-wave\" viewBox=\"0 0 240 16\" preserveAspectRatio=\"none\"><path d=\"M0 8c20-8 40-8 60 0s40 8 60 0 40-8 60 0 40 8 60 0v8H0z\"/></svg></div>" +
+        "<b id=\"g-pct\"></b></div><div class=\"g-water-side\"><input id=\"g-alloc\" type=\"range\" min=\"0\" max=\"100\" step=\"5\" aria-label=\"" + esc(L.allocation) + "\">" +
+        "<div class=\"light\" id=\"g-light\"></div><p class=\"help\" id=\"g-water-help\"></p><p class=\"g-fit\" id=\"g-fit\"></p></div></div>";
+    } else if (step === 4) {
+      body = "<div class=\"g-options\">" + ["water", "soil", "income"].map(function (key) {
+        return "<button type=\"button\" class=\"g-option\" data-g-priority=\"" + key + "\"><i>" + PRIORITY_ICONS[key] + "</i><b>" +
+          L.priorities[key] + "</b><span>" + esc(L.priority_help[key]) + "</span></button>";
+      }).join("") + "</div>";
+    } else {
+      var cells = "";
+      for (var i = 0; i < 100; i++) {
+        // squares appear as a diagonal wave, with a little irregularity so it does not look mechanical
+        cells += "<span style=\"animation-delay:" + ((Math.floor(i / 10) + i % 10) * 22 + (i * 7) % 5 * 9) + "ms\"></span>";
+      }
+      body = "<div class=\"g-result\"><div class=\"plot big\" id=\"g-parcel\" aria-hidden=\"true\">" + cells + "</div>" +
+        "<div class=\"plan-side\"><div class=\"mix\" id=\"g-mix\"></div><div class=\"impact\" id=\"g-impact\"></div><div class=\"actions\">" +
+        "<button type=\"button\" class=\"btn primary\" data-go=\"plan\">" + L.g_full + "</button>" +
+        "<button type=\"button\" class=\"btn\" data-go=\"rotation\">" + L.g_rot + "</button>" +
+        "<button type=\"button\" class=\"btn\" data-g-restart>" + L.g_restart + "</button></div></div></div>";
+    }
+    stage.innerHTML = "<h2 class=\"g-q\">" + (step < 5 ? L.g_q[step] : L.g_result) + "</h2><p class=\"g-sub\" id=\"g-sub\">" +
+      (step < 5 ? esc(L.g_sub[step]) : "") + "</p><div class=\"g-body\">" + body + "</div>";
+    stage.setAttribute("data-step", tag);
+    $("guide").setAttribute("data-step", step);
+  }
+
+  // Fills the current screen with the farmer's answers and their consequences.
+  function updateGuide(result, best, byKey) {
+    var L = T[state.lang], step = state.gstep;
+    $("g-count").textContent = step < 5 ? tr("g_step", { n: step + 1 }) : L.g_done;
+    $("g-bar").style.width = (100 * Math.min(step + 1, 6) / 6) + "%";
+    var back = document.querySelector("[data-g-back]"), next = document.querySelector("[data-g-next]");
+    back.textContent = L.g_back;
+    next.textContent = step === 4 ? L.g_see : L.g_next;
+    next.hidden = step >= 5;
+    function mark(selector, attribute, value) {
+      document.querySelectorAll(selector).forEach(function (el) {
+        el.classList.toggle("on", el.getAttribute(attribute) === String(value));
+      });
+    }
+    if (step === 0) {
+      $("g-zone").textContent = zone().name;
+    } else if (step === 1) {
+      mark("[data-g-month]", "data-g-month", state.month);
+      $("g-month-help").textContent = $("month-help").textContent;
+      if (document.activeElement !== $("g-area")) $("g-area").value = state.area;
+    } else if (step === 2) {
+      mark("[data-g-soil]", "data-g-soil", state.soil);
+      $("g-soil-help").textContent = L.soil_help[state.soil];
+      $("g-salty").checked = state.salty;
+    } else if (step === 3) {
+      $("g-level").style.height = (100 * state.allocation) + "%";
+      $("g-pct").textContent = Math.round(state.allocation * 100) + "%";
+      $("g-alloc").value = Math.round(state.allocation * 100);
+      $("g-water-help").textContent = L.water_help[waterStatus()];
+      var rice = byKey.current.plots.length ? byKey.current.plots[0].tareas : 0;
+      $("g-fit").textContent = state.riceAllowed
+        ? tr("g_fit", { n: tareasText(rice), area: tareasText(state.area) }) : L.g_fit_ban;
+    } else if (step === 4) {
+      mark("[data-g-priority]", "data-g-priority", state.priority);
+    } else {
+      $("g-sub").innerHTML = $("headline").innerHTML;
+      paintCells($("g-parcel").children, best, true);
+      $("g-mix").innerHTML = $("plan-mix").innerHTML;
+      $("g-impact").innerHTML = $("impact").innerHTML;
+    }
   }
 
   // Rotation: what grows on each plot in this cycle and in the next one.
@@ -1489,12 +1627,47 @@
     }
     $("map").onclick = pickZone;
     $("map").onkeydown = pickZone;
+    $("guide").onclick = function (event) {
+      var target = event.target, el;
+      if ((el = target.closest("[data-zone]"))) { state.zone = +el.getAttribute("data-zone"); draw(); return; }
+      if ((el = target.closest("[data-g-month]"))) { state.month = +el.getAttribute("data-g-month"); draw(); return; }
+      if ((el = target.closest("[data-g-soil]"))) { state.soil = el.getAttribute("data-g-soil"); draw(); return; }
+      if ((el = target.closest("[data-g-priority]"))) {
+        state.priority = el.getAttribute("data-g-priority"); state.selected = null; draw(); return;
+      }
+      if ((el = target.closest("[data-light]"))) {
+        var status = el.getAttribute("data-light");
+        state.riceAllowed = status !== "veda";
+        state.allocation = { normal: 1, tandeo: 0.6, veda: 0.3 }[status];
+        state.selected = null; draw(); return;
+      }
+      if ((el = target.closest("[data-g-area]"))) {
+        state.area = Math.max(1, Math.min(20000, state.area + (+el.getAttribute("data-g-area")))); draw(); return;
+      }
+      if (target.closest("[data-g-next]")) { state.gstep = Math.min(5, state.gstep + 1); draw(); window.scrollTo(0, 0); return; }
+      if (target.closest("[data-g-back]")) {
+        if (state.gstep === 0) setView("home"); else { state.gstep -= 1; draw(); window.scrollTo(0, 0); }
+        return;
+      }
+      if (target.closest("[data-g-restart]")) { state.gstep = 0; draw(); window.scrollTo(0, 0); }
+    };
+    $("guide").oninput = function (event) {
+      var id = event.target.id;
+      if (id === "g-alloc") { state.allocation = event.target.value / 100; draw(); }
+      else if (id === "g-salty") { state.salty = event.target.checked; draw(); }
+      else if (id === "g-area") {
+        var value = parseFloat(event.target.value);
+        if (value > 0) { state.area = Math.min(value, 20000); draw(); }
+      }
+    };
     $("detail").onclick = function (event) {
       var tab = event.target.getAttribute("data-tab");
       if (tab) { state.whyTab = tab; draw(); }
     };
     $("start").onclick = function () {
-      setView("plan");
+      state.gstep = 0;
+      draw();
+      setView("guide");
     };
     // Example case: Don Pedro, 100 tareas of clay soil in Mao, 60% of the water.
     $("don-pedro").onclick = function () {
@@ -1502,8 +1675,9 @@
       state.area = 100; state.soil = "clay"; state.priority = "income";
       state.allocation = 0.6; state.riceAllowed = true; state.salty = false; state.selected = null;
       $("zone").value = state.zone; $("area").value = 100; $("salty").checked = false;
+      state.gstep = 0;
       draw();
-      setView("plan");
+      setView("guide");
     };
     $("rice-banned").onchange = function () { state.riceAllowed = !this.checked; state.selected = null; draw(); };
     $("salty").onchange = function () { state.salty = this.checked; draw(); };
