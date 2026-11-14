@@ -309,6 +309,7 @@
     journey_text_3: "Explora cómo alternar cultivos para que cada lote tenga otro siguiente ciclo.",
     field_water: "Agua disponible",
     field_water_target: "del objetivo de riego",
+    field_area: "Área modelada",
     field_weather: "Este mes en la zona",
     field_rain: "lluvia media",
     field_soil: "Suelo elegido",
@@ -611,6 +612,7 @@
     journey_text_3: "Explore how crops can alternate so each plot changes in the next cycle.",
     field_water: "Water available",
     field_water_target: "of irrigation target",
+    field_area: "Modeled area",
     field_weather: "This month in the zone",
     field_rain: "average rain",
     field_soil: "Selected soil",
@@ -2147,7 +2149,8 @@
         "<div class=\"scene-context-soil\">" + SOIL_ART[state.soil] + "<span><b>" + esc(L.field_soil) + "</b><small>" +
         esc(L.soils[state.soil]) + "</small></span></div>" +
         "<div class=\"scene-context-water\"><div><b>" + esc(L.field_water) + "</b><strong>" + Math.round(state.allocation * 100) + "%</strong></div>" +
-        "<i><u style=\"width:" + Math.round(state.allocation * 100) + "%\"></u></i></div>";
+        "<i><u style=\"width:" + Math.round(state.allocation * 100) + "%\"></u></i></div>" +
+        "<div class=\"scene-context-area\"><b>" + esc(L.field_area) + "</b><span>" + tareasText(state.area) + " " + esc(tr("tareas")) + "</span></div>";
     });
   }
 

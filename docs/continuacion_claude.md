@@ -12,7 +12,9 @@
   g-canvas muestran el mes elegido, Tmax media mensual y lluvia media histórica del mes
   para la zona, suelo elegido por el usuario y porcentaje de agua configurado. Cambian al
   modificar las respuestas; el suelo y el agua no son datos satelitales de la parcela.
-- web/sw.js cambió a plan-b-v8. No se agregaron cuentas ni base de datos, ni se amplió a
+- web/sw.js cambió a plan-b-v9. El área elegida también se muestra en el contexto del
+  relieve, pero no cambia la geometría del mapa porque no se conoce el lindero real. No se
+  agregaron cuentas ni base de datos, ni se amplió a
   escala mundial: siguen siendo decisiones para después de la evaluación y requieren
   diseño de privacidad y validación agronómica por región.
 - Al continuar: probar el scroll en desktop y móvil, cambiar idioma, mes, suelo y agua

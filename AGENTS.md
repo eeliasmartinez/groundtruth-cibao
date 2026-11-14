@@ -104,7 +104,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v8`).
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v9`).
 - **Un solo período:** todo usa 2001–2025.
 - Explicación completa del proceso y de dónde están los datos: `docs/como_funciona.md`.
 

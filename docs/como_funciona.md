@@ -68,8 +68,9 @@ La portada cuenta el recorrido en tres capítulos mientras el mapa queda fijo: c
 agua y rotación. El desplazamiento es nativo del navegador. En el dibujo de la finca y en
 el recuadro del relieve se actualizan el mes elegido, temperatura máxima media y lluvia
 histórica de ese mes para la zona, tipo de suelo seleccionado por el usuario y porcentaje
-de agua indicado. El suelo y el agua son entradas del usuario; no se presentan como
-mediciones satelitales del lindero.
+de agua indicado. También indica las tareas elegidas, sin alterar la forma del relieve:
+no conocemos el lindero de la parcela. El suelo y el agua son entradas del usuario; no
+se presentan como mediciones satelitales del lindero.
 
 ## 4. Dónde está publicada (no hace falta Vercel)
 

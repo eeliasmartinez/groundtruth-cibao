@@ -505,19 +505,25 @@ body.sheet-mode #sheet { display: block; max-width: 720px; margin: 0 auto; paddi
 .z-stage { position: relative; background: var(--blue); border: 2px solid var(--ink); padding: 0; }
 #z-canvas { display: block; width: 100%; height: auto; aspect-ratio: 10 / 7; cursor: grab; touch-action: pan-y; }
 #z-canvas:active { cursor: grabbing; }
-.scene-context { position: absolute; z-index: 2; top: 10px; left: 10px; width: clamp(158px, 35%, 230px); padding: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: rgba(255,255,255,.94); border: 1px solid var(--ink); pointer-events: none; }
+.scene-context { position: absolute; z-index: 2; top: 10px; left: 10px; width: clamp(180px, 42%, 265px); padding: 9px; display: grid; grid-template-columns: 1fr 1fr; gap: 7px; background: rgba(255,255,255,.96); border: 1px solid var(--ink); pointer-events: none; }
 .scene-context-head, .scene-context-soil, .scene-context-water { min-width: 0; display: grid; gap: 1px; }
 .scene-context-head { grid-column: 1 / -1; grid-template-columns: 1fr auto; align-items: baseline; border-bottom: 1px solid var(--hair); padding-bottom: 4px; }
-.scene-context-head b, .scene-context-soil b, .scene-context-water b { font-size: 9px; line-height: 1.1; text-transform: uppercase; letter-spacing: .035em; }
-.scene-context-head strong, .scene-context-water strong { color: var(--blue); font-family: var(--display); font-weight: 900; font-size: 19px; line-height: 1; }
-.scene-context-head span { grid-column: 1 / -1; color: var(--ink-2); font-size: 10px; }
+.scene-context-head b, .scene-context-soil b, .scene-context-water b, .scene-context-area b { font-size: 10px; line-height: 1.1; text-transform: uppercase; letter-spacing: .035em; }
+.scene-context-head strong, .scene-context-water strong { color: var(--blue); font-family: var(--display); font-weight: 900; font-size: 22px; line-height: 1; }
+.scene-context-head span { grid-column: 1 / -1; color: var(--ink-2); font-size: 11px; }
 .scene-context-soil { grid-template-columns: 30px 1fr; align-items: center; }
 .scene-context-soil svg { width: 30px; height: 23px; }
 .scene-context-soil span { display: grid; }
-.scene-context-soil small { color: var(--ink-2); font-size: 10px; }
+.scene-context-soil small { color: var(--ink-2); font-size: 11px; }
 .scene-context-water > div { display: flex; align-items: baseline; justify-content: space-between; gap: 3px; }
 .scene-context-water > i { height: 5px; border: 1px solid var(--blue); background: var(--paper); overflow: hidden; }
 .scene-context-water > i u { display: block; height: 100%; background: var(--water); transition: width 260ms var(--ease-in-out); }
+.scene-context-area { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-top: 4px; border-top: 1px solid var(--hair); }
+.scene-context-area span { color: var(--ink-2); font-size: 12px; font-weight: 700; }
+@media (max-width: 860px) {
+  .scene-context { width: min(190px, 58%); padding: 7px; gap: 5px; }
+  .scene-context-head b, .scene-context-soil b, .scene-context-water b, .scene-context-area b { font-size: 9px; }
+}
 .z-stage .note { color: rgba(255, 255, 255, 0.82); margin: 0; padding: 10px 14px 12px; border-top: 2px solid rgba(255, 255, 255, 0.25); }
 .z-info { display: grid; gap: 14px; }
 .z-info .impact div { grid-template-columns: 6.6em 1fr; padding: 7px 0; }
