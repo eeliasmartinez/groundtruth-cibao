@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+.DS_Store
+.claude/
+web/test_cases.json
+# internal team notes with unverified figures: kept local, not published
+docs/vision_ojo_de_dios.md
+docs/hoja_de_ruta_claude.md

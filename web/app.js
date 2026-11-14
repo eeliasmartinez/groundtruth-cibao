@@ -1,0 +1,1293 @@
+// GroundTruth Cibao - Plan B. Page behavior.
+// Reads the farmer's answers, asks engine.js for the strategies and draws them.
+// Code written with the assistance of Claude Code (Anthropic).
+(function () {
+  "use strict";
+  var D = window.GT_DATA;
+  var E = window.GTEngine;
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ------------------------------------------------------------------
+  // The farmer's answers
+  // ------------------------------------------------------------------
+  var nextMonth = (new Date().getMonth() + 1) % 12 + 1;
+  var state = {
+    lang: "es",
+    zone: 1, // Valverde (Mao - Esperanza)
+    soil: "clay",
+    month: nextMonth,
+    area: 100,
+    priority: "income",
+    allocation: 0.6,
+    riceAllowed: true,
+    salty: false,
+    selected: null, // strategy the user clicked; null = show the best one
+    basinShare: 0.25,
+    layer: "basins" // what the map shows: basins, balance, soil or heat
+  };
+
+  var STRATEGY_ORDER = ["current", "mixed", "rotation", "green"];
+
+  // Schematic map of the northern Dominican Republic. Points are [longitude, latitude],
+  // placed by hand from general geographic knowledge: good for orientation, not surveyed.
+  var MAP = { w: 760, h: 366, lon0: -72.0, lat0: 20.06, k: 268, cos: 0.944 };
+  var GEO = {
+    land: [[-71.75, 19.71], [-71.72, 19.80], [-71.66, 19.88], [-71.45, 19.89], [-71.25, 19.86],
+      [-71.05, 19.92], [-70.93, 19.90], [-70.80, 19.84], [-70.69, 19.81], [-70.52, 19.77],
+      [-70.40, 19.76], [-70.25, 19.68], [-70.08, 19.64], [-69.94, 19.68], [-69.90, 19.62],
+      [-69.86, 19.50], [-69.84, 19.38], [-69.72, 19.31], [-69.54, 19.33], [-69.35, 19.34],
+      [-69.22, 19.36], [-69.15, 19.29], [-69.20, 19.21], [-69.33, 19.20], [-69.48, 19.20],
+      [-69.61, 19.21], [-69.67, 19.17], [-69.60, 19.10], [-69.45, 19.07], [-69.39, 19.06],
+      [-69.20, 19.02], [-69.05, 18.99], [-68.80, 18.95], [-68.80, 18.40], [-71.72, 18.40],
+      [-71.75, 18.60], [-71.98, 18.62], [-71.75, 18.85], [-71.65, 19.00], [-71.75, 19.12],
+      [-71.70, 19.32], [-71.72, 19.55]],
+    haiti: [[-71.75, 19.71], [-72.30, 19.78], [-72.30, 18.40], [-71.72, 18.40], [-71.75, 18.60],
+      [-71.98, 18.62], [-71.75, 18.85], [-71.65, 19.00], [-71.75, 19.12], [-71.70, 19.32], [-71.72, 19.55]],
+    rivers: [
+      { main: true, points: [[-70.95, 19.03], [-70.80, 19.07], [-70.64, 19.12], [-70.72, 19.28], [-70.70, 19.45],
+        [-70.87, 19.57], [-70.98, 19.59], [-71.08, 19.61], [-71.40, 19.67], [-71.50, 19.72], [-71.67, 19.84]] },
+      { main: false, points: [[-71.22, 19.24], [-71.17, 19.42], [-71.08, 19.61]] },
+      { main: true, points: [[-70.50, 18.80], [-70.41, 18.94], [-70.25, 19.03], [-70.05, 19.15], [-69.91, 19.17], [-69.67, 19.17]] },
+      { main: false, points: [[-70.53, 19.22], [-70.33, 19.20], [-70.05, 19.15]] },
+      { main: false, points: [[-70.42, 19.02], [-70.40, 19.10], [-70.33, 19.20]] }
+    ],
+    dams: [
+      { name: "Tavera - Bao", lon: -70.73, lat: 19.29, dx: -9, dy: 4, anchor: "end" },
+      { name: "Monción", lon: -71.17, lat: 19.42, dx: -9, dy: 4, anchor: "end" },
+      { name: "Hatillo", lon: -70.25, lat: 19.03, dx: -8, dy: 16, anchor: "end" },
+      { name: "Rincón", lon: -70.40, lat: 19.10, dx: 8, dy: -6, anchor: "start" }
+    ],
+    // where each zone's name goes, in the same order as the zone list
+    labels: [
+      { dx: 0, dy: -13, anchor: "middle" }, { dx: 0, dy: 22, anchor: "middle" },
+      { dx: 0, dy: -13, anchor: "middle" }, { dx: -12, dy: 4, anchor: "end" },
+      { dx: 0, dy: -13, anchor: "middle" }, { dx: 12, dy: 14, anchor: "start" },
+      { dx: 12, dy: 4, anchor: "start" }
+    ]
+  };
+  // one-hue color steps, light to dark, for each map layer
+  var RAMPS = {
+    balance: ["#fde3d3", "#f9c0a0", "#f29a6b", "#e6753d", "#c9541f"],
+    soil: ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#1c5cab"],
+    heat: ["#fbd9d9", "#f5aeae", "#ec8080", "#dc5252", "#b93131"]
+  };
+  var MONTHS = {
+    es: ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"],
+    en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+  };
+  var MONTHS_SHORT = {
+    es: ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"],
+    en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  };
+
+  var SOURCES = [
+    ["NASA POWER (Prediction Of Worldwide Energy Resources), NASA Langley Research Center", "https://power.larc.nasa.gov/"],
+    ["FAO Irrigation and Drainage Paper 56: Crop evapotranspiration (Allen et al., 1998)", "https://www.fao.org/4/x0490e/x0490e00.htm"],
+    ["FAO Irrigation Water Management Training Manual No. 3: Irrigation water needs (1986)", "https://www.fao.org/4/s2022e/s2022e00.htm"],
+    ["FAO Irrigation and Drainage Paper 29: Water quality for agriculture (Ayers & Westcot, 1985)", "https://www.fao.org/4/t0234e/t0234e00.htm"],
+    ["elDinero, 25 Mar 2026: La región Norte concentra el 91.5% de la producción nacional de arroz", "https://eldinero.com.do/359496/la-region-norte-concentra-el-91-5-de-la-produccion-nacional-de-arroz/"],
+    ["UNCCD, 23 Aug 2024: Dominican Republic: restoring land to secure clean water for millions", "https://www.unccd.int/news-stories/stories/dominican-republic-restoring-land-secure-clean-water-millions"],
+    ["El Caribe, 15 Sep 2019: INDRHI confirma prohibición de siembra de arroz de invierno", "https://www.elcaribe.com.do/2019/09/15/director-del-indrhi-confirma-prohibicion-siembra-de-arroz-de-invierno-en-provincias-del-cibao-central-y-linea-noroeste-por-sequia/"],
+    ["Diario Libre, 11 Aug 2026: condiciones de las presas y ríos (INDRHI)", "https://www.diariolibre.com/planeta/clima/2026/08/11/45--menos-lluvias-estas-son-las-condiciones-de-las-presas-y-rios/3625695"],
+    ["Montecristi 24 Horas, 28 Aug 2026: Racionan el agua para la agricultura por falta de lluvias", "https://montecristi24horas.com/2026/08/racionan-el-agua-para-la-agricultura-por-falta-de-lluvias/"]
+  ];
+
+  // ------------------------------------------------------------------
+  // Every sentence on the page, in both languages
+  // ------------------------------------------------------------------
+  var T = {
+    es: {
+      hero_title: "El Plan B del arrocero",
+      hero_lead: "Cuando el agua de riego no alcanza, al productor le dicen que no siembre arroz. Esta herramienta le muestra qué sí puede sembrar con el agua que le toca, usando 25 años de datos de la NASA.",
+      facts: [
+        ["91.5%", "del arroz dominicano se produce en el Cibao, casi todo bajo riego.", 4],
+        ["96%", "del agua del río Yaque del Norte ya está comprometida.", 5],
+        ["2019", "el INDRHI prohibió la siembra de arroz de invierno por sequía. En 2026 volvió el riego por turnos.", 6]
+      ],
+      source: "fuente",
+      farm: "Tu finca",
+      zone: "Zona arrocera",
+      month: "Mes de siembra",
+      area: "Tareas",
+      soil: "Tipo de suelo",
+      soils: { clay: "Arcilloso", loam: "Franco", sandy: "Arenoso" },
+      priority: "¿Qué te importa más?",
+      priorities: { water: "Agua", soil: "Suelo", income: "Ingreso" },
+      allocation: "Agua que te asignaron",
+      allocation_hint: "Es la parte del agua que necesitaría toda tu finca sembrada de arroz. La anuncia el INDRHI o tu junta de regantes antes de cada ciclo.",
+      rice_banned: "Este ciclo está prohibido sembrar arroz",
+      salty: "Mi suelo tiene problemas de sal",
+      headline: "Con el <b>{alloc}%</b> del agua, lo que mejor encaja con tu prioridad es <b>{name}</b>: {mix}.",
+      headline_none: "Sin agua de riego no hay cultivo viable en este ciclo: la lluvia cubre apenas el <b>{rain}%</b> de lo que consume el cultivo.",
+      strategies: "Cuatro maneras de usar la misma agua",
+      strategies_sub: "Cada cuadro es el 1% de tu finca. Mueve el control de agua y mira cómo cambian. Toca una tarjeta para ver el porqué.",
+      best: "Mejor para tu prioridad",
+      names: { current: "Solo arroz", mixed: "Arroz + leguminosa", rotation: "Rotación para vender", green: "Abono verde" },
+      name_legume_only: "Leguminosa",
+      roles: { rice: "Arroz", legume: "Leguminosa", cash: "Cultivo para vender", green: "Abono verde", idle: "Sin sembrar" },
+      tareas: "tareas",
+      tareas_of: "tareas de",
+      idle: "sin sembrar",
+      nothing: "Nada sembrado",
+      assigned: "asignada",
+      uses: "Usa <b>{used} m³</b> de {budget} m³",
+      score_water: "Agua", score_soil: "Suelo", score_income: "Ingreso",
+      sacks: "≈ {n} sacos de urea al suelo",
+      chips: {
+        heat: "Calor", heavy_soil: "Suelo pesado", sandy_rice: "Suelo arenoso", salt: "Sal",
+        idle_land: "Tierra vacía", weak_market: "Mercado incierto", no_income: "Sin ingreso",
+        short_in_dry_year: "Justo en año seco"
+      },
+      why: "Por qué se sugiere", evidence: "Evidencia", benefits: "Beneficios",
+      gaps: "Información que falta", risks: "Riesgos a revisar con un técnico",
+      why_text: {
+        current: "Es lo que haces hoy: sembrar solo arroz en la tierra que el agua permita.",
+        mixed: "Repartir el agua: menos tareas de arroz y, con lo que sobra, {alt} en el resto. Así toda la finca produce.",
+        mixed_banned: "Sin arroz este ciclo, {alt} mantiene la finca produciendo y le devuelve nitrógeno al suelo.",
+        rotation: "Descansar del arroz este ciclo y sembrar {alt}, que pide mucha menos agua y se puede vender.",
+        green: "Descansar del arroz este ciclo y sembrar {alt} para devolverle nitrógeno y materia orgánica al suelo."
+      },
+      ev_rice: "El arroz necesita {m3} m³ de riego por tarea en {zone} sembrando en {month} (NASA POWER 2001–2026, método FAO-56).",
+      ev_alt: "{alt} necesita {m3} m³ por tarea: {ratio} veces menos que el arroz.",
+      ev_rain: "En ese ciclo la lluvia cubre solo el {rain}% del agua que consume el arroz.",
+      ev_use: "Este plan usa {used} m³ de los {budget} m³ asignados.",
+      ev_dry: "En un año seco (2 de cada 10) el mismo plan pediría {dry} m³.",
+      ben_market: "Mercado y precio conocidos.",
+      ben_same: "No cambias de manejo ni de equipos.",
+      ben_full: "Ninguna tarea queda vacía.",
+      ben_saved: "Usa {saved}% menos agua que sembrar toda la finca de arroz.",
+      ben_nitrogen: "Deja nitrógeno equivalente a unos {n} sacos de urea para el próximo arroz.",
+      ben_break: "Cortar el arroz en esa tierra ayuda a romper el ciclo de malezas y plagas del monocultivo.",
+      ben_organic: "Mejora la materia orgánica y la estructura del suelo.",
+      gap_prices: "No usamos precios ni rendimientos reales: la nota de ingreso solo mide qué tan segura es la venta.",
+      gap_cell: "Los datos de la NASA describen cuadros de unos 50 km, no tu finca exacta.",
+      gap_crops: "Los valores de cada cultivo son referencias generales de FAO; falta validarlos en el Cibao.",
+      risk: {
+        heat: "Calor: la máxima media del ciclo ronda {tmax} °C y {crop} sufre por encima de {limit} °C.",
+        heavy_soil: "Suelo pesado: {crop} no tolera bien los suelos arcillosos que se encharcan.",
+        sandy_rice: "Suelo arenoso: el arroz pierde mucha agua por filtración.",
+        salt: "Sal: {crop} es sensible a la salinidad del suelo.",
+        idle_land: "{n} tareas quedan sin sembrar y sin ingreso.",
+        weak_market: "Mercado: la venta de {crop} no está asegurada. Confirma comprador antes de sembrar.",
+        no_income: "Este ciclo no deja ingreso por venta.",
+        short_in_dry_year: "En un año seco, el agua asignada no alcanzaría para todo el plan.",
+        mono: "Seguir solo con arroz mantiene el monocultivo y no aporta nitrógeno nuevo.",
+        always: "Consulta con un técnico agrícola antes de cambiar tu rotación."
+      },
+      share_wa: "Enviar plan por WhatsApp", share_copy: "Copiar plan", copied: "Copiado",
+      needs_title: "Agua de riego por tarea",
+      needs_sub: "{zone}, suelo {soil}, siembra en {month}.",
+      needs_note: "Calculado para cada año desde 2001 con temperatura, sol, humedad, viento y lluvia de NASA POWER.",
+      typical: "Año típico", dry: "Año seco (2 de cada 10)",
+      climate_title: "Balance de agua mes a mes",
+      climate_sub: "Lluvia contra el agua que pierde el campo, en mm por mes. Promedio 2001–2020 en {zone}.",
+      rain: "Lluvia", shortfall: "Falta de agua (la pone el riego)",
+      et0: "Agua que pierde el campo (evapotranspiración)", cycle: "Meses del ciclo elegido",
+      tip_rain: "lluvia", tip_et0: "pierde el campo", tip_gap: "faltan", tip_tmax: "máxima media",
+      strip: "Franja de abajo: temperatura máxima media de cada mes, en °C. Más oscuro: más calor.",
+      climate_note: "En tu ciclo ({from} a {to}) llueven unos {rain} mm y el campo pierde unos {et0} mm: faltan unos {gap} mm, que tiene que poner el riego. En todo el año llueven {rain_year} mm y el campo pierde {et0_year} mm.",
+      heat_title: "Calor durante el ciclo: ¿lo aguanta cada cultivo?",
+      heat_sub: "Temperatura máxima media durante el ciclo de cada cultivo, sembrando en {month} en {zone} (NASA POWER 2001–2026), contra el límite de referencia del cultivo.",
+      heat_ok: "bajo su límite de {limit} °C",
+      heat_over: "+{n} °C sobre su límite de {limit} °C",
+      heat_dot: "Máxima media del ciclo", heat_tick: "Límite del cultivo", heat_zone: "Exceso de calor",
+      heat_note: "Los límites son valores de referencia generales que un agrónomo debe validar. La temperatura de la NASA está ajustada por altitud y no se ha comparado con una estación local.",
+      listen: "Escuchar el plan", stop: "Detener la voz", print: "Imprimir ficha",
+      say_plan: "Plan: {name}. {mix}.",
+      say_none: "Sin agua de riego no hay cultivo viable en este ciclo.",
+      say_water: "Usa {used} metros cúbicos de agua de riego, {saved} por ciento menos que sembrar toda la finca de arroz.",
+      say_n: "Deja en el suelo nitrógeno equivalente a unos {n} sacos de urea.",
+      say_risks: "Para revisar con un técnico:",
+      say_degrees: "grados",
+      faq_title: "Preguntas frecuentes",
+      faq_sub: "Respuestas escritas por el equipo, con los números de tu finca. No hay una IA respondiendo.",
+      faq: [
+        { q: "¿Por qué una leguminosa en vez de más arroz?",
+          a: "Porque con el agua que hay no alcanza para sembrar toda la finca de arroz. En {zone}, sembrando en {month}, el arroz pide {rice_m3} m³ de riego por tarea y {alt} pide {alt_m3} m³: {ratio} veces menos. Además, las leguminosas toman nitrógeno del aire y dejan una parte en el suelo. En el plan de arroz con leguminosa eso equivale a unos {sacks} sacos de urea." },
+        { q: "¿Qué pasa si dejo parte de la tierra sin sembrar?",
+          a: "Con solo arroz y el {alloc}% del agua quedarían vacías {idle} de tus {area} tareas. Esa tierra no da ingreso, y un suelo desnudo queda expuesto al sol, a la lluvia fuerte y a las malezas. Un cultivo de poca agua o un abono verde la mantiene cubierta y produciendo.",
+          a_none: "Con el agua que tienes asignada, la estrategia de solo arroz no deja tierra vacía. Si el agua baja, la tierra que quede sin sembrar no da ingreso y queda expuesta al sol, a la lluvia fuerte y a las malezas." },
+        { q: "¿Cómo calculan el agua con datos de la NASA?",
+          a: "Usamos NASA POWER, que da para cada día desde 2001 la temperatura, el sol, la humedad, el viento y la lluvia de tu zona. Con eso calculamos cuánta agua pierde el campo cada día (método FAO-56) y la ajustamos a lo que consume cada cultivo en cada etapa. Al restar la lluvia que se aprovecha queda el riego necesario. Repetimos la cuenta para cada año y mostramos el año típico y el año seco." },
+        { q: "¿Esto es una caja negra?",
+          a: "No. La recomendación sale de fórmulas fijas que cualquiera puede revisar: con los mismos datos siempre da el mismo resultado. No hay un modelo de inteligencia artificial decidiendo qué sembrar. La IA ayudó al equipo a escribir el código y los textos, y eso está declarado. El cálculo pasa más de 31,000 verificaciones automáticas." },
+        { q: "¿Qué tan seguros son estos números?",
+          a: "Son una guía, no una medición en tu finca. La NASA describe cuadros de unos 50 km y su lluvia suele salir más baja que la de los pluviómetros. Los valores de cada cultivo son referencias generales de FAO que falta validar en el Cibao. Por eso cada estrategia trae sus riesgos y pide consultar con un técnico agrícola." },
+        { q: "¿La luna o las mareas influyen?",
+          a: "Esta herramienta no usa la fase de la luna: no conocemos evidencia científica sólida de que cambie el agua que necesita un cultivo. Lo que sí puede afectar cerca de la costa es la sal: cuando el río baja con poca agua, el agua de mar puede entrar por la desembocadura. Si tu suelo tiene problemas de sal, marca esa casilla y la herramienta avisa cuáles cultivos son sensibles." }
+      ],
+      sheet_title: "Ficha de siembra",
+      sheet_water: "Agua de riego del plan", sheet_dry: "En un año seco (2 de cada 10)",
+      sheet_saved: "Ahorro frente a sembrar todo de arroz", sheet_n: "Nitrógeno que recibe el suelo",
+      sheet_sacks: "sacos de urea", sheet_land: "Tareas sembradas",
+      sheet_heat: "Meses del ciclo y su temperatura máxima media",
+      basin_title: "De tu finca a la cuenca",
+      basin_q: "¿Y si el {share}% de los arroceros de la cuenca {basin} sembrara {alt} en vez de arroz este ciclo?",
+      basin_big: "{n} millones de m³",
+      basin_small: "de agua que no habría que sacar de las presas, en unas {tareas} tareas.",
+      basin_of: "de la capacidad de {dam}",
+      basin_cap: "{n} millones de m³",
+      basin_note: "Cifra conservadora: solo cuenta el agua ahorrada en las fincas. El área de arroz de la cuenca se estimó repartiendo el área nacional según la producción de cada provincia.",
+      basin_none: "No tenemos datos de presas para la cuenca {basin}. El cálculo a nivel de cuenca está disponible para el Yaque del Norte y el Yuna - Camú.",
+      trust_title: "Qué tan confiable es esto",
+      limits_title: "Límites y vacíos de información",
+      limits: [
+        "Es una herramienta de apoyo. No reemplaza al productor ni al técnico agrícola.",
+        "Los datos son de satélites y modelos de la NASA, en cuadros de unos 50 km. No son mediciones de una estación en la finca.",
+        "La temperatura se ajusta por altitud ({adjust} °C en esta zona: el cuadro de NASA promedia {cell} m y la zona está a {elev} m).",
+        "La lluvia de NASA POWER puede quedar por debajo de la que miden los pluviómetros locales. Eso haría que el riego calculado sea algo mayor que el real.",
+        "Las notas de agua, suelo e ingreso son una guía para comparar opciones, no una predicción de cosecha ni de ganancia.",
+        "La nota de ingreso no usa precios ni rendimientos; falta incorporarlos.",
+        "Qué cultivos aguantan un suelo arrocero y sus límites de calor son valores generales que un agrónomo local debe validar."
+      ],
+      method_title: "Cómo se calcula",
+      method: [
+        "Agua que pierde el campo cada día: método FAO-56 Penman-Monteith con temperatura, radiación solar, humedad y viento de NASA POWER.",
+        "Agua de cada cultivo: esa pérdida diaria por el coeficiente del cultivo en cada etapa (tablas de FAO-56).",
+        "Arroz inundado: se suman 200 mm para saturar el suelo, 100 mm de lámina y la filtración diaria según el suelo (manual de riego de FAO).",
+        "Riego necesario: agua del cultivo menos la lluvia aprovechable, para cada año desde 2001. Se muestra el año típico (mediana) y el año seco (percentil 80).",
+        "Estrategias: con el agua asignada se reparte la finca sin pasarse del agua ni de la tierra disponible."
+      ],
+      sources_title: "Fuentes",
+      foot_support: "Herramienta de apoyo a la decisión. Consulta siempre con un técnico agrícola local antes de cambiar tu rotación.",
+      foot_ai: "Equipo GroundTruth Cibao · NASA Space Apps Challenge 2026, Santiago. Código, textos y análisis elaborados con asistencia de IA (Claude Code, Anthropic).",
+      foot_nasa: "Usa datos de NASA POWER. La NASA no avala a ninguna entidad no gubernamental ni este producto.",
+      plan_title: "Plan B del arrocero · GroundTruth Cibao",
+      plan_farm: "Finca: {area} tareas en {zone}, suelo {soil}. Siembra: {month}.",
+      plan_water: "Agua asignada: {alloc}%.",
+      plan_strategy: "Estrategia: {name}",
+      plan_use: "Agua: {used} m³ ({saved}% menos que todo arroz).",
+      plan_n: "Nitrógeno al suelo: unos {n} sacos de urea.",
+      plan_risks: "Revisar: {list}.",
+      plan_foot: "Datos NASA POWER + FAO-56. Es una guía: consulta a tu técnico agrícola.",
+      pedro_btn: "Ver el caso de Don Pedro en Mao: 100 tareas, 60% del agua",
+      pedro_note: "Don Pedro es un caso de ejemplo, no una persona real.",
+      light: { normal: "Normal", tandeo: "Tandeo", veda: "Veda" },
+      light_desc: { normal: "Riego completo", tandeo: "Riego por turnos", veda: "Arroz prohibido" },
+      light_note: "El semáforo es una guía nuestra con los términos del riego dominicano. Los porcentajes no son cifras oficiales del INDRHI: ajústalos con el control.",
+      map_title: "El Cibao arrocero visto por la NASA",
+      map_sub: "Toca una zona para cambiar la finca. Cada cuadro punteado mide unos 50 km: es el tamaño con que NASA POWER describe el clima.",
+      layers: { basins: "Ríos y presas", balance: "Falta de agua", soil: "Humedad del suelo", heat: "Calor" },
+      layer_desc: {
+        basins: "Ríos Yaque del Norte (oeste) y Yuna (este) con sus presas.",
+        balance: "Lluvia menos el agua que pierde el campo, en mm por año. Más oscuro: falta más agua.",
+        soil: "Humedad en la zona de raíces, en % de saturación. Más oscuro: más húmedo.",
+        heat: "Temperatura máxima media del mes más caliente. Más oscuro: más calor."
+      },
+      layer_source: "NASA POWER, promedio 2001–2020.",
+      river: "Río", dam: "Presa", zone_dot: "Zona arrocera", selected_dot: "Tu zona",
+      map_aria: "Mapa esquemático del Cibao con las zonas arroceras",
+      map_note: "Mapa esquemático: la costa, los ríos y las presas están dibujados de forma aproximada.",
+      ocean: "Océano Atlántico", haiti: "Haití",
+      parcel_title: "Tu finca desde arriba",
+      parcel_sub: "{name}. Cada cuadro es el 1% de tus {area} tareas.",
+      impact_n: "sacos de urea que el suelo recibe sin comprarlos",
+      impact_water: "m³ de agua menos que sembrar todo de arroz",
+      impact_land: "tareas sembradas, sin suelo desnudo"
+    },
+    en: {
+      hero_title: "The rice farmer's Plan B",
+      hero_lead: "When irrigation water runs short, rice farmers are told not to plant. This tool shows what they can still grow with the water they are given, using 25 years of NASA data.",
+      facts: [
+        ["91.5%", "of Dominican rice is grown in the Cibao valley, almost all of it irrigated.", 4],
+        ["96%", "of the Yaque del Norte river's water is already committed.", 5],
+        ["2019", "the water authority banned winter rice planting because of drought. In 2026 irrigation by turns came back.", 6]
+      ],
+      source: "source",
+      farm: "Your farm",
+      zone: "Rice zone",
+      month: "Planting month",
+      area: "Tareas",
+      soil: "Soil type",
+      soils: { clay: "Clay", loam: "Loam", sandy: "Sandy" },
+      priority: "What matters most?",
+      priorities: { water: "Water", soil: "Soil", income: "Income" },
+      allocation: "Water you were allocated",
+      allocation_hint: "The share of the water your whole farm would need if planted with rice. The water authority (INDRHI) or your irrigation board announces it before each cycle.",
+      rice_banned: "Rice planting is banned this cycle",
+      salty: "My soil has salt problems",
+      headline: "With <b>{alloc}%</b> of the water, the best match for your priority is <b>{name}</b>: {mix}.",
+      headline_none: "With no irrigation water, no crop is viable this cycle: rain covers only <b>{rain}%</b> of what the crop uses.",
+      strategies: "Four ways to use the same water",
+      strategies_sub: "Each square is 1% of your farm. Move the water control and watch them change. Tap a card to see why.",
+      best: "Best for your priority",
+      names: { current: "Rice only", mixed: "Rice + legume", rotation: "Rotation to sell", green: "Green manure" },
+      name_legume_only: "Legume",
+      roles: { rice: "Rice", legume: "Legume", cash: "Crop to sell", green: "Green manure", idle: "Not planted" },
+      tareas: "tareas",
+      tareas_of: "tareas of",
+      idle: "not planted",
+      nothing: "Nothing planted",
+      assigned: "allocated",
+      uses: "Uses <b>{used} m³</b> of {budget} m³",
+      score_water: "Water", score_soil: "Soil", score_income: "Income",
+      sacks: "≈ {n} sacks of urea for the soil",
+      chips: {
+        heat: "Heat", heavy_soil: "Heavy soil", sandy_rice: "Sandy soil", salt: "Salt",
+        idle_land: "Idle land", weak_market: "Uncertain market", no_income: "No income",
+        short_in_dry_year: "Tight in a dry year"
+      },
+      why: "Why it is suggested", evidence: "Evidence", benefits: "Benefits",
+      gaps: "Information gaps", risks: "Risks to review with an expert",
+      why_text: {
+        current: "It is what you do today: plant only rice on the land the water allows.",
+        mixed: "Split the water: fewer tareas of rice and, with what is left, {alt} on the rest. The whole farm keeps producing.",
+        mixed_banned: "With no rice this cycle, {alt} keeps the farm producing and returns nitrogen to the soil.",
+        rotation: "Rest from rice this cycle and plant {alt}, which needs far less water and can be sold.",
+        green: "Rest from rice this cycle and grow {alt} to return nitrogen and organic matter to the soil."
+      },
+      ev_rice: "Rice needs {m3} m³ of irrigation per tarea in {zone} when planted in {month} (NASA POWER 2001–2026, FAO-56 method).",
+      ev_alt: "{alt} needs {m3} m³ per tarea: {ratio} times less than rice.",
+      ev_rain: "In that cycle rain covers only {rain}% of the water rice uses.",
+      ev_use: "This plan uses {used} m³ of the {budget} m³ allocated.",
+      ev_dry: "In a dry year (2 out of 10) the same plan would need {dry} m³.",
+      ben_market: "Known market and price.",
+      ben_same: "No change in practices or equipment.",
+      ben_full: "No tarea is left empty.",
+      ben_saved: "Uses {saved}% less water than planting the whole farm with rice.",
+      ben_nitrogen: "Leaves nitrogen worth about {n} sacks of urea for the next rice crop.",
+      ben_break: "Taking rice off that land helps break the weed and pest cycle of monoculture.",
+      ben_organic: "Improves soil organic matter and structure.",
+      gap_prices: "We do not use real prices or yields: the income score only measures how sure the sale is.",
+      gap_cell: "NASA data describes squares about 50 km wide, not your exact farm.",
+      gap_crops: "Crop values are general FAO references; they still need validation in the Cibao.",
+      risk: {
+        heat: "Heat: the average daily maximum in the cycle is about {tmax} °C and {crop} suffers above {limit} °C.",
+        heavy_soil: "Heavy soil: {crop} does not tolerate clay soils that stay waterlogged.",
+        sandy_rice: "Sandy soil: rice loses a lot of water through seepage.",
+        salt: "Salt: {crop} is sensitive to soil salinity.",
+        idle_land: "{n} tareas are left unplanted and without income.",
+        weak_market: "Market: selling {crop} is not guaranteed. Confirm a buyer before planting.",
+        no_income: "This cycle brings no income from sales.",
+        short_in_dry_year: "In a dry year, the allocated water would not cover the whole plan.",
+        mono: "Staying with rice only keeps the monoculture and adds no new nitrogen.",
+        always: "Check with a local agricultural expert before changing your rotation."
+      },
+      share_wa: "Send plan by WhatsApp", share_copy: "Copy plan", copied: "Copied",
+      needs_title: "Irrigation water per tarea",
+      needs_sub: "{zone}, {soil} soil, planting in {month}.",
+      needs_note: "Computed for every year since 2001 with temperature, sunshine, humidity, wind and rain from NASA POWER.",
+      typical: "Typical year", dry: "Dry year (2 out of 10)",
+      climate_title: "Water balance month by month",
+      climate_sub: "Rain against the water the field loses, in mm per month. 2001–2020 average in {zone}.",
+      rain: "Rain", shortfall: "Water shortfall (irrigation must supply it)",
+      et0: "Water the field loses (evapotranspiration)", cycle: "Months of the chosen cycle",
+      tip_rain: "rain", tip_et0: "field loses", tip_gap: "short by", tip_tmax: "average maximum",
+      strip: "Bottom strip: average daily maximum temperature of each month, in °C. Darker: hotter.",
+      climate_note: "In your cycle ({from} to {to}) it rains about {rain} mm and the field loses about {et0} mm: about {gap} mm are missing, and irrigation must supply them. Over the whole year it rains {rain_year} mm and the field loses {et0_year} mm.",
+      heat_title: "Heat during the cycle: can each crop take it?",
+      heat_sub: "Average daily maximum during each crop's cycle, planting in {month} in {zone} (NASA POWER 2001–2026), against the crop's reference limit.",
+      heat_ok: "below its {limit} °C limit",
+      heat_over: "+{n} °C above its {limit} °C limit",
+      heat_dot: "Average maximum of the cycle", heat_tick: "Crop limit", heat_zone: "Excess heat",
+      heat_note: "The limits are general reference values that an agronomist must validate. NASA temperature is adjusted for elevation and has not been compared with a local station.",
+      listen: "Listen to the plan", stop: "Stop the voice", print: "Print planting sheet",
+      say_plan: "Plan: {name}. {mix}.",
+      say_none: "With no irrigation water, no crop is viable this cycle.",
+      say_water: "It uses {used} cubic meters of irrigation water, {saved} percent less than planting the whole farm with rice.",
+      say_n: "It leaves nitrogen in the soil worth about {n} sacks of urea.",
+      say_risks: "To review with an expert:",
+      say_degrees: "degrees",
+      faq_title: "Frequently asked questions",
+      faq_sub: "Answers written by the team, using your farm's numbers. No AI is answering.",
+      faq: [
+        { q: "Why a legume instead of more rice?",
+          a: "Because the water available is not enough to plant the whole farm with rice. In {zone}, planting in {month}, rice needs {rice_m3} m³ of irrigation per tarea and {alt} needs {alt_m3} m³: {ratio} times less. Legumes also take nitrogen from the air and leave part of it in the soil. In the rice plus legume plan that is worth about {sacks} sacks of urea." },
+        { q: "What happens if I leave part of the land unplanted?",
+          a: "With rice only and {alloc}% of the water, {idle} of your {area} tareas would stay empty. That land brings no income, and bare soil is exposed to sun, heavy rain and weeds. A low-water crop or a green manure keeps it covered and producing.",
+          a_none: "With the water you were allocated, the rice-only strategy leaves no land empty. If the water drops, any land left unplanted brings no income and is exposed to sun, heavy rain and weeds." },
+        { q: "How do you calculate water with NASA data?",
+          a: "We use NASA POWER, which gives the temperature, sunshine, humidity, wind and rain of your zone for every day since 2001. From that we compute how much water the field loses each day (FAO-56 method) and adjust it to what each crop uses at each stage. Subtracting the usable rain leaves the irrigation needed. We repeat this for every year and show the typical year and the dry year." },
+        { q: "Is this a black box?",
+          a: "No. The recommendation comes from fixed formulas anyone can review: the same data always gives the same result. No artificial intelligence model decides what to plant. AI helped the team write the code and the texts, and that is disclosed. The calculation passes more than 31,000 automatic checks." },
+        { q: "How reliable are these numbers?",
+          a: "They are a guide, not a measurement on your farm. NASA describes squares about 50 km wide and its rainfall tends to be lower than rain-gauge records. Crop values are general FAO references that still need validation in the Cibao. That is why every strategy lists its risks and asks you to check with an agricultural expert." },
+        { q: "Do the moon or the tides matter?",
+          a: "This tool does not use the phase of the moon: we know of no solid scientific evidence that it changes how much water a crop needs. What can matter near the coast is salt: when the river runs low, sea water can enter through its mouth. If your soil has salt problems, tick that box and the tool flags the crops that are sensitive." }
+      ],
+      sheet_title: "Planting sheet",
+      sheet_water: "Irrigation water for the plan", sheet_dry: "In a dry year (2 out of 10)",
+      sheet_saved: "Saving compared with planting all rice", sheet_n: "Nitrogen the soil receives",
+      sheet_sacks: "sacks of urea", sheet_land: "Tareas planted",
+      sheet_heat: "Months of the cycle and their average daily maximum",
+      basin_title: "From your farm to the river basin",
+      basin_q: "What if {share}% of the rice farmers in the {basin} basin planted {alt} instead of rice this cycle?",
+      basin_big: "{n} million m³",
+      basin_small: "of water that would not have to leave the dams, on about {tareas} tareas.",
+      basin_of: "of {dam}'s capacity",
+      basin_cap: "{n} million m³",
+      basin_note: "Conservative figure: it only counts water saved on the farms. The basin's rice area was estimated by splitting the national area according to each province's production.",
+      basin_none: "We have no dam data for the {basin} basin. The basin-wide estimate is available for the Yaque del Norte and the Yuna - Camú.",
+      trust_title: "How reliable is this",
+      limits_title: "Limits and information gaps",
+      limits: [
+        "This is a decision-support tool. It does not replace the farmer or the agricultural expert.",
+        "The data comes from NASA satellites and models, in squares about 50 km wide. It is not a weather station on the farm.",
+        "Temperature is adjusted for elevation ({adjust} °C in this zone: the NASA square averages {cell} m and the zone sits at {elev} m).",
+        "NASA POWER rainfall can be lower than what local rain gauges record. That would make the computed irrigation somewhat higher than the real one.",
+        "The water, soil and income scores are a guide for comparing options, not a forecast of harvest or profit.",
+        "The income score does not use prices or yields; they still need to be added.",
+        "Which crops tolerate a rice soil, and their heat limits, are general values a local agronomist must validate."
+      ],
+      method_title: "How it is calculated",
+      method: [
+        "Water the field loses each day: FAO-56 Penman-Monteith method with temperature, solar radiation, humidity and wind from NASA POWER.",
+        "Water for each crop: that daily loss times the crop coefficient of each growth stage (FAO-56 tables).",
+        "Flooded rice: plus 200 mm to saturate the soil, a 100 mm water layer and daily seepage depending on the soil (FAO irrigation manual).",
+        "Irrigation need: crop water minus usable rain, for every year since 2001. We show the typical year (median) and the dry year (80th percentile).",
+        "Strategies: the allocated water is split across the farm without exceeding the water or the land available."
+      ],
+      sources_title: "Sources",
+      foot_support: "Decision-support tool. Always check with a local agricultural expert before changing your rotation.",
+      foot_ai: "Team GroundTruth Cibao · NASA Space Apps Challenge 2026, Santiago. Code, text and analysis produced with AI assistance (Claude Code, Anthropic).",
+      foot_nasa: "Uses NASA POWER data. NASA does not endorse any non-U.S. Government entity or this product.",
+      plan_title: "The rice farmer's Plan B · GroundTruth Cibao",
+      plan_farm: "Farm: {area} tareas in {zone}, {soil} soil. Planting: {month}.",
+      plan_water: "Water allocated: {alloc}%.",
+      plan_strategy: "Strategy: {name}",
+      plan_use: "Water: {used} m³ ({saved}% less than all rice).",
+      plan_n: "Nitrogen for the soil: about {n} sacks of urea.",
+      plan_risks: "To review: {list}.",
+      plan_foot: "NASA POWER data + FAO-56. This is a guide: check with your agricultural expert.",
+      pedro_btn: "See Don Pedro's case in Mao: 100 tareas, 60% of the water",
+      pedro_note: "Don Pedro is an example case, not a real person.",
+      light: { normal: "Normal", tandeo: "Turns", veda: "Ban" },
+      light_desc: { normal: "Full irrigation", tandeo: "Irrigation by turns", veda: "Rice banned" },
+      light_note: "The traffic light is our own guide using Dominican irrigation terms (tandeo = turns, veda = ban). The percentages are not official INDRHI figures: adjust them with the control.",
+      map_title: "The rice-growing Cibao as NASA sees it",
+      map_sub: "Tap a zone to change the farm. Each dotted square is about 50 km wide: the size at which NASA POWER describes the climate.",
+      layers: { basins: "Rivers and dams", balance: "Water shortfall", soil: "Soil moisture", heat: "Heat" },
+      layer_desc: {
+        basins: "Yaque del Norte (west) and Yuna (east) rivers with their dams.",
+        balance: "Rain minus the water the field loses, in mm per year. Darker: larger shortfall.",
+        soil: "Moisture in the root zone, in % of saturation. Darker: wetter.",
+        heat: "Average daily maximum of the hottest month. Darker: hotter."
+      },
+      layer_source: "NASA POWER, 2001–2020 average.",
+      river: "River", dam: "Dam", zone_dot: "Rice zone", selected_dot: "Your zone",
+      map_aria: "Schematic map of the Cibao valley with the rice zones",
+      map_note: "Schematic map: the coast, rivers and dams are drawn approximately.",
+      ocean: "Atlantic Ocean", haiti: "Haiti",
+      parcel_title: "Your farm from above",
+      parcel_sub: "{name}. Each square is 1% of your {area} tareas.",
+      impact_n: "sacks of urea the soil gets without buying them",
+      impact_water: "m³ less water than planting everything with rice",
+      impact_land: "tareas planted, no bare soil"
+    }
+  };
+
+  // ------------------------------------------------------------------
+  // Small helpers
+  // ------------------------------------------------------------------
+  function tr(key, vars) {
+    var text = T[state.lang][key];
+    return vars ? fill(text, vars) : text;
+  }
+  function fill(text, vars) {
+    return text.replace(/\{(\w+)\}/g, function (_, name) { return vars[name]; });
+  }
+  function num(value, digits) {
+    return new Intl.NumberFormat(state.lang === "es" ? "es-DO" : "en-US", {
+      maximumFractionDigits: digits || 0, minimumFractionDigits: digits || 0
+    }).format(value);
+  }
+  function tareasText(value) {
+    return num(value, value < 20 && value % 1 ? 1 : 0);
+  }
+  function cropName(key) {
+    return D.crops[key][state.lang];
+  }
+  function lower(text) {
+    return text.charAt(0).toLowerCase() + text.slice(1);
+  }
+  function role(crop) {
+    if (crop === "rice") return "rice";
+    if (crop === "sesbania") return "green";
+    return D.legumes.indexOf(crop) >= 0 ? "legume" : "cash";
+  }
+  function zone() { return D.zones[state.zone]; }
+  function esc(text) {
+    return String(text).replace(/[&<>"]/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+  function strategyName(s) {
+    if (s.key === "mixed" && s.plots.length && !s.plots.some(function (p) { return p.crop === "rice"; }))
+      return tr("name_legume_only");
+    return T[state.lang].names[s.key];
+  }
+  function mixText(s) {
+    if (!s.plots.length) return lower(tr("nothing"));
+    return s.plots.map(function (p) {
+      return tareasText(p.tareas) + " " + tr("tareas_of") + " " + lower(cropName(p.crop));
+    }).join(" + ");
+  }
+
+  // ------------------------------------------------------------------
+  // Calculation for the current answers
+  // ------------------------------------------------------------------
+  function calculate() {
+    var needs = D.needs[zone().name + "|" + state.soil + "|" + state.month];
+    return E.compare(D, needs, state.soil, state.area, state.allocation, state.priority,
+      state.riceAllowed, state.salty);
+  }
+
+  // ------------------------------------------------------------------
+  // Drawing
+  // ------------------------------------------------------------------
+  function drawStatic() {
+    document.documentElement.lang = state.lang;
+    document.querySelectorAll("[data-t]").forEach(function (el) {
+      el.textContent = tr(el.getAttribute("data-t"));
+    });
+    document.querySelectorAll(".lang button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-lang") === state.lang);
+    });
+
+    $("facts").innerHTML = T[state.lang].facts.map(function (f) {
+      return "<li><b>" + f[0] + "</b><span>" + esc(f[1]) + "</span> <a href=\"" + SOURCES[f[2]][1] +
+        "\" target=\"_blank\" rel=\"noopener\">" + tr("source") + "</a></li>";
+    }).join("");
+
+    $("zone").innerHTML = D.zones.map(function (z, i) {
+      return "<option value=\"" + i + "\">" + esc(z.name) + "</option>";
+    }).join("");
+    $("zone").value = state.zone;
+    $("month").innerHTML = MONTHS[state.lang].map(function (m, i) {
+      return "<option value=\"" + (i + 1) + "\">" + m.charAt(0).toUpperCase() + m.slice(1) + "</option>";
+    }).join("");
+    $("month").value = state.month;
+
+    segmented("soil", T[state.lang].soils, "soil");
+    segmented("priority", T[state.lang].priorities, "priority");
+    segmented("layers", T[state.lang].layers, "layer");
+    var parcel = "";
+    for (var c = 0; c < 100; c++) parcel += "<span></span>";
+    $("parcel").innerHTML = parcel;
+
+    var roles = T[state.lang].roles;
+    $("legend").innerHTML = ["rice", "legume", "cash", "green", "idle"].map(function (r) {
+      return "<span><i class=\"" + r + "\"></i>" + roles[r] + "</span>";
+    }).join("");
+
+    // Strategy cards are created once; later only their contents change, so
+    // the squares can animate from one crop to another.
+    $("cards").innerHTML = STRATEGY_ORDER.map(function (key) {
+      var cells = "";
+      for (var i = 0; i < 100; i++) cells += "<span></span>";
+      return "<button type=\"button\" class=\"card\" data-key=\"" + key + "\">" +
+        "<span class=\"badge\">" + tr("best") + "</span>" +
+        "<h3></h3><div class=\"plot\" aria-hidden=\"true\">" + cells + "</div>" +
+        "<div class=\"mix\"></div>" +
+        "<div><div class=\"meter\"><div class=\"fill\"></div><div class=\"cap\"></div></div></div>" +
+        "<div class=\"meter-text\"></div><div class=\"scores\"></div><div class=\"chips\"></div></button>";
+    }).join("");
+
+    $("faq").innerHTML = T[state.lang].faq.map(function (item, i) {
+      return "<details><summary>" + esc(item.q) + "</summary><p id=\"faq-" + i + "\"></p></details>";
+    }).join("");
+    $("method").innerHTML = T[state.lang].method.map(function (m) { return "<li>" + esc(m) + "</li>"; }).join("");
+    $("sources").innerHTML = SOURCES.map(function (s) {
+      return "<li><a href=\"" + s[1] + "\" target=\"_blank\" rel=\"noopener\">" + esc(s[0]) + "</a></li>";
+    }).join("");
+  }
+
+  function segmented(id, labels, field) {
+    $(id).innerHTML = Object.keys(labels).map(function (key) {
+      return "<button type=\"button\" data-value=\"" + key + "\" class=\"" +
+        (state[field] === key ? "on" : "") + "\">" + labels[key] + "</button>";
+    }).join("");
+  }
+
+  function draw() {
+    var result = calculate();
+    var best = result.ranked[0];
+    var byKey = {};
+    result.strategies.forEach(function (s) { byKey[s.key] = s; });
+    var selected = byKey[state.selected] || best;
+
+    $("allocation-out").textContent = Math.round(state.allocation * 100) + "%";
+    $("allocation").value = Math.round(state.allocation * 100);
+    document.querySelectorAll("#soil button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-value") === state.soil);
+    });
+    document.querySelectorAll("#priority button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-value") === state.priority);
+    });
+
+    $("rice-banned").checked = !state.riceAllowed;
+    drawLight();
+    drawMap();
+    drawParcel(selected);
+    drawHeadline(result, best);
+    result.strategies.forEach(function (s) { drawCard(s, result, s === best, s === selected); });
+    drawDetail(selected, result);
+    drawNeeds(result);
+    drawClimate(result);
+    drawHeat(result);
+    drawFaq(result, byKey);
+    drawSheet(selected, result);
+    drawBasin(selected, result, byKey);
+    drawLimits();
+  }
+
+  function drawHeadline(result, best) {
+    if (!best.plots.length) {
+      $("headline").innerHTML = tr("headline_none", { rain: Math.round(result.needs.rice.rain_share * 100) });
+      return;
+    }
+    $("headline").innerHTML = tr("headline", {
+      alloc: Math.round(state.allocation * 100), name: esc(strategyName(best)), mix: esc(mixText(best))
+    });
+  }
+
+  function drawCard(s, result, isBest, isSelected) {
+    var card = document.querySelector(".card[data-key=\"" + s.key + "\"]");
+    card.classList.toggle("best", isBest && s.plots.length > 0);
+    card.classList.toggle("selected", isSelected);
+    card.setAttribute("aria-pressed", isSelected ? "true" : "false");
+    card.querySelector("h3").textContent = strategyName(s);
+
+    paintCells(card.querySelectorAll(".plot span"), s);
+
+    var lines = s.plots.map(function (p) {
+      return "<span><i class=\"dot " + role(p.crop) + "\"></i><b>" + tareasText(p.tareas) + "</b> " +
+        tr("tareas") + " · " + esc(cropName(p.crop)) + "</span>";
+    });
+    if (s.idle_tareas > 0.005) {
+      lines.push("<span><i class=\"dot idle\"></i><b>" + tareasText(s.idle_tareas) + "</b> " +
+        tr("tareas") + " · " + tr("idle") + "</span>");
+    }
+    card.querySelector(".mix").innerHTML = lines.join("");
+
+    var usedShare = result.baseline_m3 ? s.water_m3 / result.baseline_m3 : 0;
+    card.querySelector(".fill").style.width = (100 * usedShare) + "%";
+    var cap = card.querySelector(".cap");
+    cap.style.left = "calc(" + (100 * state.allocation) + "% - 1px)";
+    cap.setAttribute("data-label", tr("assigned"));
+    card.querySelector(".meter-text").innerHTML = tr("uses", {
+      used: num(s.water_m3), budget: num(result.budget_m3)
+    });
+
+    card.querySelector(".scores").innerHTML = ["water", "soil", "income"].map(function (name) {
+      var value = Math.round(s.scores[name]);
+      return "<div class=\"score" + (name === state.priority ? " main" : "") + "\"><span>" +
+        tr("score_" + name) + "</span><div class=\"bar\"><i style=\"width:" + value + "%\"></i></div><b>" +
+        value + "</b></div>";
+    }).join("");
+
+    var chips = [];
+    if (s.urea_sacks >= 0.5) chips.push("<span class=\"chip good\">" + tr("sacks", { n: num(s.urea_sacks) }) + "</span>");
+    s.warnings.forEach(function (code) {
+      chips.push("<span class=\"chip\">" + T[state.lang].chips[code] + "</span>");
+    });
+    card.querySelector(".chips").innerHTML = chips.join("");
+  }
+
+  function riskList(s, result) {
+    var R = T[state.lang].risk;
+    var risks = [];
+    s.plots.forEach(function (p) {
+      result.fit[p.crop][1].forEach(function (code) {
+        risks.push(fill(R[code], {
+          crop: lower(cropName(p.crop)), tmax: num(result.needs[p.crop].tmax, 1),
+          limit: D.crops[p.crop].heat_limit
+        }));
+      });
+      if (p.crop !== "sesbania" && D.crops[p.crop].market <= 2)
+        risks.push(fill(R.weak_market, { crop: lower(cropName(p.crop)) }));
+    });
+    if (s.warnings.indexOf("idle_land") >= 0) risks.push(fill(R.idle_land, { n: tareasText(s.idle_tareas) }));
+    if (s.warnings.indexOf("no_income") >= 0) risks.push(R.no_income);
+    if (s.warnings.indexOf("short_in_dry_year") >= 0) risks.push(R.short_in_dry_year);
+    if (s.key === "current" && s.plots.length) risks.push(R.mono);
+    risks.push(R.always);
+    return risks;
+  }
+
+  function drawDetail(s, result) {
+    var L = T[state.lang];
+    stopVoice();
+    var alt = s.alternative ? cropName(s.alternative) : "";
+    var hasRice = s.plots.some(function (p) { return p.crop === "rice"; });
+    var whyKey = s.key === "mixed" && !hasRice ? "mixed_banned" : s.key;
+    var why = fill(L.why_text[whyKey], { alt: lower(alt) });
+
+    var evidence = [tr("ev_rice", {
+      m3: num(result.needs.rice.typical_m3), zone: zone().name, month: MONTHS[state.lang][state.month - 1]
+    })];
+    if (s.alternative) {
+      evidence.push(tr("ev_alt", {
+        alt: alt, m3: num(result.needs[s.alternative].typical_m3),
+        ratio: num(result.needs.rice.typical_m3 / result.needs[s.alternative].typical_m3, 1)
+      }));
+    }
+    evidence.push(tr("ev_rain", { rain: Math.round(result.needs.rice.rain_share * 100) }));
+    evidence.push(tr("ev_use", { used: num(s.water_m3), budget: num(result.budget_m3) }));
+    if (s.plots.length) evidence.push(tr("ev_dry", { dry: num(s.water_dry_m3) }));
+
+    var benefits = [];
+    if (hasRice && s.key === "current") { benefits.push(L.ben_market); benefits.push(L.ben_same); }
+    if (s.key !== "current" && s.plots.length) {
+      if (s.idle_tareas <= 0.005) benefits.push(L.ben_full);
+      if (s.saved_share > 0.01) benefits.push(tr("ben_saved", { saved: Math.round(s.saved_share * 100) }));
+      if (s.urea_sacks >= 0.5) benefits.push(tr("ben_nitrogen", { n: num(s.urea_sacks) }));
+      benefits.push(L.ben_break);
+      if (s.key === "green") benefits.push(L.ben_organic);
+    }
+    if (!benefits.length) benefits.push("—");
+
+    var plan = planText(s, result);
+    function list(items) {
+      return "<ul>" + items.map(function (i) { return "<li>" + esc(i) + "</li>"; }).join("") + "</ul>";
+    }
+    $("detail").innerHTML =
+      "<h2>" + esc(strategyName(s)) + "</h2><p class=\"sub\">" + esc(mixText(s)) + "</p>" +
+      "<div class=\"detail-grid\">" +
+      "<div><h3>" + L.why + "</h3><ul><li>" + esc(why) + "</li></ul></div>" +
+      "<div><h3>" + L.evidence + "</h3>" + list(evidence) + "</div>" +
+      "<div><h3>" + L.benefits + "</h3>" + list(benefits) + "</div>" +
+      "<div><h3>" + L.gaps + "</h3>" + list([L.gap_prices, L.gap_cell, L.gap_crops]) + "</div>" +
+      "<div><h3>" + L.risks + "</h3>" + list(riskList(s, result)) + "</div>" +
+      "</div><div class=\"actions\">" +
+      "<a class=\"btn primary\" target=\"_blank\" rel=\"noopener\" href=\"https://wa.me/?text=" +
+      encodeURIComponent(plan) + "\">" + L.share_wa + "</a>" +
+      "<button type=\"button\" class=\"btn\" id=\"copy-plan\">" + L.share_copy + "</button>" +
+      (window.speechSynthesis ? "<button type=\"button\" class=\"btn\" id=\"listen-plan\">" + L.listen + "</button>" : "") +
+      "<button type=\"button\" class=\"btn\" id=\"print-plan\">" + L.print + "</button></div>";
+    $("copy-plan").onclick = function () {
+      var button = this;
+      var done = function () { button.textContent = L.copied; };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(plan).then(done, done);
+    };
+    if ($("listen-plan")) {
+      $("listen-plan").onclick = function () { toggleVoice(spokenText(s, result), this); };
+    }
+    $("print-plan").onclick = function () {
+      document.body.classList.add("sheet-mode");
+      window.print();
+    };
+  }
+
+  // ------------------------------------------------------------------
+  // Voice, frequently asked questions and the printable planting sheet
+  // ------------------------------------------------------------------
+
+  // The plan in plain sentences, written to be read aloud.
+  function spokenText(s, result) {
+    var L = T[state.lang];
+    if (!s.plots.length) return L.say_none;
+    var parts = [tr("say_plan", { name: strategyName(s), mix: mixText(s).replace(/ \+ /g, state.lang === "es" ? " y " : " and ") })];
+    parts.push(tr("say_water", { used: num(s.water_m3), saved: Math.round(s.saved_share * 100) }));
+    if (s.urea_sacks >= 0.5) parts.push(tr("say_n", { n: num(s.urea_sacks) }));
+    parts.push(L.say_risks);
+    riskList(s, result).forEach(function (risk) { parts.push(risk.replace(/°C/g, L.say_degrees)); });
+    return parts.join(" ");
+  }
+
+  var speaking = false;
+  function stopVoice() {
+    if (speaking && window.speechSynthesis) window.speechSynthesis.cancel();
+    speaking = false;
+  }
+  // Reads the text with a voice installed on this device (works without internet).
+  function toggleVoice(text, button) {
+    var L = T[state.lang];
+    if (speaking) {
+      stopVoice();
+      button.textContent = L.listen;
+      return;
+    }
+    var speech = new SpeechSynthesisUtterance(text);
+    var wanted = state.lang === "es" ? ["es-do", "es-us", "es-mx", "es-419", "es"] : ["en-us", "en"];
+    var voices = window.speechSynthesis.getVoices();
+    var voice = null;
+    wanted.forEach(function (code) {
+      if (voice) return;
+      voices.forEach(function (v) {
+        if (!voice && v.lang.toLowerCase().replace("_", "-").indexOf(code) === 0) voice = v;
+      });
+    });
+    if (voice) speech.voice = voice;
+    speech.lang = voice ? voice.lang : (state.lang === "es" ? "es-US" : "en-US");
+    speech.rate = 0.95;
+    speech.onend = speech.onerror = function () {
+      speaking = false;
+      button.textContent = L.listen;
+    };
+    speaking = true;
+    button.textContent = L.stop;
+    window.speechSynthesis.speak(speech);
+  }
+
+  function drawFaq(result, byKey) {
+    var mixed = byKey.mixed, current = byKey.current, alt = mixed.alternative;
+    var vars = {
+      zone: zone().name, month: MONTHS[state.lang][state.month - 1],
+      rice_m3: num(result.needs.rice.typical_m3), alt: lower(cropName(alt)),
+      alt_m3: num(result.needs[alt].typical_m3),
+      ratio: num(result.needs.rice.typical_m3 / result.needs[alt].typical_m3, 1),
+      sacks: num(mixed.urea_sacks), alloc: Math.round(state.allocation * 100),
+      idle: tareasText(current.idle_tareas), area: tareasText(state.area)
+    };
+    T[state.lang].faq.forEach(function (item, i) {
+      var text = item.a_none && current.idle_tareas <= 0.005 ? item.a_none : item.a;
+      $("faq-" + i).textContent = fill(text, vars);
+    });
+  }
+
+  // One-page summary of the chosen plan, shown only when printing.
+  function drawSheet(s, result) {
+    var L = T[state.lang];
+    var cells = "";
+    for (var i = 0; i < 100; i++) cells += "<span></span>";
+    var plots = s.plots.map(function (p) {
+      return "<li><i class=\"dot " + role(p.crop) + "\"></i><b>" + tareasText(p.tareas) + "</b> " + tr("tareas") +
+        " · " + esc(cropName(p.crop)) + "</li>";
+    });
+    if (s.idle_tareas > 0.005) {
+      plots.push("<li><i class=\"dot idle\"></i><b>" + tareasText(s.idle_tareas) + "</b> " + tr("tareas") + " · " + tr("idle") + "</li>");
+    }
+    var shares = cycleShares(result.needs.rice.days);
+    var months = [];
+    for (var k = 0; k < 12; k++) {
+      var m = (state.month - 1 + k) % 12;
+      if (shares[m]) months.push(MONTHS_SHORT[state.lang][m] + " " + num(zone().climate.tmax[m]) + " °C");
+    }
+    function row(label, value) { return "<tr><td>" + label + "</td><td><b>" + value + "</b></td></tr>"; }
+    $("sheet").innerHTML =
+      "<p class=\"sheet-brand\">GroundTruth Cibao · " + new Date().toLocaleDateString(state.lang === "es" ? "es-DO" : "en-US") + "</p>" +
+      "<h1>" + L.sheet_title + ": " + esc(strategyName(s)) + "</h1>" +
+      "<p>" + esc(tr("plan_farm", {
+        area: tareasText(state.area), zone: zone().name, soil: lower(L.soils[state.soil]),
+        month: MONTHS[state.lang][state.month - 1]
+      })) + " " + esc(tr("plan_water", { alloc: Math.round(state.allocation * 100) })) + "</p>" +
+      "<div class=\"sheet-grid\"><div><div class=\"plot\">" + cells + "</div><ul class=\"sheet-plots\">" + plots.join("") + "</ul></div>" +
+      "<table>" +
+      row(L.sheet_water, num(s.water_m3) + " m³") +
+      row(L.sheet_dry, num(s.water_dry_m3) + " m³") +
+      row(L.sheet_saved, num(Math.max(0, s.saved_m3)) + " m³ (" + Math.round(s.saved_share * 100) + "%)") +
+      row(L.sheet_n, "≈ " + num(s.urea_sacks) + " " + L.sheet_sacks) +
+      row(L.sheet_land, tareasText(state.area - s.idle_tareas) + " / " + tareasText(state.area)) +
+      row(L.sheet_heat, months.join(" · ")) +
+      "</table></div>" +
+      "<h2>" + L.risks + "</h2><ul>" + riskList(s, result).map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul>" +
+      "<h2>" + L.gaps + "</h2><ul><li>" + esc(L.gap_prices) + "</li><li>" + esc(L.gap_cell) + "</li><li>" + esc(L.gap_crops) + "</li></ul>" +
+      "<p class=\"sheet-foot\">" + esc(L.plan_foot) + " " + esc(L.foot_ai) + " " + esc(L.foot_nasa) + "</p>";
+    paintCells($("sheet").querySelectorAll(".plot span"), s);
+  }
+
+  function planText(s, result) {
+    var L = T[state.lang];
+    var lines = [
+      L.plan_title,
+      tr("plan_farm", {
+        area: tareasText(state.area), zone: zone().name, soil: lower(L.soils[state.soil]),
+        month: MONTHS[state.lang][state.month - 1]
+      }),
+      tr("plan_water", { alloc: Math.round(state.allocation * 100) }),
+      tr("plan_strategy", { name: strategyName(s) })
+    ];
+    s.plots.forEach(function (p) {
+      lines.push("- " + cropName(p.crop) + ": " + tareasText(p.tareas) + " " + tr("tareas"));
+    });
+    if (s.idle_tareas > 0.005) lines.push("- " + L.roles.idle + ": " + tareasText(s.idle_tareas) + " " + tr("tareas"));
+    lines.push(tr("plan_use", { used: num(s.water_m3), saved: Math.round(s.saved_share * 100) }));
+    if (s.urea_sacks >= 0.5) lines.push(tr("plan_n", { n: num(s.urea_sacks) }));
+    if (s.warnings.length) {
+      lines.push(tr("plan_risks", {
+        list: s.warnings.map(function (c) { return lower(L.chips[c]); }).join(", ")
+      }));
+    }
+    lines.push(L.plan_foot);
+    return lines.join("\n");
+  }
+
+  function drawNeeds(result) {
+    var L = T[state.lang];
+    $("needs-sub").textContent = tr("needs_sub", {
+      zone: zone().name, soil: lower(L.soils[state.soil]), month: MONTHS[state.lang][state.month - 1]
+    });
+    var keys = Object.keys(result.needs).sort(function (a, b) {
+      return result.needs[b].typical_m3 - result.needs[a].typical_m3;
+    });
+    var max = result.needs[keys[0]].dry_m3;
+    $("needs").innerHTML = keys.map(function (key) {
+      var n = result.needs[key];
+      return "<div class=\"need-row\" title=\"" + esc(cropName(key)) + ": " + num(n.typical_m3) + " m³ · " +
+        L.dry + ": " + num(n.dry_m3) + " m³ · " + n.days + " d\"><span>" + esc(cropName(key)) +
+        "</span><div class=\"track\"><i style=\"width:" + (100 * n.typical_m3 / max) + "%\"></i>" +
+        "<u style=\"left:calc(" + (100 * n.dry_m3 / max) + "% - 2px)\"></u></div><b>" +
+        num(n.typical_m3) + " m³</b></div>";
+    }).join("") + "<div class=\"key\"><span><i class=\"k-bar\"></i>" + L.typical +
+      "</span><span><i class=\"k-tick\"></i>" + L.dry + "</span></div>";
+  }
+
+  // Share of each calendar month covered by a crop planted on the 15th.
+  function cycleShares(days) {
+    var shares = {};
+    for (var d = 0; d < days; d++) {
+      var m = (state.month - 1 + Math.floor((14 + d) / 30.4)) % 12;
+      shares[m] = (shares[m] || 0) + 1 / 30.4;
+    }
+    return shares;
+  }
+
+  // Water balance: rain (bars) against the water the field loses (line).
+  // The red block between them is the water irrigation has to supply.
+  function drawClimate(result) {
+    var L = T[state.lang];
+    var c = zone().climate;
+    $("climate-sub").textContent = tr("climate_sub", { zone: zone().name });
+
+    var W = 520, H = 246, left = 34, right = 8, top = 10, plotH = 172;
+    var plotBottom = top + plotH, stripY = plotBottom + 26, stripH = 22;
+    var plotW = W - left - right;
+    var max = Math.ceil(Math.max.apply(null, c.et0.concat(c.rain)) / 50) * 50;
+    var step = plotW / 12;
+    var y = function (v) { return top + plotH - plotH * v / max; };
+    var shares = cycleShares(result.needs.rice.days);
+    var svg = "<svg viewBox=\"0 0 " + W + " " + H + "\" role=\"img\" aria-label=\"" + esc(L.climate_title) + "\">";
+
+    Object.keys(shares).forEach(function (m) {
+      svg += "<rect x=\"" + (left + m * step) + "\" y=\"" + top + "\" width=\"" + step + "\" height=\"" + plotH + "\" fill=\"#e3f0e9\"/>";
+    });
+    for (var g = 0; g <= max; g += 50) {
+      svg += "<line x1=\"" + left + "\" x2=\"" + (W - right) + "\" y1=\"" + y(g) + "\" y2=\"" + y(g) + "\" stroke=\"#e2dfd5\"/>" +
+        "<text x=\"" + (left - 5) + "\" y=\"" + (y(g) + 4) + "\" text-anchor=\"end\">" + g + "</text>";
+    }
+    var points = [];
+    c.rain.forEach(function (rain, i) {
+      var x = left + i * step, et0 = c.et0[i], gap = et0 - rain;
+      var tip = MONTHS[state.lang][i] + " · " + L.tip_rain + " " + num(rain) + " mm · " + L.tip_et0 + " " + num(et0) + " mm" +
+        (gap > 0 ? " · " + L.tip_gap + " " + num(gap) + " mm" : "");
+      if (gap > 0) {
+        svg += "<rect x=\"" + (x + step * 0.22) + "\" y=\"" + y(et0) + "\" width=\"" + (step * 0.56) + "\" height=\"" +
+          (y(rain) - y(et0) - 2) + "\" rx=\"3\" fill=\"#f5aeae\"><title>" + tip + "</title></rect>";
+      }
+      svg += "<rect x=\"" + (x + step * 0.22) + "\" y=\"" + y(rain) + "\" width=\"" + (step * 0.56) + "\" height=\"" +
+        (plotBottom - y(rain)) + "\" rx=\"3\" fill=\"#2a78d6\"><title>" + tip + "</title></rect>" +
+        "<text x=\"" + (x + step / 2) + "\" y=\"" + (plotBottom + 15) + "\" text-anchor=\"middle\">" + MONTHS_SHORT[state.lang][i] + "</text>";
+      points.push((x + step / 2) + "," + y(et0));
+    });
+    svg += "<polyline points=\"" + points.join(" ") + "\" fill=\"none\" stroke=\"#17160f\" stroke-width=\"2\"/>";
+    c.et0.forEach(function (et0, i) {
+      svg += "<circle cx=\"" + (left + i * step + step / 2) + "\" cy=\"" + y(et0) + "\" r=\"3.5\" fill=\"#17160f\" stroke=\"#fff\" stroke-width=\"1.5\"/>";
+    });
+
+    // Heat strip: average daily maximum of each month (28 C light to 38 C dark).
+    svg += "<text x=\"" + (left - 5) + "\" y=\"" + (stripY + 15) + "\" text-anchor=\"end\">°C</text>";
+    c.tmax.forEach(function (tmax, i) {
+      var shade = RAMPS.heat[Math.max(0, Math.min(4, Math.floor((tmax - 28) / 2)))];
+      svg += "<rect x=\"" + (left + i * step + 1) + "\" y=\"" + stripY + "\" width=\"" + (step - 2) + "\" height=\"" + stripH +
+        "\" rx=\"3\" fill=\"" + shade + "\"><title>" + MONTHS[state.lang][i] + " · " + L.tip_tmax + " " + num(tmax, 1) + " °C</title></rect>" +
+        "<text class=\"strip\" x=\"" + (left + i * step + step / 2) + "\" y=\"" + (stripY + 15) + "\" text-anchor=\"middle\">" + num(tmax) + "</text>";
+    });
+    svg += "</svg>";
+
+    $("climate").innerHTML = "<div class=\"key\"><span><i class=\"k-bar\"></i>" + L.rain +
+      "</span><span><i class=\"k-gap\"></i>" + L.shortfall + "</span><span><i class=\"k-line\"></i>" + L.et0 +
+      "</span><span><i class=\"k-band\"></i>" + L.cycle + "</span></div>" + svg +
+      "<p class=\"note\">" + esc(L.strip) + "</p>";
+
+    var rainCycle = 0, et0Cycle = 0;
+    Object.keys(shares).forEach(function (m) {
+      rainCycle += shares[m] * c.rain[m];
+      et0Cycle += shares[m] * c.et0[m];
+    });
+    var lastMonth = (state.month - 1 + Math.floor((14 + result.needs.rice.days - 1) / 30.4)) % 12;
+    $("climate-note").textContent = tr("climate_note", {
+      from: MONTHS[state.lang][state.month - 1], to: MONTHS[state.lang][lastMonth],
+      rain: num(rainCycle), et0: num(et0Cycle), gap: num(Math.max(0, et0Cycle - rainCycle)),
+      rain_year: num(total(c.rain)), et0_year: num(total(c.et0))
+    });
+  }
+
+  // Heat alert: the average daily maximum of each crop's cycle against the
+  // crop's reference limit (the same test the engine uses for its heat warning).
+  function drawHeat(result) {
+    var L = T[state.lang];
+    $("heat-sub").textContent = tr("heat_sub", { month: MONTHS[state.lang][state.month - 1], zone: zone().name });
+    var low = 26, high = 40;
+    function at(temp) { return 100 * (Math.max(low, Math.min(high, temp)) - low) / (high - low); }
+    $("heat").innerHTML = Object.keys(result.needs).map(function (key) {
+      var tmax = result.needs[key].tmax, limit = D.crops[key].heat_limit;
+      var hot = tmax > limit;
+      var status = hot ? "▲ " + tr("heat_over", { n: num(tmax - limit, 1), limit: limit })
+        : "✓ " + tr("heat_ok", { limit: limit });
+      return "<div class=\"heat-row" + (hot ? " hot" : "") + "\"><span>" + esc(cropName(key)) + "</span><div class=\"track\">" +
+        (hot ? "<em style=\"left:" + at(limit) + "%;width:" + (at(tmax) - at(limit)) + "%\"></em>" : "") +
+        "<u style=\"left:calc(" + at(limit) + "% - 1px)\"></u><i style=\"left:calc(" + at(tmax) + "% - 6px)\"></i></div>" +
+        "<b>" + num(tmax, 1) + " °C</b><small>" + esc(status) + "</small></div>";
+    }).join("");
+    $("heat-key").innerHTML = "<span><i class=\"k-dot\"></i>" + L.heat_dot + "</span><span><i class=\"k-tick\"></i>" +
+      L.heat_tick + "</span><span><i class=\"k-gap\"></i>" + L.heat_zone + "</span>";
+  }
+
+  function drawBasin(selected, result, byKey) {
+    var basin = zone().basin;
+    if (!D.basins[basin]) {
+      $("basin").innerHTML = "<p class=\"sub\">" + esc(tr("basin_none", { basin: basin })) + "</p>";
+      return;
+    }
+    var alt = selected.alternative || byKey.mixed.alternative;
+    var saving = E.basinSavings(D, basin, result.needs.rice.typical_m3, result.needs[alt].typical_m3, state.basinShare);
+    var dams = Object.keys(saving.dam_share).map(function (name) {
+      var share = saving.dam_share[name];
+      return "<div class=\"dam\"><div class=\"tank\"><i style=\"height:" + Math.min(100, 100 * share) + "%\"></i><b>" +
+        Math.round(100 * share) + "%</b></div><strong>" + esc(name) + "</strong>" +
+        esc(tr("basin_of", { dam: name })) + " (" + tr("basin_cap", { n: num(D.basins[basin].dams[name], 0) }) + ")</div>";
+    }).join("");
+
+    $("basin").innerHTML =
+      "<div class=\"basin-head\"><div><p class=\"basin-q\">" + esc(tr("basin_q", {
+        share: Math.round(state.basinShare * 100), basin: basin, alt: lower(cropName(alt))
+      })) + "</p><input id=\"basin-share\" type=\"range\" min=\"0\" max=\"100\" step=\"5\" value=\"" +
+      Math.round(state.basinShare * 100) + "\" aria-label=\"%\"></div>" +
+      "<p class=\"basin-big\">" + tr("basin_big", { n: num(saving.field_million_m3) }) + "<small>" +
+      esc(tr("basin_small", { tareas: num(saving.tareas) })) + "</small></p></div>" +
+      "<div class=\"dams\">" + dams + "</div><p class=\"note\">" + esc(tr("basin_note")) + "</p>";
+    $("basin-share").oninput = function () {
+      state.basinShare = this.value / 100;
+      drawBasin(selected, result, byKey);
+      $("basin-share").focus();
+    };
+  }
+
+  function drawLimits() {
+    var z = zone();
+    $("limits").innerHTML = T[state.lang].limits.map(function (text) {
+      return "<li>" + esc(fill(text, {
+        adjust: (z.temp_adjustment > 0 ? "+" : "") + num(z.temp_adjustment, 1), cell: num(z.cell_elev), elev: z.elev
+      })) + "</li>";
+    }).join("");
+  }
+
+  // ------------------------------------------------------------------
+  // Water traffic light, map of the Cibao and the farm seen from above
+  // ------------------------------------------------------------------
+
+  // 100 squares: each crop gets its share of the farm, the rest stays empty.
+  function paintCells(cells, s) {
+    var index = 0;
+    s.plots.forEach(function (p) {
+      var count = Math.round(100 * p.tareas / state.area);
+      for (var n = 0; n < count && index < 100; n++) cells[index++].className = role(p.crop);
+    });
+    while (index < 100) cells[index++].className = "idle";
+  }
+
+  // Normal: most of the water. Tandeo: water by turns. Veda: rice is banned.
+  function waterStatus() {
+    if (!state.riceAllowed) return "veda";
+    return state.allocation >= 0.8 ? "normal" : "tandeo";
+  }
+
+  function drawLight() {
+    var L = T[state.lang];
+    var status = waterStatus();
+    $("light").innerHTML = ["normal", "tandeo", "veda"].map(function (key) {
+      return "<button type=\"button\" data-light=\"" + key + "\" class=\"" + key + (status === key ? " on" : "") +
+        "\" aria-pressed=\"" + (status === key) + "\"><i></i><b>" + L.light[key] + "</b><span>" +
+        L.light_desc[key] + "</span></button>";
+    }).join("");
+  }
+
+  function mx(lon) { return (lon - MAP.lon0) * MAP.cos * MAP.k; }
+  function my(lat) { return (MAP.lat0 - lat) * MAP.k; }
+  function mapPath(points, close) {
+    return "M" + points.map(function (p) {
+      return mx(p[0]).toFixed(1) + "," + my(p[1]).toFixed(1);
+    }).join("L") + (close ? "Z" : "");
+  }
+  function total(list) { return list.reduce(function (a, b) { return a + b; }, 0); }
+
+  // The number each map layer shows for a zone, all from NASA POWER (2001-2020).
+  function layerValue(z, layer) {
+    if (layer === "balance") return total(z.climate.rain) - total(z.climate.et0);
+    if (layer === "soil") return total(z.climate.soil) / 12;
+    if (layer === "heat") return Math.max.apply(null, z.climate.tmax);
+    return null;
+  }
+  function layerText(value, layer) {
+    if (layer === "balance") return num(value) + " mm";
+    if (layer === "soil") return num(value) + "%";
+    return num(value, 1) + " °C";
+  }
+  function shortName(name) {
+    var inside = name.match(/\((.*)\)/);
+    return inside ? inside[1] : name;
+  }
+
+  function drawMap() {
+    var L = T[state.lang];
+    var layer = state.layer;
+    document.querySelectorAll("#layers button").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-value") === layer);
+    });
+
+    // Group the zones by the NASA POWER square (0.5 x 0.625 degrees) they fall in.
+    var squares = {};
+    D.zones.forEach(function (z, i) {
+      var lat = Math.round(z.lat / 0.5) * 0.5;
+      var lon = Math.round(z.lon / 0.625) * 0.625;
+      var key = lat + "|" + lon;
+      if (!squares[key]) squares[key] = { lat: lat, lon: lon, zones: [] };
+      squares[key].zones.push(i);
+    });
+    var values = D.zones.map(function (z) { return layerValue(z, layer); });
+    var low = Math.min.apply(null, values), high = Math.max.apply(null, values);
+    function color(value) {
+      var share = high > low ? (value - low) / (high - low) : 0;
+      if (layer === "balance") share = 1 - share; // a bigger shortfall is darker
+      return RAMPS[layer][Math.min(4, Math.floor(share * 5))];
+    }
+
+    var svg = "<svg viewBox=\"0 0 " + MAP.w + " " + MAP.h + "\" role=\"group\" aria-label=\"" + esc(L.map_aria) + "\">" +
+      "<rect width=\"" + MAP.w + "\" height=\"" + MAP.h + "\" fill=\"#dcebf7\"/>" +
+      "<path d=\"" + mapPath(GEO.haiti, true) + "\" fill=\"#e9e6dc\"/>" +
+      "<path d=\"" + mapPath(GEO.land, true) + "\" fill=\"#f8f5ec\" stroke=\"#c9c4b4\"/>" +
+      "<text class=\"place\" x=\"" + mx(-70.75) + "\" y=\"" + my(19.98) + "\">" + L.ocean + "</text>" +
+      "<text class=\"place\" x=\"" + mx(-71.97) + "\" y=\"" + my(19.30) + "\">" + L.haiti + "</text>";
+
+    Object.keys(squares).forEach(function (key) {
+      var sq = squares[key];
+      var x = mx(sq.lon - 0.3125), y = my(sq.lat + 0.25);
+      var w = 0.625 * MAP.cos * MAP.k, h = 0.5 * MAP.k;
+      var mine = sq.zones.indexOf(state.zone) >= 0;
+      var value = layer === "basins" ? null :
+        total(sq.zones.map(function (i) { return values[i]; })) / sq.zones.length;
+      svg += "<rect x=\"" + x + "\" y=\"" + y + "\" width=\"" + w + "\" height=\"" + h + "\" fill=\"" +
+        (value === null ? "none" : color(value)) + "\" fill-opacity=\"0.72\" stroke=\"" +
+        (mine ? "#0c5a3c" : "#8a8778") + "\" stroke-width=\"" + (mine ? 2.5 : 1) + "\"" +
+        (mine ? "" : " stroke-dasharray=\"3 4\"") + "/>";
+      if (value !== null) {
+        // The number goes in the corner with the most free space.
+        var atLeft = sq.lon < -71;
+        svg += "<text class=\"value\" text-anchor=\"" + (atLeft ? "start" : "end") + "\" x=\"" +
+          (atLeft ? x + 7 : x + w - 7) + "\" y=\"" + (y + h - 8) + "\">" + layerText(value, layer) + "</text>";
+      }
+    });
+
+    GEO.rivers.forEach(function (river) {
+      svg += "<path d=\"" + mapPath(river.points) + "\" fill=\"none\" stroke=\"#2a78d6\" stroke-width=\"" +
+        (river.main ? 3 : 1.8) + "\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>";
+    });
+    svg += "<text class=\"river\" x=\"" + mx(-71.70) + "\" y=\"" + my(19.585) + "\">" + L.river + " Yaque del Norte</text>" +
+      "<text class=\"river\" x=\"" + mx(-69.86) + "\" y=\"" + my(19.045) + "\">" + L.river + " Yuna</text>";
+
+    GEO.dams.forEach(function (dam) {
+      var x = mx(dam.lon), y = my(dam.lat);
+      svg += "<rect x=\"" + (x - 5) + "\" y=\"" + (y - 5) + "\" width=\"10\" height=\"10\" fill=\"#174f96\" stroke=\"#fff\" stroke-width=\"1.5\" transform=\"rotate(45 " +
+        x + " " + y + ")\"/><text class=\"dam-name\" text-anchor=\"" + dam.anchor + "\" x=\"" + (x + dam.dx) + "\" y=\"" + (y + dam.dy) + "\">" + dam.name + "</text>";
+    });
+
+    D.zones.forEach(function (z, i) {
+      var x = mx(z.lon), y = my(z.lat), label = GEO.labels[i], mine = i === state.zone;
+      svg += "<g class=\"zone" + (mine ? " mine" : "") + "\" data-zone=\"" + i + "\" tabindex=\"0\" role=\"button\" aria-label=\"" +
+        esc(z.name) + "\"><circle cx=\"" + x + "\" cy=\"" + y + "\" r=\"17\" fill=\"transparent\"/>" +
+        "<circle class=\"dot\" cx=\"" + x + "\" cy=\"" + y + "\" r=\"" + (mine ? 9 : 6.5) + "\"/>" +
+        "<text text-anchor=\"" + label.anchor + "\" x=\"" + (x + label.dx) + "\" y=\"" + (y + label.dy) + "\">" +
+        esc(shortName(z.name)) + "</text><title>" + esc(z.name) + "</title></g>";
+    });
+    $("map").innerHTML = svg + "</svg>";
+
+    var key = "<span><i class=\"k-zone\"></i>" + L.zone_dot + "</span><span><i class=\"k-zone mine\"></i>" + L.selected_dot + "</span>";
+    if (layer === "basins") {
+      key += "<span><i class=\"k-river\"></i>" + L.river + "</span><span><i class=\"k-dam\"></i>" + L.dam + "</span>";
+    } else {
+      var ramp = RAMPS[layer].slice();
+      var from = layer === "balance" ? high : low, to = layer === "balance" ? low : high;
+      key += "<span class=\"k-ramp\">" + layerText(from, layer) + " " + ramp.map(function (c) {
+        return "<i style=\"background:" + c + "\"></i>";
+      }).join("") + " " + layerText(to, layer) + "</span>";
+    }
+    $("map-key").innerHTML = key + "<span class=\"k-text\">" + esc(L.layer_desc[layer]) +
+      (layer === "basins" ? "" : " " + esc(L.layer_source)) + "</span>";
+  }
+
+  function drawParcel(s) {
+    var L = T[state.lang];
+    paintCells($("parcel").children, s);
+    $("parcel-sub").textContent = tr("parcel_sub", { name: strategyName(s), area: tareasText(state.area) });
+    function tile(value, text) { return "<div><b>" + value + "</b><span>" + esc(text) + "</span></div>"; }
+    $("impact").innerHTML =
+      tile(num(s.urea_sacks), L.impact_n) +
+      tile(num(Math.max(0, s.saved_m3)), L.impact_water) +
+      tile(tareasText(state.area - s.idle_tareas) + " / " + tareasText(state.area), L.impact_land);
+  }
+
+  // ------------------------------------------------------------------
+  // Reacting to the farmer
+  // ------------------------------------------------------------------
+  function listen() {
+    document.querySelectorAll(".lang button").forEach(function (button) {
+      button.onclick = function () {
+        state.lang = button.getAttribute("data-lang");
+        drawStatic();
+        listen();
+        draw();
+      };
+    });
+    $("zone").onchange = function () { state.zone = +this.value; draw(); };
+    $("month").onchange = function () { state.month = +this.value; draw(); };
+    $("area").oninput = function () {
+      var value = parseFloat(this.value);
+      if (value > 0) { state.area = Math.min(value, 20000); draw(); }
+    };
+    $("soil").onclick = function (event) {
+      var value = event.target.getAttribute("data-value");
+      if (value) { state.soil = value; draw(); }
+    };
+    $("priority").onclick = function (event) {
+      var value = event.target.getAttribute("data-value");
+      if (value) { state.priority = value; state.selected = null; draw(); }
+    };
+    $("allocation").oninput = function () { state.allocation = this.value / 100; draw(); };
+    $("light").onclick = function (event) {
+      var button = event.target.closest("[data-light]");
+      if (!button) return;
+      var status = button.getAttribute("data-light");
+      state.riceAllowed = status !== "veda";
+      state.allocation = { normal: 1, tandeo: 0.6, veda: 0.3 }[status];
+      state.selected = null;
+      draw();
+    };
+    $("layers").onclick = function (event) {
+      var value = event.target.getAttribute("data-value");
+      if (value) { state.layer = value; drawMap(); }
+    };
+    function pickZone(event) {
+      var zoneMark = event.target.closest("[data-zone]");
+      if (!zoneMark || (event.type === "keydown" && event.key !== "Enter" && event.key !== " ")) return;
+      event.preventDefault();
+      state.zone = +zoneMark.getAttribute("data-zone");
+      $("zone").value = state.zone;
+      draw();
+    }
+    $("map").onclick = pickZone;
+    $("map").onkeydown = pickZone;
+    // Example case: Don Pedro, 100 tareas of clay soil in Mao, 60% of the water.
+    $("don-pedro").onclick = function () {
+      D.zones.forEach(function (z, i) { if (z.name.indexOf("Valverde") === 0) state.zone = i; });
+      state.area = 100; state.soil = "clay"; state.priority = "income";
+      state.allocation = 0.6; state.riceAllowed = true; state.salty = false; state.selected = null;
+      $("zone").value = state.zone; $("area").value = 100; $("salty").checked = false;
+      draw();
+      $("headline").scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    $("rice-banned").onchange = function () { state.riceAllowed = !this.checked; state.selected = null; draw(); };
+    $("salty").onchange = function () { state.salty = this.checked; draw(); };
+    $("cards").onclick = function (event) {
+      var card = event.target.closest(".card");
+      if (card) { state.selected = card.getAttribute("data-key"); draw(); }
+    };
+  }
+
+  window.onbeforeprint = function () { document.body.classList.add("sheet-mode"); };
+  window.onafterprint = function () { document.body.classList.remove("sheet-mode"); };
+
+  drawStatic();
+  listen();
+  draw();
+})();

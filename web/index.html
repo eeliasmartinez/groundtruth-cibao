@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GroundTruth Cibao · Plan B</title>
+  <meta name="description" content="Crop-rotation decision support for rice farmers of the Cibao valley, Dominican Republic, powered by NASA POWER data.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+        <path d="M16 3c5 6 8 10.5 8 15a8 8 0 0 1-16 0c0-4.500 3-9 8-15z" fill="#2a78d6"/>
+        <path d="M16 29V15m0 6c-3-.5-5-2.500-5.500-5.500M16 18c3-.5 5-2.500 5.500-5.500" fill="none" stroke="#fff" stroke-width="1.800" stroke-linecap="round"/>
+      </svg>
+      <span>GroundTruth Cibao</span>
+    </div>
+    <div class="lang" role="group" aria-label="Idioma / Language">
+      <button type="button" data-lang="es" class="on">Español</button>
+      <button type="button" data-lang="en">English</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1 data-t="hero_title"></h1>
+    <p class="lead" data-t="hero_lead"></p>
+    <div class="hero-actions">
+      <button type="button" class="btn primary big" id="don-pedro" data-t="pedro_btn"></button>
+      <span class="hero-note" data-t="pedro_note"></span>
+    </div>
+    <ul class="facts" id="facts"></ul>
+  </section>
+
+  <main class="layout">
+    <aside class="panel controls" aria-labelledby="farm-title">
+      <h2 id="farm-title" data-t="farm"></h2>
+
+      <label class="field"><span data-t="zone"></span>
+        <select id="zone"></select>
+      </label>
+
+      <div class="row2">
+        <label class="field"><span data-t="month"></span>
+          <select id="month"></select>
+        </label>
+        <label class="field"><span data-t="area"></span>
+          <input id="area" type="number" min="1" max="20000" step="1" value="100" inputmode="decimal">
+        </label>
+      </div>
+
+      <div class="field"><span data-t="soil"></span>
+        <div class="seg" id="soil" role="group"></div>
+      </div>
+
+      <div class="field"><span data-t="priority"></span>
+        <div class="seg" id="priority" role="group"></div>
+      </div>
+
+      <div class="water-control">
+        <div class="water-head">
+          <label for="allocation" data-t="allocation"></label>
+          <output id="allocation-out" for="allocation"></output>
+        </div>
+        <input id="allocation" type="range" min="0" max="100" step="5" value="60">
+        <div class="light" id="light" role="group"></div>
+        <p class="hint" data-t="allocation_hint"></p>
+        <p class="hint" data-t="light_note"></p>
+      </div>
+
+      <label class="check"><input id="rice-banned" type="checkbox"><span data-t="rice_banned"></span></label>
+      <label class="check"><input id="salty" type="checkbox"><span data-t="salty"></span></label>
+    </aside>
+
+    <div class="results">
+      <p class="headline" id="headline" aria-live="polite"></p>
+
+      <div class="two map-row">
+        <section class="panel" aria-labelledby="map-title">
+          <h2 id="map-title" data-t="map_title"></h2>
+          <p class="sub" data-t="map_sub"></p>
+          <div class="seg layers" id="layers" role="group"></div>
+          <div id="map"></div>
+          <div class="key" id="map-key"></div>
+          <p class="note" data-t="map_note"></p>
+        </section>
+
+        <section class="panel" aria-labelledby="parcel-title">
+          <h2 id="parcel-title" data-t="parcel_title"></h2>
+          <p class="sub" id="parcel-sub"></p>
+          <div class="plot big" id="parcel" aria-hidden="true"></div>
+          <div class="impact" id="impact"></div>
+        </section>
+      </div>
+
+      <section aria-labelledby="strategies-title">
+        <h2 id="strategies-title" data-t="strategies"></h2>
+        <p class="sub" data-t="strategies_sub"></p>
+        <div class="legend" id="legend"></div>
+        <div class="cards" id="cards"></div>
+      </section>
+
+      <section class="panel detail" id="detail" aria-live="polite"></section>
+
+      <div class="two">
+        <section class="panel" aria-labelledby="needs-title">
+          <h2 id="needs-title" data-t="needs_title"></h2>
+          <p class="sub" id="needs-sub"></p>
+          <div id="needs"></div>
+          <p class="note" data-t="needs_note"></p>
+        </section>
+
+        <section class="panel" aria-labelledby="climate-title">
+          <h2 id="climate-title" data-t="climate_title"></h2>
+          <p class="sub" id="climate-sub"></p>
+          <div id="climate"></div>
+          <p class="note" id="climate-note"></p>
+        </section>
+      </div>
+
+      <section class="panel" aria-labelledby="heat-title">
+        <h2 id="heat-title" data-t="heat_title"></h2>
+        <p class="sub" id="heat-sub"></p>
+        <div class="heat" id="heat"></div>
+        <div class="key" id="heat-key"></div>
+        <p class="note" data-t="heat_note"></p>
+      </section>
+
+      <section class="panel basin" id="basin-section" aria-labelledby="basin-title">
+        <h2 id="basin-title" data-t="basin_title"></h2>
+        <div id="basin"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="faq-title">
+        <h2 id="faq-title" data-t="faq_title"></h2>
+        <p class="sub" data-t="faq_sub"></p>
+        <div id="faq"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="trust-title">
+        <h2 id="trust-title" data-t="trust_title"></h2>
+        <details open>
+          <summary data-t="limits_title"></summary>
+          <ul id="limits"></ul>
+        </details>
+        <details>
+          <summary data-t="method_title"></summary>
+          <ul id="method"></ul>
+        </details>
+        <details>
+          <summary data-t="sources_title"></summary>
+          <ul id="sources"></ul>
+        </details>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <p data-t="foot_support"></p>
+    <p data-t="foot_ai"></p>
+    <p data-t="foot_nasa"></p>
+  </footer>
+
+  <div id="sheet" aria-hidden="true"></div>
+
+  <script src="data.js"></script>
+  <script src="engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
