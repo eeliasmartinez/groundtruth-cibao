@@ -111,6 +111,13 @@ h2 { font-size: clamp(26px, 3vw, 36px); line-height: 1; }
 :is(#map, .g-map, #h-map) .rv.main { stroke-width: 2.8; opacity: 1; }
 :is(#map, .g-map, #h-map) .province-line { fill: transparent; stroke: rgba(16, 19, 26, .58); stroke-width: 1.1; vector-effect: non-scaling-stroke; cursor: pointer; }
 :is(#map, .g-map, #h-map) .province-line:hover { stroke: var(--red); stroke-width: 2; }
+:is(#map, .g-map, #h-map) .highway-casing { fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+:is(#map, .g-map, #h-map) .highway { fill: none; stroke: var(--red); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+:is(#map, .g-map, #h-map) .highway-label { fill: var(--ink); font-size: 10px; font-weight: 800; paint-order: stroke; stroke: #fff; stroke-width: 3px; }
+:is(#map, .g-map, #h-map) .map-car { pointer-events: none; filter: drop-shadow(1px 1px 1px rgba(0,0,0,.4)); }
+:is(#map, .g-map, #h-map) .map-car circle { fill: #10131a; }
+:is(#map, .g-map, #h-map) .rice-shadow { fill: rgba(0,0,0,.18); }
+:is(#map, .g-map, #h-map) .rice-sprout { fill: none; stroke: #527632; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(1px 1px 1px rgba(0,0,0,.4)); }
 :is(#map, .g-map, #h-map) .rv-flow { fill: none; stroke: #fff; stroke-width: 1.2; stroke-linecap: round; stroke-dasharray: 2 9; animation: mapflow 1.4s linear infinite; pointer-events: none; }
 @keyframes mapflow { to { stroke-dashoffset: -11; } }
 :is(#map, .g-map, #h-map) .zone { cursor: pointer; }
@@ -315,6 +322,13 @@ details.more p { margin-top: 6px; max-width: 75ch; }
 
 /* ---- guided walkthrough: one question per screen ---- */
 .guide { max-width: calc(980px + 2 * var(--edge)); margin: 0 auto; padding: 22px var(--edge) 40px; min-height: calc(100vh - 58px); display: grid; align-content: start; gap: 14px; }
+.guide.with-scene { max-width: calc(1420px + 2 * var(--edge)); }
+.g-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
+.guide.with-scene .g-layout { grid-template-columns: minmax(300px, .9fr) minmax(430px, 1.1fr); }
+.g-scene { position: sticky; top: 86px; min-width: 0; }
+.g-scene-label { margin: 9px 2px 0; color: var(--ink-2); font-size: 14px; line-height: 1.4; }
+#g-canvas { display: block; width: 100%; height: auto; aspect-ratio: 10 / 7; cursor: grab; touch-action: pan-y; }
+#g-canvas:active { cursor: grabbing; }
 .g-top { display: grid; grid-template-columns: auto 1fr; gap: 14px; align-items: center; font-family: var(--display); font-weight: 800; font-size: 18px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--blue); }
 .g-progress { height: 8px; background: #fff; border: 2px solid var(--ink); }
 .g-progress i { display: block; height: 100%; background: var(--blue); transition: width 400ms var(--ease-in-out); }
@@ -465,6 +479,10 @@ body.sheet-mode #sheet { display: block; max-width: 720px; margin: 0 auto; paddi
 details.more .soil-table { margin-top: 8px; }
 @media (max-width: 860px) {
   .zone-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 1040px) {
+  .guide.with-scene .g-layout { grid-template-columns: minmax(0, 1fr); }
+  .g-scene { position: static; }
 }
 
 /* ---- the Back button: top bar on a computer, above the tab bar on a phone ---- */

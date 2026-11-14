@@ -59,11 +59,20 @@
       <span id="g-count"></span>
       <div class="g-progress"><i id="g-bar"></i></div>
     </div>
-    <div class="panel g-card">
-      <div id="g-stage" aria-live="polite"></div>
-      <div class="g-foot">
-        <button type="button" class="btn big" data-g-back></button>
-        <button type="button" class="btn primary big" data-g-next></button>
+    <div class="g-layout" id="g-layout">
+      <aside class="g-scene" id="g-scene-panel" hidden>
+        <div class="z-stage">
+          <canvas id="g-canvas" aria-hidden="true"></canvas>
+          <p class="note" data-t="z_note"></p>
+        </div>
+        <p class="g-scene-label" data-t="g_scene_label"></p>
+      </aside>
+      <div class="panel g-card">
+        <div id="g-stage" aria-live="polite"></div>
+        <div class="g-foot">
+          <button type="button" class="btn big" data-g-back></button>
+          <button type="button" class="btn primary big" data-g-next></button>
+        </div>
       </div>
     </div>
   </section>
@@ -279,6 +288,7 @@
   <script src="data.js"></script>
   <script src="geo.js"></script>
   <script src="provinces.js"></script>
+  <script src="roads.js"></script>
   <script src="relief.js"></script>
   <script src="engine.js"></script>
   <script src="app.js"></script>

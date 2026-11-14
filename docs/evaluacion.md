@@ -22,3 +22,20 @@ Documento del equipo. Redacción asistida por IA (Claude Code). Notas de 1 a 10.
 2. Probarla con una persona que no sea del equipo y anotar dónde se pierde (Uso).
 3. Instalarla y usarla sin conexión en un teléfono real (Portabilidad).
 4. Fotos propias de suelos y de un arrozal del Cibao (Diseño e impacto local).
+
+## Actualización: recorrido persistente y Autopista Duarte (14-nov, tarde)
+
+- La pregunta que sigue a “Continuar con esta finca” ahora conserva el relieve 3D en una
+  columna lateral. Debe validarse manualmente en la copia local y en una pantalla pequeña;
+  la política del navegador de esta sesión bloqueó la URL `file://` para inspección.
+- La Autopista Duarte usa pasos nombrados de una ruta OSRM sobre OpenStreetMap, con
+  atribución y el descriptor oficial de corredor del MOPC. El trazo es de referencia, no
+  una geometría oficial del derecho de vía.
+- Los carros en movimiento son una animación, sin datos de tránsito real. Los brotes son
+  símbolos de las zonas arroceras disponibles; el prototipo no detecta cultivos por imagen.
+- No se representaron animales ni otros cultivos en puntos escogidos a mano. El Atlas de
+  la ONE reporta cultivos por regiones/provincias, no parcelas individuales; añadir otros
+  símbolos requiere definir una capa regional y explicarla para no hacerla pasar por una
+  observación de NASA.
+- Verificación de código: sintaxis JS correcta; `check_web.js` pasó 409 escenarios y
+  comparó 36,316 valores sin diferencias. El motor Python no se modificó en esta ronda.

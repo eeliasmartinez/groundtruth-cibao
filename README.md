@@ -39,6 +39,8 @@ and soil wetness. From it the engine computes:
 | `rotation.py` | Builds and scores the rotation strategies |
 | `build_web.py` | Runs the engine and writes the data the page uses |
 | `build_provinces.py` | Simplifies the 32 province outlines for the offline map |
+| `build_roads.py` | Simplifies the saved OpenStreetMap route for the offline Duarte overlay |
+| `data/duarte_osrm.json` | Saved route geometry source, filtered to named Duarte highway steps |
 | `check_engine.py`, `check_web.js` | Automatic quality checks |
 | `app.py`, `charts.py` | Streamlit "data lab" with the NASA climate charts |
 | `docs/` | Team research notes (Spanish) |
@@ -81,6 +83,7 @@ open web/index.html
 Full links are listed in the page's "Sources" section and in `docs/investigacion.md`.
 Built with Python, pandas, NumPy, requests, Streamlit and Altair (open source).
 Map coastline: Natural Earth (public domain). Map rivers: © OpenStreetMap contributors (ODbL).
+Autopista Duarte reference line: © OpenStreetMap contributors (ODbL), routed through OSRM; official corridor description: MOPC / RD Vial.
 Typefaces: Big Shoulders Display and Archivo (SIL Open Font License), via Fontsource.
 Elevation: Terrain Tiles on AWS Open Data (Mapzen), derived mainly from NASA SRTM.
 Satellite photo: NASA Worldview Snapshots, MODIS Terra corrected reflectance, 18 Feb 2026.

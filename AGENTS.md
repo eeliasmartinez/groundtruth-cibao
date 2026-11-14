@@ -83,9 +83,19 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
 - **Límites provinciales:** geoBoundaries ADM1 (2022, dominio público), guardados en
   `data/provinces.geojson` y `web/provinces.js` (lo genera `build_provinces.py`). Tocar
   una provincia selecciona el punto arrocero más cercano, no una parcela exacta.
+- **Autopista Duarte:** `data/duarte_osrm.json` guarda los tramos nombrados de la ruta
+  OSRM sobre OpenStreetMap; `build_roads.py` genera `web/roads.js`. En el mapa aparecen
+  la línea y carritos animados. Los carros son ilustrativos, no tráfico en vivo. La línea
+  es referencia OSM, no levantamiento oficial del MOPC.
+- **Arroz en el mapa:** los brotes marcan las 14 zonas arroceras del prototipo. No son
+  campos detectados por satélite ni parcelas exactas. No se añadieron animales ni otros
+  cultivos porque no hay capas georreferenciadas fiables para ubicarlos.
 - **Marca de finca en el relieve 3D:** aparece al elegir "Planificar mi finca aquí"; es
   ilustrativa. El relieve y NASA POWER no tienen detalle suficiente para ubicar el lindero
   de una parcela.
+- **Cuestionario con relieve:** al continuar desde la ficha de una zona, el siguiente
+  paso y las preguntas siguientes mantienen el mismo relieve 3D en una columna lateral.
+  La vista se puede girar allí; el botón Atrás conserva la navegación.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
   la página, subir el número de `CACHE` en `web/sw.js`.
 - **Un solo período:** todo usa 2001–2025.
@@ -129,6 +139,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   pregunta de suelo del recorrido. Las fotos de suelos no se pudieron bajar; usa dibujos.
 - Se quitó el botón del caso de Don Pedro. Hay botón "Volver a mi plan".
 - Evaluación crítica por aspecto: `docs/evaluacion.md`.
+- Continuación para Claude Code: `docs/continuacion_claude.md`.
 
 ## Botón Atrás general
 - El botón "← Atrás" (barra superior; en celular flota sobre la barra de pestañas)
