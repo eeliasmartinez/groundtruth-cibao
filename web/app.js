@@ -1,6 +1,6 @@
 // GroundTruth Cibao - Plan B. Page behavior.
 // Reads the farmer's answers, asks engine.js for the strategies and draws them.
-// Code written with the assistance of Claude Code (Anthropic).
+// Code written with the assistance of Claude Code (Anthropic) and OpenAI Codex.
 (function () {
   "use strict";
   var D = window.GT_DATA;
@@ -26,10 +26,15 @@
     layer: "basins", // what the map shows: basins, balance, soil or heat
     whyTab: "why", // which explanation of the plan is open
     view: "home", // which section of the app is on screen
-    gstep: 0 // question of the guided walkthrough (5 = the result)
+    gstep: 0, // question of the guided walkthrough (5 = the result)
+    farmPlaced: false
   };
 
   var STRATEGY_ORDER = ["current", "mixed", "rotation", "green"];
+  // Every screen the person leaves is remembered here so "Back" can return to it.
+  var trail = [];
+  var ready = false; // becomes true once the first screen is on
+  var browserSteps = 0; // how many of those screens the browser's own Back button knows about
 
   // Schematic map of the northern Dominican Republic. Points are [longitude, latitude],
   // placed by hand from general geographic knowledge: good for orientation, not surveyed.
@@ -117,6 +122,7 @@
 
   var SOURCES = [
     ["NASA POWER (Prediction Of Worldwide Energy Resources), NASA Langley Research Center", "https://power.larc.nasa.gov/"],
+    ["Province boundaries: geoBoundaries ADM1, Dominican Republic, represented 2022 (public domain)", "https://www.geoboundaries.org/api/current/gbOpen/DOM/ADM1/"],
     ["FAO Irrigation and Drainage Paper 56: Crop evapotranspiration (Allen et al., 1998)", "https://www.fao.org/4/x0490e/x0490e00.htm"],
     ["FAO Irrigation Water Management Training Manual No. 3: Irrigation water needs (1986)", "https://www.fao.org/4/s2022e/s2022e00.htm"],
     ["FAO Irrigation and Drainage Paper 29: Water quality for agriculture (Ayers & Westcot, 1985)", "https://www.fao.org/4/t0234e/t0234e00.htm"],
@@ -269,10 +275,11 @@
       eyebrow: "NASA Space Apps 2026 · República Dominicana",
       nav: { home: "Inicio", plan: "Mi plan", rotation: "Rotación", options: "Opciones", map: "Mapa", data: "Datos", help: "Ayuda" },
       install: "Instalar app",
+      back: "← Atrás",
       g_step: "Pregunta {n} de 5", g_done: "Tu plan",
       g_q: ["¿Dónde está tu finca?", "¿Cuándo siembras y cuánta tierra tienes?", "¿Cómo es tu suelo?",
         "¿Cuánta agua te toca este ciclo?", "¿Qué te importa más?"],
-      g_sub: ["Toca tu zona en el mapa. Usamos el clima que la NASA midió ahí.",
+      g_sub: ["Toca una provincia o zona arrocera. Elegimos el punto arrocero más cercano; el clima de NASA es regional.",
         "El mes cambia el calor y la lluvia que va a recibir el cultivo.",
         "El suelo decide cuánta agua se pierde y qué cultivos aguantan.",
         "Es lo que anuncia el INDRHI o tu junta de regantes antes de sembrar.",
@@ -356,7 +363,7 @@
       ],
       sources_title: "Fuentes",
       foot_support: "Herramienta de apoyo a la decisión. Consulta siempre con un técnico agrícola local antes de cambiar tu rotación.",
-      foot_ai: "Equipo GroundTruth Cibao · NASA Space Apps Challenge 2026, Santiago. Código, textos y análisis elaborados con asistencia de IA (Claude Code, Anthropic).",
+      foot_ai: "Equipo GroundTruth Cibao · NASA Space Apps Challenge 2026, Santiago. Código, textos y análisis elaborados con asistencia de Claude Code (Anthropic) y OpenAI Codex.",
       foot_nasa: "Usa datos de NASA POWER. La NASA no avala a ninguna entidad no gubernamental ni este producto.",
       plan_title: "Plan B del arrocero · GroundTruth Cibao",
       plan_farm: "Finca: {area} tareas en {zone}, suelo {soil}. Siembra: {month}.",
@@ -372,12 +379,16 @@
       light_desc: { normal: "Riego completo", tandeo: "Riego por turnos", veda: "Arroz prohibido" },
       light_note: "El semáforo es una guía nuestra con los términos del riego dominicano. Los porcentajes no son cifras oficiales del INDRHI: ajústalos con el control.",
       map_title: "El arroz dominicano visto por la NASA",
-      map_sub: "Toca una zona para cambiar la finca. Cada cuadro punteado mide unos 50 km: es el tamaño con que NASA POWER describe el clima.",
+      map_sub: "Toca una provincia o zona arrocera. Elegimos el punto arrocero más cercano. Límites: geoBoundaries (2022). Cada cuadro NASA POWER mide unos 50 km.",
       layers: { basins: "Ríos y presas", sat: "Foto satelital", balance: "Falta de agua", soil: "Humedad del suelo", heat: "Calor" },
       back_plan: "← Volver a mi plan", back_map: "← Volver al mapa",
       z_sub: "Cuenca {basin}. Relieve real en 3D de unos 90 km de ancho. Arrastra para girarlo.",
       z_note: "Relieve: elevación SRTM de la NASA (Terrain Tiles), con la altura exagerada 8 veces para que se note. Ríos: © colaboradores de OpenStreetMap. Clima: NASA POWER, promedio 2001–2025.",
       z_plan: "Planificar mi finca aquí",
+      z_continue: "Continuar con esta finca",
+      z_farm_note: "Toca el botón para colocar una marca de finca en esta zona.",
+      z_farm_placed: "Finca colocada en esta zona arrocera. Su ubicación y tamaño son ilustrativos.",
+      province_boundary: "Límites provinciales (geoBoundaries, 2022)",
       z_elev: "altitud de la zona", z_high: "punto más alto cerca", z_heat: "máxima media en {month}, el mes más caliente",
       z_temp: "temperatura media del año", z_rain: "de lluvia al año", z_et0: "pierde el campo al año",
       z_hum: "humedad del aire", z_wind: "viento medio", z_soilw: "humedad del suelo en las raíces",
@@ -545,10 +556,11 @@
       eyebrow: "NASA Space Apps 2026 · Dominican Republic",
       nav: { home: "Home", plan: "My plan", rotation: "Rotation", options: "Options", map: "Map", data: "Data", help: "Help" },
       install: "Install app",
+      back: "← Back",
       g_step: "Question {n} of 5", g_done: "Your plan",
       g_q: ["Where is your farm?", "When do you plant and how much land do you have?", "What is your soil like?",
         "How much water do you get this cycle?", "What matters most to you?"],
-      g_sub: ["Tap your zone on the map. We use the climate NASA measured there.",
+      g_sub: ["Tap a province or rice zone. We choose the nearest rice point; NASA climate data is regional.",
         "The month changes the heat and rain the crop will get.",
         "Soil decides how much water is lost and which crops cope.",
         "It is what the water authority or your irrigation board announces before planting.",
@@ -632,7 +644,7 @@
       ],
       sources_title: "Sources",
       foot_support: "Decision-support tool. Always check with a local agricultural expert before changing your rotation.",
-      foot_ai: "Team GroundTruth Cibao · NASA Space Apps Challenge 2026, Santiago. Code, text and analysis produced with AI assistance (Claude Code, Anthropic).",
+      foot_ai: "Team GroundTruth Cibao · NASA Space Apps Challenge 2026, Santiago. Code, text and analysis produced with AI assistance Claude Code (Anthropic) and OpenAI Codex.",
       foot_nasa: "Uses NASA POWER data. NASA does not endorse any non-U.S. Government entity or this product.",
       plan_title: "The rice farmer's Plan B · GroundTruth Cibao",
       plan_farm: "Farm: {area} tareas in {zone}, {soil} soil. Planting: {month}.",
@@ -648,12 +660,16 @@
       light_desc: { normal: "Full irrigation", tandeo: "Irrigation by turns", veda: "Rice banned" },
       light_note: "The traffic light is our own guide using Dominican irrigation terms (tandeo = turns, veda = ban). The percentages are not official INDRHI figures: adjust them with the control.",
       map_title: "Dominican rice as NASA sees it",
-      map_sub: "Tap a zone to change the farm. Each dotted square is about 50 km wide: the size at which NASA POWER describes the climate.",
+      map_sub: "Tap a province or rice zone. We choose the nearest rice point. Boundaries: geoBoundaries (2022). NASA POWER squares are about 50 km wide.",
       layers: { basins: "Rivers and dams", sat: "Satellite photo", balance: "Water shortfall", soil: "Soil moisture", heat: "Heat" },
       back_plan: "← Back to my plan", back_map: "← Back to the map",
       z_sub: "{basin} basin. Real 3D relief about 90 km wide. Drag to turn it.",
       z_note: "Relief: NASA SRTM elevation (Terrain Tiles), with height exaggerated 8 times so it shows. Rivers: © OpenStreetMap contributors. Climate: NASA POWER, 2001–2025 average.",
       z_plan: "Plan my farm here",
+      z_continue: "Continue with this farm",
+      z_farm_note: "Tap the button to place a farm marker in this zone.",
+      z_farm_placed: "Farm placed in this rice-growing zone. Its location and size are illustrative.",
+      province_boundary: "Province boundaries (geoBoundaries, 2022)",
       z_elev: "elevation of the zone", z_high: "highest point nearby", z_heat: "average maximum in {month}, the hottest month",
       z_temp: "average temperature of the year", z_rain: "of rain per year", z_et0: "lost by the field per year",
       z_hum: "air humidity", z_wind: "average wind", z_soilw: "soil moisture in the root zone",
@@ -1359,7 +1375,7 @@
   }
   function total(list) { return list.reduce(function (a, b) { return a + b; }, 0); }
 
-  // The number each map layer shows for a zone, all from NASA POWER (2001-2020).
+  // The number each map layer shows for a zone, all from NASA POWER (2001-2025).
   function layerValue(z, layer) {
     if (layer === "balance") return total(z.climate.rain) - total(z.climate.et0);
     if (layer === "soil") return total(z.climate.soil) / 12;
@@ -1374,6 +1390,22 @@
   function shortName(name) {
     var inside = name.match(/\((.*)\)/);
     return inside ? inside[1] : name;
+  }
+
+  function nearestZoneToMapPoint(event) {
+    var svg = event.target.closest("svg") || event.currentTarget.querySelector("svg");
+    if (!svg) return state.zone;
+    var rect = svg.getBoundingClientRect();
+    var x = (event.clientX - rect.left) / rect.width * MAP.w;
+    var y = (event.clientY - rect.top) / rect.height * MAP.h;
+    var lon = x / (MAP.cos * MAP.k) + MAP.lon0, lat = MAP.lat0 - y / MAP.k;
+    var best = 0, distance = Infinity;
+    D.zones.forEach(function (z, index) {
+      var dx = (z.lon - lon) * Math.cos(lat * Math.PI / 180), dy = z.lat - lat;
+      var d = dx * dx + dy * dy;
+      if (d < distance) { distance = d; best = index; }
+    });
+    return best;
   }
 
   function drawMap() {
@@ -1402,6 +1434,11 @@
       return RAMPS[layer][Math.min(4, Math.floor(share * 5))];
     }
     function rings(list) { return list.map(function (ring) { return mapPath(ring, true); }).join(""); }
+    var provinceLayer = (window.GT_PROVINCES || []).map(function (province, index) {
+      var d = province.rings.map(function (ring) { return mapPath(ring, true); }).join("");
+      return "<path class=\"province-line\" data-province=\"" + index + "\" d=\"" + d + "\" aria-label=\"" +
+        esc(province.name) + "\"><title>" + esc(province.name) + " · " + esc(L.province_boundary) + "</title></path>";
+    }).join("");
 
     var svg = "<svg viewBox=\"0 0 " + MAP.w + " " + MAP.h + "\" role=\"group\" aria-label=\"" + esc(L.map_aria) + "\">" +
       "<defs><clipPath id=\"landclip\"><path d=\"" + rings(G.land) + "\"/></clipPath><linearGradient id=\"sea\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#d5e9fb\"/><stop offset=\"1\" stop-color=\"#a9d0f5\"/></linearGradient>" +
@@ -1433,6 +1470,8 @@
           (atLeft ? x + 6 : x + w - 6) + "\" y=\"" + (y + h - 7) + "\">" + layerText(value, layer) + "</text>";
       }
     });
+
+    svg += provinceLayer;
 
     // Real river courses. The three main rivers also get moving white dashes.
     var flow = "";
@@ -1668,6 +1707,19 @@
       }
     }
 
+    var provinceLines = [];
+    (window.GT_PROVINCES || []).forEach(function (province) {
+      province.rings.forEach(function (ring) {
+        var run = [];
+        ring.forEach(function (point) {
+          if (!inside(point[0], point[1])) {
+            if (run.length > 1) provinceLines.push(run);
+            run = [];
+          } else run.push(place(point[0], point[1], 5));
+        });
+        if (run.length > 1) provinceLines.push(run);
+      });
+    });
     var rivers = [], names = [];
     window.GT_GEO.rivers.forEach(function (river) {
       river.lines.forEach(function (line) {
@@ -1693,7 +1745,7 @@
       if (!inside(other.lon, other.lat)) return;
       var spot = place(other.lon, other.lat, 30); spot.name = shortName(other.name); spot.mine = n === index; zones.push(spot);
     });
-    return { points: points, quads: quads, rivers: rivers, dams: dams, zones: zones, riverNames: names,
+    return { points: points, quads: quads, provinceLines: provinceLines, rivers: rivers, dams: dams, zones: zones, riverNames: names,
       highest: highest, widthKm: 2 * WINDOW.lon * kmLon };
   }
 
@@ -1727,6 +1779,13 @@
       ctx.fill(); ctx.stroke();
     });
 
+    ctx.beginPath();
+    m.provinceLines.forEach(function (line) {
+      line.forEach(function (p, n) { var q = project(p); if (n) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); });
+    });
+    ctx.strokeStyle = "rgba(255,255,255,.86)"; ctx.lineWidth = 1.15 * ratio; ctx.setLineDash([4 * ratio, 3 * ratio]); ctx.stroke();
+    ctx.setLineDash([]);
+
     ctx.lineJoin = ctx.lineCap = "round";
     m.rivers.forEach(function (river) {
       ctx.beginPath();
@@ -1757,6 +1816,18 @@
       ctx.beginPath(); ctx.arc(q[0], q[1] - pole, r, 0, 2 * Math.PI);
       ctx.fillStyle = "#e2231a"; ctx.fill(); ctx.lineWidth = 2 * ratio; ctx.strokeStyle = spot.mine ? "#10131a" : "#fff"; ctx.stroke();
       label(spot.name, q[0] + r + 5 * ratio, q[1] - pole + 4 * ratio, spot.mine);
+      if (spot.mine && state.farmPlaced) {
+        var rise = Math.min(1, Math.max(0, (now - scene.start) / 420));
+        var pop = 1 - Math.pow(1 - rise, 3), fx = q[0], fy = q[1] - pole - 8 * ratio * pop;
+        ctx.save(); ctx.globalAlpha = pop; ctx.translate(fx, fy); ctx.scale(pop, pop);
+        ctx.fillStyle = "#537a35"; ctx.beginPath(); ctx.moveTo(-22 * ratio, 5 * ratio); ctx.lineTo(0, -2 * ratio); ctx.lineTo(22 * ratio, 5 * ratio); ctx.lineTo(18 * ratio, 17 * ratio); ctx.lineTo(-18 * ratio, 17 * ratio); ctx.closePath(); ctx.fill();
+        ctx.strokeStyle = "#f7f4e8"; ctx.lineWidth = 1.5 * ratio;
+        [-10, 0, 10].forEach(function (dx) { ctx.beginPath(); ctx.moveTo(dx * ratio, 5 * ratio); ctx.lineTo(dx * ratio, 15 * ratio); ctx.stroke(); });
+        ctx.fillStyle = "#fff"; ctx.fillRect(-5 * ratio, -16 * ratio, 10 * ratio, 12 * ratio);
+        ctx.fillStyle = "#e2231a"; ctx.beginPath(); ctx.moveTo(-8 * ratio, -16 * ratio); ctx.lineTo(0, -23 * ratio); ctx.lineTo(8 * ratio, -16 * ratio); ctx.closePath(); ctx.fill();
+        ctx.restore();
+        label("FINCA", fx + 25 * ratio, fy + 3 * ratio, true);
+      }
     });
 
     // north arrow
@@ -1787,6 +1858,7 @@
   // Map zoom toward the zone, then the 3D view opens.
   function zoomToZone(container, index) {
     var svg = container.querySelector("svg"), z = D.zones[index];
+    if (state.zone !== index) state.farmPlaced = false;
     state.zone = index;
     function open() { draw(); setView("zone"); }
     if (!svg || reduceMotion) { open(); return; }
@@ -1803,6 +1875,8 @@
     var hottest = c.tmax.indexOf(Math.max.apply(null, c.tmax));
     function mean(list) { return total(list) / list.length; }
     $("z-title").textContent = z.name;
+    $("z-plan").textContent = state.farmPlaced ? L.z_continue : L.z_plan;
+    $("z-farm-note").textContent = state.farmPlaced ? L.z_farm_placed : L.z_farm_note;
     $("z-sub").textContent = tr("z_sub", { basin: z.basin });
     var rows = [
       [num(elevationAt(z.lon, z.lat)) + " m", L.z_elev],
@@ -1909,7 +1983,7 @@
         setView(state.view, true);
       };
     });
-    $("zone").onchange = function () { state.zone = +this.value; draw(); };
+    $("zone").onchange = function () { state.zone = +this.value; state.farmPlaced = false; draw(); };
     $("month").onchange = function () { state.month = +this.value; draw(); };
     $("area").oninput = function () {
       var value = parseFloat(this.value);
@@ -1946,7 +2020,8 @@
       draw();
     }
     function exploreZone(event) {
-      var mark = event.target.closest("[data-zone]");
+      var mark = event.target.closest("[data-zone]"), province = event.target.closest("[data-province]");
+      if (!mark && province && event.type !== "keydown") mark = { getAttribute: function () { return nearestZoneToMapPoint(event); } };
       if (!mark || (event.type === "keydown" && event.key !== "Enter" && event.key !== " ")) return;
       event.preventDefault();
       zoomToZone(event.currentTarget, +mark.getAttribute("data-zone"));
@@ -1955,12 +2030,19 @@
     $("map").onkeydown = exploreZone;
     $("h-map").onkeydown = exploreZone;
     $("z-plan").onclick = function () {
+      if (!state.farmPlaced) {
+        state.farmPlaced = true;
+        scene.start = performance.now();
+        drawZoneInfo();
+        return;
+      }
       state.gstep = 1;
       draw();
       setView("guide");
     };
     $("guide").onclick = function (event) {
       var target = event.target, el;
+      if ((el = target.closest("[data-province]"))) { state.zone = nearestZoneToMapPoint(event); state.farmPlaced = false; draw(); return; }
       if ((el = target.closest("[data-zone]"))) { state.zone = +el.getAttribute("data-zone"); draw(); return; }
       if ((el = target.closest("[data-g-month]"))) { state.month = +el.getAttribute("data-g-month"); draw(); return; }
       if ((el = target.closest("[data-g-soil]"))) { state.soil = el.getAttribute("data-g-soil"); draw(); return; }
@@ -1976,12 +2058,12 @@
       if ((el = target.closest("[data-g-area]"))) {
         state.area = Math.max(1, Math.min(20000, state.area + (+el.getAttribute("data-g-area")))); draw(); return;
       }
-      if (target.closest("[data-g-next]")) { state.gstep = Math.min(5, state.gstep + 1); draw(); window.scrollTo(0, 0); return; }
+      if (target.closest("[data-g-next]")) { remember(); state.gstep = Math.min(5, state.gstep + 1); draw(); window.scrollTo(0, 0); return; }
       if (target.closest("[data-g-back]")) {
-        if (state.gstep === 0) setView("home"); else { state.gstep -= 1; draw(); window.scrollTo(0, 0); }
+        if (trail.length) $("back").click(); else setView("home");
         return;
       }
-      if (target.closest("[data-g-restart]")) { state.gstep = 0; draw(); window.scrollTo(0, 0); }
+      if (target.closest("[data-g-restart]")) { remember(); state.gstep = 0; draw(); window.scrollTo(0, 0); }
     };
     $("guide").oninput = function (event) {
       var id = event.target.id;
@@ -1993,8 +2075,9 @@
       }
     };
     $("h-map").onclick = function (event) {
-      var mark = event.target.closest("[data-zone]");
+      var mark = event.target.closest("[data-zone]"), province = event.target.closest("[data-province]");
       if (mark) zoomToZone($("h-map"), +mark.getAttribute("data-zone"));
+      else if (province) zoomToZone($("h-map"), nearestZoneToMapPoint(event));
     };
     var stage = $("z-canvas");
     stage.onpointerdown = function (event) {
@@ -2029,8 +2112,24 @@
   window.onafterprint = function () { document.body.classList.remove("sheet-mode"); };
 
   // Show one section of the app and hide the others.
-  function setView(view, keepScroll) {
+  // Remember the screen that is being left (also tells the browser, so its Back button works).
+  function remember() {
+    trail.push({ view: state.view, gstep: state.gstep });
+    try { history.pushState({ step: trail.length }, ""); browserSteps += 1; } catch (e) { /* not allowed on some file:// pages */ }
+    $("back").hidden = false;
+  }
+  // Return to the screen that was open before the last click.
+  function goBack() {
+    var previous = trail.pop();
+    $("back").hidden = !trail.length;
+    if (!previous) return;
+    state.gstep = previous.gstep;
+    draw();
+    setView(previous.view, false, true);
+  }
+  function setView(view, keepScroll, returning) {
     if (VIEWS.indexOf(view) < 0) view = "home";
+    if (ready && !returning && view !== state.view) remember();
     state.view = view;
     document.body.setAttribute("data-view", view);
     document.querySelectorAll("[data-view]").forEach(function (el) {
@@ -2048,6 +2147,13 @@
     if (go) { event.preventDefault(); setView(go.getAttribute("data-go")); }
   });
   window.addEventListener("hashchange", function () { setView(location.hash.slice(1), true); });
+  // The Back button of the page, and the one of the browser or the phone, do the same thing.
+  $("back").onclick = function () {
+    if (browserSteps > 0) history.back(); else goBack();
+  };
+  window.addEventListener("popstate", function () {
+    if (browserSteps > 0) { browserSteps -= 1; goBack(); }
+  });
 
   // Installable app: keep a copy of the page on the device so it opens without internet.
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
@@ -2069,4 +2175,5 @@
   listen();
   draw();
   setView(location.hash.slice(1) || "home", true);
+  ready = true;
 })();

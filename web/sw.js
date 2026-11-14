@@ -1,9 +1,9 @@
 // Service worker: keeps a copy of the app on the device so it opens without
 // internet. It answers from the saved copy at once and refreshes that copy in
 // the background, so a new version shows up the next time the app is opened.
-// Code written with the assistance of Claude Code (Anthropic).
-var CACHE = "plan-b-v4";
-var FILES = ["./", "index.html", "style.css", "app.js", "engine.js", "data.js", "geo.js", "relief.js", "sat.jpg",
+// Code written with the assistance of Claude Code (Anthropic) and OpenAI Codex.
+var CACHE = "plan-b-v6";
+var FILES = ["./", "index.html", "style.css", "app.js", "engine.js", "data.js", "geo.js", "provinces.js", "relief.js", "sat.jpg",
   "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png",
   "fonts/big-shoulders.woff2", "fonts/archivo.woff2"];
 

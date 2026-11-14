@@ -80,6 +80,12 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
 - **Mapa real:** costa de Natural Earth y ríos de OpenStreetMap, guardados en
   `web/geo.js` (lo genera `build_geo.py`). Las presas están ubicadas de forma aproximada
   sobre su río.
+- **Límites provinciales:** geoBoundaries ADM1 (2022, dominio público), guardados en
+  `data/provinces.geojson` y `web/provinces.js` (lo genera `build_provinces.py`). Tocar
+  una provincia selecciona el punto arrocero más cercano, no una parcela exacta.
+- **Marca de finca en el relieve 3D:** aparece al elegir "Planificar mi finca aquí"; es
+  ilustrativa. El relieve y NASA POWER no tienen detalle suficiente para ubicar el lindero
+  de una parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
   la página, subir el número de `CACHE` en `web/sw.js`.
 - **Un solo período:** todo usa 2001–2025.
@@ -123,6 +129,12 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   pregunta de suelo del recorrido. Las fotos de suelos no se pudieron bajar; usa dibujos.
 - Se quitó el botón del caso de Don Pedro. Hay botón "Volver a mi plan".
 - Evaluación crítica por aspecto: `docs/evaluacion.md`.
+
+## Botón Atrás general
+- El botón "← Atrás" (barra superior; en celular flota sobre la barra de pestañas)
+  vuelve a la pantalla anterior, incluidas las preguntas del recorrido. Usa la lista
+  `trail` de `web/app.js` y también responde al botón de atrás del navegador o del
+  teléfono. Cualquier pantalla nueva debe abrirse con `setView(...)` para que se recuerde.
 
 ## Cómo correrlo
 ```bash

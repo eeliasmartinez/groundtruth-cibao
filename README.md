@@ -17,7 +17,7 @@ agricultural expert.
 
 ## How NASA data is used
 
-Daily data from **NASA POWER** (2001–2026) for fourteen rice zones across the country: temperature
+Daily data from **NASA POWER** (2001–2025) for fourteen rice zones across the country: temperature
 (mean, max, min), solar radiation, relative humidity, wind speed, precipitation
 and soil wetness. From it the engine computes:
 
@@ -38,6 +38,7 @@ and soil wetness. From it the engine computes:
 | `crops.py` | Crop table with its sources |
 | `rotation.py` | Builds and scores the rotation strategies |
 | `build_web.py` | Runs the engine and writes the data the page uses |
+| `build_provinces.py` | Simplifies the 32 province outlines for the offline map |
 | `check_engine.py`, `check_web.js` | Automatic quality checks |
 | `app.py`, `charts.py` | Streamlit "data lab" with the NASA climate charts |
 | `docs/` | Team research notes (Spanish) |
@@ -83,11 +84,12 @@ Map coastline: Natural Earth (public domain). Map rivers: © OpenStreetMap contr
 Typefaces: Big Shoulders Display and Archivo (SIL Open Font License), via Fontsource.
 Elevation: Terrain Tiles on AWS Open Data (Mapzen), derived mainly from NASA SRTM.
 Satellite photo: NASA Worldview Snapshots, MODIS Terra corrected reflectance, 18 Feb 2026.
+Province boundaries: geoBoundaries ADM1, Dominican Republic (represented year 2022, public domain).
 Soil texture by feel: USDA NRCS guide (S. J. Thien, 1979).
 
 ## Use of AI
 
 The code, the texts and the analysis in this repository were produced with the
-assistance of AI (Claude Code, by Anthropic), directed and reviewed by the team.
+assistance of AI (Claude Code by Anthropic and OpenAI Codex), directed and reviewed by the team.
 
 NASA does not endorse any non-U.S. Government entity or this project.

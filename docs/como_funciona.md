@@ -12,6 +12,7 @@ proyecto, y se pueden abrir y revisar:
 | Datos diarios de la NASA, uno por zona (14 archivos) | carpeta `data/` | Abrir cualquier `.csv` con Excel o Google Sheets. En GitHub: https://github.com/eeliasmartinez/groundtruth-cibao/tree/main/data |
 | Resultados ya calculados que usa la página | `web/data.js` | Es un archivo de texto generado por el motor |
 | Costa y ríos del mapa | `web/geo.js` | Generado desde Natural Earth y OpenStreetMap |
+| Límites de las 32 provincias | `data/provinces.geojson` y `web/provinces.js` | geoBoundaries ADM1 (2022, dominio público); se regenera con `python3 build_provinces.py` |
 
 Cada CSV tiene una fila por día desde el 1 de enero de 2001 y estas columnas:
 temperatura media, máxima y mínima (°C), lluvia (mm/día), radiación solar, humedad del
@@ -45,6 +46,11 @@ Para volver a descargar todo: `.venv/bin/python nasa_power.py`
 La página no calcula el clima: lee `web/data.js`. Solo hace en el navegador la parte
 final (repartir la finca según el agua), con `web/engine.js`, que es una copia exacta de
 `rotation.py`. `check_web.js` comprueba que las dos den lo mismo.
+
+Al tocar una provincia en el mapa, la app selecciona el punto arrocero más cercano de
+los 14 disponibles. Es una referencia regional: no identifica una parcela ni cambia la
+resolución aproximada de 50 km de NASA POWER. La marca de casita en el relieve 3D también
+es ilustrativa, no un levantamiento del terreno.
 
 ## 4. Dónde está publicada (no hace falta Vercel)
 
