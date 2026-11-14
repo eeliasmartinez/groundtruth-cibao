@@ -92,3 +92,13 @@ con internet, funciona sin conexión, porque guarda una copia en el dispositivo
 - 1 tarea = 628.86 m². 1 mm de agua sobre una tarea = 0.629 m³.
 - Riego del arroz en Mao sembrando en diciembre: 887 m³ por tarea ÷ 0.629 ≈ 1,410 mm
   en el ciclo. (El valor exacto puede variar unas unidades si se regeneran los datos.)
+# Cambios de navegación y guía sencilla
+
+En el mapa 3D, el resumen de clima, suelo, agua y tamaño comienza cerrado. Para verlo,
+la persona toca “Datos del mapa”. Al elegir “Continuar con esta finca”, se guarda la
+marca ilustrativa de la finca y se abre la primera pregunta del recorrido de una vez,
+manteniendo visible el relieve.
+
+En Inicio hay una “Guía sencilla para el campo”. Es el mismo plan y usa los mismos
+cálculos que el recorrido normal; cambia únicamente las preguntas y sus explicaciones
+para que sean más directas. No guarda cuentas ni información personal.

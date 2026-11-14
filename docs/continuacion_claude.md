@@ -1,5 +1,17 @@
 # Handoff para Claude Code — 14-nov-2026
 
+## Actualización Codex — simplificación de la finca y opciones
+
+- El recuadro de clima/suelo/agua/área en el relieve 3D está dentro de un menú nativo
+  cerrado inicialmente, “Datos del mapa”. Abrirlo es opcional.
+- “Continuar con esta finca” ahora pone la marca ilustrativa y abre inmediatamente la
+  primera pregunta junto al mismo relieve 3D. Ya no requiere un segundo clic.
+- Inicio incluye “Guía sencilla para el campo”. Usa el motor y las opciones existentes;
+  solo adapta preguntas y explicaciones para productores. No crea cuentas ni guarda datos.
+- La PWA subió a `plan-b-v10`; el teléfono debe cargar esta versión para mostrar los cambios.
+- Cambios en `web/app.js`, `web/index.html`, `web/style.css`, `web/sw.js`, `AGENTS.md` y
+  esta documentación. Mantener los dos idiomas y subir CACHE en futuros cambios.
+
 ## Actualización Codex — narrativa de scroll y mapa que responde
 
 - La portada suma la sección journey con tres capítulos: clima, agua y rotación. En

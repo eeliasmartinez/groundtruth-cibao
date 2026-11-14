@@ -29,6 +29,7 @@
     gstep: 0, // question of the guided walkthrough (5 = the result)
     farmPlaced: false,
     guideWithScene: false,
+    easyMode: false,
     journeyBeat: 1
   };
 
@@ -289,6 +290,13 @@
         "El suelo decide cuánta agua se pierde y qué cultivos aguantan.",
         "Es lo que anuncia el INDRHI o tu junta de regantes antes de sembrar.",
         "Con eso elegimos cuál de los planes va primero."],
+      easy_g_q: ["¿Dónde está tu finca?", "¿En qué mes vas a sembrar y cuántas tareas tienes?", "¿Cómo se siente la tierra mojada?",
+        "¿Cuánta agua te darán?", "¿Qué quieres cuidar primero?"],
+      easy_g_sub: ["Toca tu provincia o la zona más cercana. El clima es una referencia regional.",
+        "Escoge el mes y el tamaño de tu finca. La lluvia y el calor cambian según la época.",
+        "Elige el tipo que más se parece. Si no sabes, abre la guía y prueba con la mano.",
+        "Indica si tendrás agua normal, por turnos o veda.",
+        "Escoge lo que más te importa: ahorrar agua, cuidar el suelo o vender."],
       g_next: "Siguiente", g_back: "Atrás", g_see: "Ver mi plan",
       g_result: "Este es tu plan", g_full: "Ver mi plan completo", g_rot: "Ver la rotación", g_restart: "Empezar de nuevo",
       g_zone: "Tu zona:", g_month: "Mes de siembra", g_area: "Tareas de tu finca",
@@ -313,6 +321,8 @@
     field_weather: "Este mes en la zona",
     field_rain: "lluvia media",
     field_soil: "Suelo elegido",
+      field_map_data: "Datos del mapa",
+      easy_start: "Guía sencilla para el campo",
       g_fit: "Con esa agua alcanza para {n} de tus {area} tareas de arroz.",
       g_fit_ban: "Este ciclo no se puede sembrar arroz.",
       how: [["Dime tu finca", "Zona, mes de siembra, tareas y tipo de suelo."],
@@ -592,6 +602,13 @@
         "Soil decides how much water is lost and which crops cope.",
         "It is what the water authority or your irrigation board announces before planting.",
         "With that we choose which plan goes first."],
+      easy_g_q: ["Where is your farm?", "What month will you plant, and how many tareas do you have?", "How does the soil feel when wet?",
+        "How much water will you get?", "What matters most to you?"],
+      easy_g_sub: ["Tap your province or the closest rice-growing area. Climate is a regional reference.",
+        "Choose the month and farm size. Rain and heat change with the season.",
+        "Choose the type that feels closest. If unsure, open the guide and try the hand test.",
+        "Choose whether you expect normal water, rotating turns, or a ban.",
+        "Choose what matters most: saving water, caring for soil, or selling."],
       g_next: "Next", g_back: "Back", g_see: "See my plan",
       g_result: "This is your plan", g_full: "See my full plan", g_rot: "See the rotation", g_restart: "Start again",
       g_zone: "Your zone:", g_month: "Planting month", g_area: "Tareas on your farm",
@@ -616,6 +633,8 @@
     field_weather: "This month in the zone",
     field_rain: "average rain",
     field_soil: "Selected soil",
+      field_map_data: "Map data",
+      easy_start: "Easy farm guide",
       g_fit: "That water is enough for {n} of your {area} tareas of rice.",
       g_fit_ban: "Rice cannot be planted this cycle.",
       how: [["Tell us your farm", "Zone, planting month, tareas and soil type."],
@@ -1626,7 +1645,9 @@
   // so its entrance animation plays once and typing is never interrupted).
   function prepareGuide() {
     var L = T[state.lang], step = state.gstep, stage = $("g-stage");
-    var tag = step + "|" + state.lang;
+    var questions = state.easyMode ? L.easy_g_q : L.g_q;
+    var explanations = state.easyMode ? L.easy_g_sub : L.g_sub;
+    var tag = step + "|" + state.lang + "|" + (state.easyMode ? "easy" : "full");
     var showZoneScene = state.guideWithScene && step > 0;
     $("g-scene-panel").hidden = !showZoneScene;
     $("guide").classList.toggle("with-scene", showZoneScene);
@@ -1670,8 +1691,8 @@
         "<button type=\"button\" class=\"btn\" data-go=\"rotation\">" + L.g_rot + "</button>" +
         "<button type=\"button\" class=\"btn\" data-g-restart>" + L.g_restart + "</button></div></div></div>";
     }
-    stage.innerHTML = "<h2 class=\"g-q\">" + (step < 5 ? L.g_q[step] : L.g_result) + "</h2><p class=\"g-sub\" id=\"g-sub\">" +
-      (step < 5 ? esc(L.g_sub[step]) : "") + "</p><div class=\"g-body\">" + body + "</div>";
+    stage.innerHTML = "<h2 class=\"g-q\">" + (step < 5 ? questions[step] : L.g_result) + "</h2><p class=\"g-sub\" id=\"g-sub\">" +
+      (step < 5 ? esc(explanations[step]) : "") + "</p><div class=\"g-body\">" + body + "</div>";
     stage.setAttribute("data-step", tag);
     $("guide").setAttribute("data-step", step);
   }
@@ -2214,12 +2235,7 @@
     $("map").onkeydown = exploreZone;
     $("h-map").onkeydown = exploreZone;
     $("z-plan").onclick = function () {
-      if (!state.farmPlaced) {
-        state.farmPlaced = true;
-        scene.start = performance.now();
-        drawZoneInfo();
-        return;
-      }
+      state.farmPlaced = true;
       state.guideWithScene = true;
       state.gstep = 1;
       draw();
@@ -2284,6 +2300,14 @@
     };
     $("start").onclick = function () {
       state.gstep = 0;
+      state.easyMode = false;
+      state.guideWithScene = false;
+      draw();
+      setView("guide");
+    };
+    $("start-easy").onclick = function () {
+      state.gstep = 0;
+      state.easyMode = true;
       state.guideWithScene = false;
       draw();
       setView("guide");

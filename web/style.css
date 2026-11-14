@@ -505,7 +505,12 @@ body.sheet-mode #sheet { display: block; max-width: 720px; margin: 0 auto; paddi
 .z-stage { position: relative; background: var(--blue); border: 2px solid var(--ink); padding: 0; }
 #z-canvas { display: block; width: 100%; height: auto; aspect-ratio: 10 / 7; cursor: grab; touch-action: pan-y; }
 #z-canvas:active { cursor: grabbing; }
-.scene-context { position: absolute; z-index: 2; top: 10px; left: 10px; width: clamp(180px, 42%, 265px); padding: 9px; display: grid; grid-template-columns: 1fr 1fr; gap: 7px; background: rgba(255,255,255,.96); border: 1px solid var(--ink); pointer-events: none; }
+.scene-context-menu { position: absolute; z-index: 2; top: 10px; left: 10px; width: min(265px, calc(100% - 20px)); }
+.scene-context-menu > summary { width: fit-content; min-height: 38px; display: flex; align-items: center; gap: 10px; cursor: pointer; list-style: none; padding: 7px 10px; border: 1px solid var(--ink); background: rgba(255,255,255,.96); color: var(--ink); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.scene-context-menu > summary::-webkit-details-marker { display: none; }
+.scene-context-menu > summary::after { content: "+"; font-family: var(--display); color: var(--blue); font-size: 22px; line-height: .8; }
+.scene-context-menu[open] > summary::after { content: "−"; }
+.scene-context { margin-top: 6px; padding: 9px; display: grid; grid-template-columns: 1fr 1fr; gap: 7px; background: rgba(255,255,255,.97); border: 1px solid var(--ink); }
 .scene-context-head, .scene-context-soil, .scene-context-water { min-width: 0; display: grid; gap: 1px; }
 .scene-context-head { grid-column: 1 / -1; grid-template-columns: 1fr auto; align-items: baseline; border-bottom: 1px solid var(--hair); padding-bottom: 4px; }
 .scene-context-head b, .scene-context-soil b, .scene-context-water b, .scene-context-area b { font-size: 10px; line-height: 1.1; text-transform: uppercase; letter-spacing: .035em; }
@@ -521,7 +526,8 @@ body.sheet-mode #sheet { display: block; max-width: 720px; margin: 0 auto; paddi
 .scene-context-area { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-top: 4px; border-top: 1px solid var(--hair); }
 .scene-context-area span { color: var(--ink-2); font-size: 12px; font-weight: 700; }
 @media (max-width: 860px) {
-  .scene-context { width: min(190px, 58%); padding: 7px; gap: 5px; }
+  .scene-context-menu { width: min(235px, calc(100% - 20px)); }
+  .scene-context { padding: 7px; gap: 5px; }
   .scene-context-head b, .scene-context-soil b, .scene-context-water b, .scene-context-area b { font-size: 9px; }
 }
 .z-stage .note { color: rgba(255, 255, 255, 0.82); margin: 0; padding: 10px 14px 12px; border-top: 2px solid rgba(255, 255, 255, 0.25); }

@@ -104,7 +104,13 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v9`).
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v10`).
+- **Datos del relieve:** el resumen del clima, suelo, agua y área está cerrado inicialmente
+  dentro de “Datos del mapa”; se abre solo si el usuario lo elige.
+- **Continuar desde una zona:** “Continuar con esta finca” coloca la marca ilustrativa y
+  abre la primera pregunta del recorrido en el mismo clic, conservando el relieve 3D.
+- **Guía sencilla:** Inicio ofrece “Guía sencilla para el campo”. Usa los mismos cálculos y
+  preguntas, con explicaciones más directas; el recorrido normal sigue disponible.
 - **Un solo período:** todo usa 2001–2025.
 - Explicación completa del proceso y de dónde están los datos: `docs/como_funciona.md`.
 
