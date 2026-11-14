@@ -212,3 +212,7 @@ Si `.venv` no existe: `python3 -m venv .venv && .venv/bin/pip install -r require
 - La lluvia de NASA POWER sale más baja que la real y no detectó la sequía de inicios de 2024.
 - La nota de ingreso no usa precios; mide qué tan segura es la venta.
 - El área de arroz por cuenca es una estimación (área nacional × % de producción).
+- Las estimaciones económicas siguen pendientes: los costos públicos revisados son
+  referencias de 2021 y los precios/rendimientos disponibles no coinciden todos en
+  zona, período y población. No anunciar ahorro monetario ni rentabilidad hasta validar
+  costos actuales y precios recibidos en el Cibao.

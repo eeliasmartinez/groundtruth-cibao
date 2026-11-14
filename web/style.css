@@ -69,7 +69,10 @@ h2 { font-size: clamp(26px, 3vw, 36px); line-height: 1; }
 .btn.primary:hover { background: var(--blue-deep); border-color: var(--blue-deep); }
 .btn.big { font-size: 17px; padding: 14px 22px; }
 .btn.small { padding: 5px 10px; font-size: 13px; }
-.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.actions { display: grid; gap: 10px; margin-top: 16px; }
+.actions .action-share { display: block; text-align: center; }
+.action-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding-top: 9px; border-top: 1px solid var(--hair); }
+.action-tools .btn { min-width: 0; text-align: center; }
 
 /* ---- home: the map printed on blue ---- */
 .hero { background: var(--blue); color: #fff; min-height: calc(100vh - 58px); display: grid; align-items: center; padding: clamp(24px, 4vw, 56px) var(--edge); overflow: hidden; }
@@ -373,6 +376,8 @@ details.more p { margin-top: 6px; max-width: 75ch; }
 .cal-bar .ico { font-size: 22px; flex: none; }
 .cal-bar.cash { color: var(--ink); }
 .cal-bar.idle { color: var(--ink-2); font-weight: 600; }
+.cal-explainer { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; color: var(--ink-2); font-size: 13px; line-height: 1.4; }
+.cal-key { display: inline-block; flex: none; width: 20px; height: 13px; background: var(--ground); border: 1px solid var(--hair); }
 .rot-story { margin-top: 18px; font-size: 17px; background: var(--blue-tint); padding: 14px 16px; max-width: 80ch; }
 .rot-water { margin-top: 14px; }
 

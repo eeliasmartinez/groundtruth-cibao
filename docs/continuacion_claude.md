@@ -1,5 +1,32 @@
 # Handoff para Claude Code — 14-nov-2026
 
+## Actualización Codex — bug de finca, calendario, botones y presas
+
+- Bug visto en la captura del recorrido: el texto decía que se vería la marca de finca,
+  pero al iniciar desde Inicio y escoger una zona el relieve no la dibujaba. `drawScene`
+  ahora la muestra mientras el recorrido conserva la zona seleccionada; sigue siendo un
+  símbolo ilustrativo, no el lindero de una finca real.
+- Las acciones de “Mi plan” ahora están agrupadas: compartir ocupa una fila principal y
+  copiar, escuchar, imprimir y guardar/borrar quedan en una cuadrícula compacta.
+- El calendario de dos ciclos explica en español e inglés el significado del gris: días
+  que quedan fuera de la duración modelada del cultivo. Pueden incluir preparación,
+  descanso o espera; no son una observación satelital de suelo desnudo.
+- El relieve carga `web/dam.svg` y lo dibuja en los puntos de presa. Hay un marcador de
+  reserva mientras carga el SVG. `web/sw.js` pasa a `plan-b-v15` y precarga el recurso.
+- No se incorporó un estimador de ganancia todavía. Agricultura publica costos de arroz
+  (RD$7,900.40/tarea) y habichuela roja (RD$7,766.22/tarea), pero son referencias de
+  2021; el costo de habichuela proviene de la Regional Suroeste. ONE publica precios al
+  productor recientes y el IAD publica rendimientos del sector reformado, pero combinar
+  esas fuentes para prometer el resultado de una finca del Cibao sería engañoso. Antes
+  de calcular ahorro/beneficio hacen falta precios recibidos por el productor del Cibao,
+  rendimientos comparables, costos actuales y validación de cultivos/temporadas.
+- Fuentes revisadas: costos de producción del Ministerio de Agricultura (2021),
+  <https://agricultura.gob.do/wp-content/uploads/2023/05/Costo-de-Produccion-2021.pdf>;
+  rendimiento del IAD (enero-junio 2025),
+  <https://iad.gob.do/wp-content/uploads/2025/07/INFORME-POA-ENERO-JUNIO-2025-1.pdf>;
+  boletines agropecuarios ONE, incluyendo precios al productor,
+  <https://www.one.gob.do/publicaciones/2026/boletin-de-estadisticas-agropecuarias-enero-marzo-2026/>.
+
 ## Actualización Codex — guardado privado, procedencia y superficies de mapa
 
 - `web/copy.js` contiene ahora el objeto bilingüe `T`, separado de la lógica de pantalla.

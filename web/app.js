@@ -494,12 +494,12 @@
 
     var plan = planText(s, result);
     $("plan-actions").innerHTML =
-      "<a class=\"btn primary\" target=\"_blank\" rel=\"noopener\" href=\"https://wa.me/?text=" +
+      "<a class=\"btn primary action-share\" target=\"_blank\" rel=\"noopener\" href=\"https://wa.me/?text=" +
       encodeURIComponent(plan) + "\">" + L.share_wa + "</a>" +
-      "<button type=\"button\" class=\"btn\" id=\"copy-plan\">" + L.share_copy + "</button>" +
+      "<div class=\"action-tools\"><button type=\"button\" class=\"btn\" id=\"copy-plan\">" + L.share_copy + "</button>" +
       (window.speechSynthesis ? "<button type=\"button\" class=\"btn\" id=\"listen-plan\">" + L.listen + "</button>" : "") +
       "<button type=\"button\" class=\"btn\" id=\"print-plan\">" + L.print + "</button>" +
-      "<button type=\"button\" class=\"btn\" id=\"save-local-plan\">" + (state.savedOnDevice ? L.delete_local : L.save_local) + "</button>";
+      "<button type=\"button\" class=\"btn\" id=\"save-local-plan\">" + (state.savedOnDevice ? L.delete_local : L.save_local) + "</button></div>";
     $("copy-plan").onclick = function () {
       var button = this;
       var done = function () { button.textContent = L.copied; };
@@ -1206,7 +1206,9 @@
     if (motionQuery.addEventListener) motionQuery.addEventListener("change", updateMotionPreference);
     else if (motionQuery.addListener) motionQuery.addListener(updateMotionPreference);
   }
-  var scene = { frame: 0, start: 0, angle: -0.35, dragged: false, pointer: null, model: null, zone: -1 };
+  var scene = { frame: 0, start: 0, angle: -0.35, dragged: false, pointer: null, model: null, zone: -1, damIcon: new Image() };
+  scene.damIcon.src = "dam.svg";
+  scene.damIcon.onload = function () { if (sceneVisible()) drawScene(performance.now()); };
 
   function terrainColor(height, shade) {
     if (height <= 0.5) return null; // sea
@@ -1396,10 +1398,15 @@
       ctx.fillStyle = "#10131a"; ctx.fillText(text, x, y);
     }
     m.dams.forEach(function (dam) {
-      var q = project(dam), r = 5.5 * ratio;
-      ctx.beginPath(); ctx.moveTo(q[0], q[1] - r); ctx.lineTo(q[0] + r, q[1]); ctx.lineTo(q[0], q[1] + r); ctx.lineTo(q[0] - r, q[1]); ctx.closePath();
-      ctx.fillStyle = "#10131a"; ctx.fill(); ctx.lineWidth = 1.5 * ratio; ctx.strokeStyle = "#fff"; ctx.stroke();
-      label(dam.name, q[0] + 9 * ratio, q[1] + 4 * ratio);
+      var q = project(dam), size = 23 * ratio;
+      if (scene.damIcon && scene.damIcon.complete && scene.damIcon.naturalWidth) {
+        ctx.drawImage(scene.damIcon, q[0] - size / 2, q[1] - size / 2, size, size);
+      } else {
+        var r = 5.5 * ratio;
+        ctx.beginPath(); ctx.moveTo(q[0], q[1] - r); ctx.lineTo(q[0] + r, q[1]); ctx.lineTo(q[0], q[1] + r); ctx.lineTo(q[0] - r, q[1]); ctx.closePath();
+        ctx.fillStyle = "#10131a"; ctx.fill(); ctx.lineWidth = 1.5 * ratio; ctx.strokeStyle = "#fff"; ctx.stroke();
+      }
+      label(dam.name, q[0] + 13 * ratio, q[1] + 4 * ratio);
     });
     m.zones.forEach(function (spot) {
       var q = project(spot), pole = (spot.mine ? 34 : 0) * ratio * grow, r = (spot.mine ? 8 : 5) * ratio;
@@ -1407,7 +1414,7 @@
       ctx.beginPath(); ctx.arc(q[0], q[1] - pole, r, 0, 2 * Math.PI);
       ctx.fillStyle = "#e2231a"; ctx.fill(); ctx.lineWidth = 2 * ratio; ctx.strokeStyle = spot.mine ? "#10131a" : "#fff"; ctx.stroke();
       label(spot.name, q[0] + r + 5 * ratio, q[1] - pole + 4 * ratio, spot.mine);
-      if (spot.mine && state.farmPlaced) {
+      if (spot.mine && (state.farmPlaced || (state.view === "guide" && state.guideWithScene))) {
         var rise = Math.min(1, Math.max(0, (now - scene.start) / 420));
         var pop = 1 - Math.pow(1 - rise, 3), fx = q[0], fy = q[1] - pole - 8 * ratio * pop;
         ctx.save(); ctx.globalAlpha = pop; ctx.translate(fx, fy); ctx.scale(pop, pop);
@@ -1546,6 +1553,7 @@
       "<b style=\"left:" + (100 * 14 / 365) + "%\">" + tr("rot_cycle", { n: 1, month: MONTHS[state.lang][state.month - 1] }) + "</b>" +
       "<b style=\"left:" + (100 * 197 / 365) + "%\">" + tr("rot_cycle", { n: 2, month: MONTHS[state.lang][month2 - 1] }) + "</b></div></div>" +
       rows + "</div>" +
+      "<p class=\"cal-explainer\"><span class=\"cal-key\" aria-hidden=\"true\"></span>" + esc(L.rot_idle_explain) + "</p>" +
       "<p class=\"rot-story\">" + esc(story) + "</p>" +
       "<div class=\"impact rot-water\"><div><b>" + num(s.water_m3) + "</b><span>" +
       esc(tr("rot_water", { c: 1, used: num(s.water_m3), budget: num(result.budget_m3) })) + "</span></div><div><b>" +
