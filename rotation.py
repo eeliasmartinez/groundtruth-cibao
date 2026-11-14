@@ -40,6 +40,11 @@ BASINS = {
         "rice_share": 0.295 + 0.142 + 0.094 + 0.0218,
         "dams": {"Hatillo": 374.88, "Rincón": 59.40},
     },
+    "Yaque del Sur": {
+        # Whole "Sur" region: 4.98% of national rice production (province split not published)
+        "rice_share": 0.0498,
+        "dams": {"Sabana Yegua": 341.84, "Sabaneta": 56.5},
+    },
 }
 
 

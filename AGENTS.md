@@ -60,6 +60,18 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   RD$ 30,000–50,000 de ahorro, esterilidad del arroz a 32 °C, pérdidas de 40% en
   canales, suelos Vertisoles y camellones del IDIAF, canales Mao-Gurabo y Luis Bogaert.
 
+## Rediseño y ampliación (14-nov, tarde)
+- **Rediseño:** estilo cristal con colores de la bandera, escena animada en la portada,
+  un icono por cultivo, tres pasos guiados con una frase de ayuda cada uno, el "por qué"
+  en pestañas y las secciones de datos plegadas.
+- **Todo el país:** 14 zonas arroceras (se sumaron Bonao, Sánchez, Dajabón, San Juan,
+  Vicente Noble, Miches y Bayaguana), mapa de la isla completa y cuenca Yaque del Sur
+  (presas Sabana Yegua y Sabaneta). Las ubicaciones y altitudes de las zonas nuevas son
+  aproximadas y deben validarse. Sigue siendo una herramienta para arroceros.
+- **Suelo automático: NO se hizo.** Se probó SoilGrids (ISRIC) en las 14 zonas: 8
+  consultas se quedaron sin respuesta, 4 devolvieron vacío y solo 2 dieron datos. No es
+  confiable para el pitch. El suelo se sigue eligiendo a mano.
+
 ## Cómo correrlo
 ```bash
 cd ~/NASA

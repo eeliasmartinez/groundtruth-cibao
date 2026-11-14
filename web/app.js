@@ -31,7 +31,7 @@
 
   // Schematic map of the northern Dominican Republic. Points are [longitude, latitude],
   // placed by hand from general geographic knowledge: good for orientation, not surveyed.
-  var MAP = { w: 760, h: 366, lon0: -72.0, lat0: 20.06, k: 268, cos: 0.944 };
+  var MAP = { w: 760, h: 546, lon0: -72.1, lat0: 20.05, k: 206, cos: 0.947 };
   var GEO = {
     land: [[-71.75, 19.71], [-71.72, 19.80], [-71.66, 19.88], [-71.45, 19.89], [-71.25, 19.86],
       [-71.05, 19.92], [-70.93, 19.90], [-70.80, 19.84], [-70.69, 19.81], [-70.52, 19.77],
@@ -39,32 +39,49 @@
       [-69.86, 19.50], [-69.84, 19.38], [-69.72, 19.31], [-69.54, 19.33], [-69.35, 19.34],
       [-69.22, 19.36], [-69.15, 19.29], [-69.20, 19.21], [-69.33, 19.20], [-69.48, 19.20],
       [-69.61, 19.21], [-69.67, 19.17], [-69.60, 19.10], [-69.45, 19.07], [-69.39, 19.06],
-      [-69.20, 19.02], [-69.05, 18.99], [-68.80, 18.95], [-68.80, 18.40], [-71.72, 18.40],
-      [-71.75, 18.60], [-71.98, 18.62], [-71.75, 18.85], [-71.65, 19.00], [-71.75, 19.12],
+      [-69.20, 19.02], [-69.05, 18.99], [-68.75, 18.95], [-68.55, 18.77], [-68.33, 18.62],
+      [-68.37, 18.50], [-68.45, 18.36], [-68.61, 18.37], [-68.85, 18.33], [-68.97, 18.41],
+      [-69.31, 18.44], [-69.61, 18.44], [-69.90, 18.46], [-70.02, 18.41], [-70.17, 18.23],
+      [-70.55, 18.21], [-70.60, 18.28], [-70.75, 18.38], [-70.83, 18.33], [-71.02, 18.28],
+      [-71.07, 18.20], [-71.10, 18.00], [-71.25, 17.80], [-71.42, 17.60], [-71.55, 17.75],
+      [-71.65, 17.90], [-71.77, 18.04], [-71.72, 18.32], [-71.85, 18.48], [-72.00, 18.62],
+      [-71.75, 18.85], [-71.65, 19.00], [-71.75, 19.12], [-71.70, 19.32], [-71.72, 19.55]],
+    haiti: [[-71.75, 19.71], [-72.40, 19.78], [-72.40, 17.95], [-71.77, 18.04], [-71.72, 18.32],
+      [-71.85, 18.48], [-72.00, 18.62], [-71.75, 18.85], [-71.65, 19.00], [-71.75, 19.12],
       [-71.70, 19.32], [-71.72, 19.55]],
-    haiti: [[-71.75, 19.71], [-72.30, 19.78], [-72.30, 18.40], [-71.72, 18.40], [-71.75, 18.60],
-      [-71.98, 18.62], [-71.75, 18.85], [-71.65, 19.00], [-71.75, 19.12], [-71.70, 19.32], [-71.72, 19.55]],
     rivers: [
       { main: true, points: [[-70.95, 19.03], [-70.80, 19.07], [-70.64, 19.12], [-70.72, 19.28], [-70.70, 19.45],
         [-70.87, 19.57], [-70.98, 19.59], [-71.08, 19.61], [-71.40, 19.67], [-71.50, 19.72], [-71.67, 19.84]] },
       { main: false, points: [[-71.22, 19.24], [-71.17, 19.42], [-71.08, 19.61]] },
       { main: true, points: [[-70.50, 18.80], [-70.41, 18.94], [-70.25, 19.03], [-70.05, 19.15], [-69.91, 19.17], [-69.67, 19.17]] },
       { main: false, points: [[-70.53, 19.22], [-70.33, 19.20], [-70.05, 19.15]] },
-      { main: false, points: [[-70.42, 19.02], [-70.40, 19.10], [-70.33, 19.20]] }
+      { main: false, points: [[-70.42, 19.02], [-70.40, 19.10], [-70.33, 19.20]] },
+      { main: true, points: [[-70.98, 18.96], [-70.93, 18.73], [-71.02, 18.58], [-71.20, 18.42], [-71.10, 18.25]] },
+      { main: false, points: [[-71.30, 18.97], [-71.23, 18.81], [-71.02, 18.58]] }
     ],
     dams: [
       { name: "Tavera - Bao", lon: -70.73, lat: 19.29, dx: -9, dy: 4, anchor: "end" },
       { name: "Monción", lon: -71.17, lat: 19.42, dx: -9, dy: 4, anchor: "end" },
       { name: "Hatillo", lon: -70.25, lat: 19.03, dx: -8, dy: 16, anchor: "end" },
-      { name: "Rincón", lon: -70.40, lat: 19.10, dx: 8, dy: -6, anchor: "start" }
+      { name: "Rincón", lon: -70.40, lat: 19.10, dx: 8, dy: -6, anchor: "start" },
+      { name: "Sabana Yegua", lon: -70.93, lat: 18.73, dx: 9, dy: 4, anchor: "start" },
+      { name: "Sabaneta", lon: -71.30, lat: 18.97, dx: -9, dy: 4, anchor: "end" }
     ],
-    // where each zone's name goes, in the same order as the zone list
-    labels: [
-      { dx: 0, dy: -13, anchor: "middle" }, { dx: 0, dy: 22, anchor: "middle" },
-      { dx: 0, dy: -13, anchor: "middle" }, { dx: -12, dy: 4, anchor: "end" },
-      { dx: 0, dy: -13, anchor: "middle" }, { dx: 12, dy: 14, anchor: "start" },
-      { dx: 12, dy: 4, anchor: "start" }
-    ]
+    // where each zone's name goes (zones not listed get their name to the right)
+    labels: {
+      "Santiago (Navarrete)": { dx: 0, dy: -12, anchor: "middle" },
+      "Valverde (Mao - Esperanza)": { dx: 0, dy: 20, anchor: "middle" },
+      "Montecristi (Villa Vásquez)": { dx: 0, dy: -12, anchor: "middle" },
+      "La Vega": { dx: -11, dy: 4, anchor: "end" },
+      "Duarte (Villa Riva)": { dx: 0, dy: -12, anchor: "middle" },
+      "Sánchez Ramírez (Cotuí)": { dx: 11, dy: 13, anchor: "start" },
+      "Monseñor Nouel (Bonao)": { dx: -11, dy: 12, anchor: "end" },
+      "Samaná (Sánchez)": { dx: 8, dy: 16, anchor: "start" },
+      "Dajabón": { dx: 0, dy: 20, anchor: "middle" },
+      "San Juan de la Maguana": { dx: -11, dy: 12, anchor: "end" },
+      "Barahona (Vicente Noble)": { dx: -11, dy: 4, anchor: "end" },
+      "Monte Plata (Bayaguana)": { dx: 0, dy: 20, anchor: "middle" }
+    }
   };
   // A small hand-drawn icon for each crop (24 x 24 line drawings).
   var ICONS = {
@@ -278,7 +295,7 @@
       basin_of: "de la capacidad de {dam}",
       basin_cap: "{n} millones de m³",
       basin_note: "Cifra conservadora: solo cuenta el agua ahorrada en las fincas. El área de arroz de la cuenca se estimó repartiendo el área nacional según la producción de cada provincia.",
-      basin_none: "No tenemos datos de presas para la cuenca {basin}. El cálculo a nivel de cuenca está disponible para el Yaque del Norte y el Yuna - Camú.",
+      basin_none: "No tenemos datos de presas para la cuenca {basin}. El cálculo a nivel de cuenca está disponible para el Yaque del Norte, el Yuna - Camú y el Yaque del Sur.",
       trust_title: "Qué tan confiable es esto",
       limits_title: "Límites y vacíos de información",
       limits: [
@@ -315,11 +332,11 @@
       light: { normal: "Normal", tandeo: "Tandeo", veda: "Veda" },
       light_desc: { normal: "Riego completo", tandeo: "Riego por turnos", veda: "Arroz prohibido" },
       light_note: "El semáforo es una guía nuestra con los términos del riego dominicano. Los porcentajes no son cifras oficiales del INDRHI: ajústalos con el control.",
-      map_title: "El Cibao arrocero visto por la NASA",
+      map_title: "El arroz dominicano visto por la NASA",
       map_sub: "Toca una zona para cambiar la finca. Cada cuadro punteado mide unos 50 km: es el tamaño con que NASA POWER describe el clima.",
       layers: { basins: "Ríos y presas", balance: "Falta de agua", soil: "Humedad del suelo", heat: "Calor" },
       layer_desc: {
-        basins: "Ríos Yaque del Norte (oeste) y Yuna (este) con sus presas.",
+        basins: "Ríos Yaque del Norte, Yuna y Yaque del Sur con sus presas.",
         balance: "Lluvia menos el agua que pierde el campo, en mm por año. Más oscuro: falta más agua.",
         soil: "Humedad en la zona de raíces, en % de saturación. Más oscuro: más húmedo.",
         heat: "Temperatura máxima media del mes más caliente. Más oscuro: más calor."
@@ -328,7 +345,7 @@
       river: "Río", dam: "Presa", zone_dot: "Zona arrocera", selected_dot: "Tu zona",
       map_aria: "Mapa esquemático del Cibao con las zonas arroceras",
       map_note: "Mapa esquemático: la costa, los ríos y las presas están dibujados de forma aproximada.",
-      ocean: "Océano Atlántico", haiti: "Haití",
+      ocean: "Océano Atlántico", haiti: "Haití", caribbean: "Mar Caribe",
       parcel_title: "Tu finca desde arriba",
       parcel_sub: "{name}. Cada cuadro es el 1% de tus {area} tareas.",
       impact_n: "sacos de urea que el suelo recibe sin comprarlos",
@@ -497,7 +514,7 @@
       basin_of: "of {dam}'s capacity",
       basin_cap: "{n} million m³",
       basin_note: "Conservative figure: it only counts water saved on the farms. The basin's rice area was estimated by splitting the national area according to each province's production.",
-      basin_none: "We have no dam data for the {basin} basin. The basin-wide estimate is available for the Yaque del Norte and the Yuna - Camú.",
+      basin_none: "We have no dam data for the {basin} basin. The basin-wide estimate is available for the Yaque del Norte, the Yuna - Camú and the Yaque del Sur.",
       trust_title: "How reliable is this",
       limits_title: "Limits and information gaps",
       limits: [
@@ -534,11 +551,11 @@
       light: { normal: "Normal", tandeo: "Turns", veda: "Ban" },
       light_desc: { normal: "Full irrigation", tandeo: "Irrigation by turns", veda: "Rice banned" },
       light_note: "The traffic light is our own guide using Dominican irrigation terms (tandeo = turns, veda = ban). The percentages are not official INDRHI figures: adjust them with the control.",
-      map_title: "The rice-growing Cibao as NASA sees it",
+      map_title: "Dominican rice as NASA sees it",
       map_sub: "Tap a zone to change the farm. Each dotted square is about 50 km wide: the size at which NASA POWER describes the climate.",
       layers: { basins: "Rivers and dams", balance: "Water shortfall", soil: "Soil moisture", heat: "Heat" },
       layer_desc: {
-        basins: "Yaque del Norte (west) and Yuna (east) rivers with their dams.",
+        basins: "Yaque del Norte, Yuna and Yaque del Sur rivers with their dams.",
         balance: "Rain minus the water the field loses, in mm per year. Darker: larger shortfall.",
         soil: "Moisture in the root zone, in % of saturation. Darker: wetter.",
         heat: "Average daily maximum of the hottest month. Darker: hotter."
@@ -547,7 +564,7 @@
       river: "River", dam: "Dam", zone_dot: "Rice zone", selected_dot: "Your zone",
       map_aria: "Schematic map of the Cibao valley with the rice zones",
       map_note: "Schematic map: the coast, rivers and dams are drawn approximately.",
-      ocean: "Atlantic Ocean", haiti: "Haiti",
+      ocean: "Atlantic Ocean", haiti: "Haiti", caribbean: "Caribbean Sea",
       parcel_title: "Your farm from above",
       parcel_sub: "{name}. Each square is 1% of your {area} tareas.",
       impact_n: "sacks of urea the soil gets without buying them",
@@ -1276,7 +1293,9 @@
         (river.main ? 3 : 1.8) + "\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>";
     });
     svg += "<text class=\"river\" x=\"" + mx(-71.70) + "\" y=\"" + my(19.585) + "\">" + L.river + " Yaque del Norte</text>" +
-      "<text class=\"river\" x=\"" + mx(-69.86) + "\" y=\"" + my(19.045) + "\">" + L.river + " Yuna</text>";
+      "<text class=\"river\" x=\"" + mx(-69.86) + "\" y=\"" + my(19.045) + "\">" + L.river + " Yuna</text>" +
+      "<text class=\"river\" x=\"" + mx(-70.92) + "\" y=\"" + my(18.50) + "\">" + L.river + " Yaque del Sur</text>" +
+      "<text class=\"place\" x=\"" + mx(-70.25) + "\" y=\"" + my(17.85) + "\">" + L.caribbean + "</text>";
 
     GEO.dams.forEach(function (dam) {
       var x = mx(dam.lon), y = my(dam.lat);
@@ -1285,7 +1304,7 @@
     });
 
     D.zones.forEach(function (z, i) {
-      var x = mx(z.lon), y = my(z.lat), label = GEO.labels[i], mine = i === state.zone;
+      var x = mx(z.lon), y = my(z.lat), label = GEO.labels[z.name] || { dx: 11, dy: 4, anchor: "start" }, mine = i === state.zone;
       svg += "<g class=\"zone" + (mine ? " mine" : "") + "\" data-zone=\"" + i + "\" tabindex=\"0\" role=\"button\" aria-label=\"" +
         esc(z.name) + "\"><circle cx=\"" + x + "\" cy=\"" + y + "\" r=\"17\" fill=\"transparent\"/>" +
         "<circle class=\"dot\" cx=\"" + x + "\" cy=\"" + y + "\" r=\"" + (mine ? 9 : 6.5) + "\"/>" +

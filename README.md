@@ -17,7 +17,7 @@ agricultural expert.
 
 ## How NASA data is used
 
-Daily data from **NASA POWER** (2001–2026) for seven rice zones: temperature
+Daily data from **NASA POWER** (2001–2026) for fourteen rice zones across the country: temperature
 (mean, max, min), solar radiation, relative humidity, wind speed, precipitation
 and soil wetness. From it the engine computes:
 

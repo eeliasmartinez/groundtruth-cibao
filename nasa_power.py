@@ -39,7 +39,7 @@ PARAMETERS = {
     "WS2M": "wind",  # wind speed at 2 m, m/s
 }
 
-# Rice-growing zones of the Cibao. Elevation is in meters above sea level.
+# Rice-growing zones of the Dominican Republic. Elevation is in meters above sea level.
 # "basin" is the river system that supplies the irrigation water.
 ZONES = {
     "Santiago (Navarrete)": {"lat": 19.56, "lon": -70.87, "elev": 150, "basin": "Yaque del Norte"},
@@ -49,6 +49,15 @@ ZONES = {
     "Duarte (Villa Riva)": {"lat": 19.17, "lon": -69.91, "elev": 20, "basin": "Yuna - Camú"},
     "Sánchez Ramírez (Cotuí)": {"lat": 19.05, "lon": -70.15, "elev": 70, "basin": "Yuna - Camú"},
     "María Trinidad Sánchez (Nagua)": {"lat": 19.38, "lon": -69.85, "elev": 10, "basin": "Nagua - Boba"},
+    # Rice zones outside the Cibao core. Locations and elevations are approximate
+    # and must be validated by the team.
+    "Monseñor Nouel (Bonao)": {"lat": 18.94, "lon": -70.41, "elev": 170, "basin": "Yuna - Camú"},
+    "Samaná (Sánchez)": {"lat": 19.23, "lon": -69.61, "elev": 10, "basin": "Yuna - Camú"},
+    "Dajabón": {"lat": 19.55, "lon": -71.70, "elev": 35, "basin": "Masacre"},
+    "San Juan de la Maguana": {"lat": 18.81, "lon": -71.23, "elev": 415, "basin": "Yaque del Sur"},
+    "Barahona (Vicente Noble)": {"lat": 18.38, "lon": -71.18, "elev": 30, "basin": "Yaque del Sur"},
+    "El Seibo (Miches)": {"lat": 18.98, "lon": -69.05, "elev": 10, "basin": "Este"},
+    "Monte Plata (Bayaguana)": {"lat": 18.75, "lon": -69.63, "elev": 50, "basin": "Ozama"},
 }
 
 
