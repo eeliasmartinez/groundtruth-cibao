@@ -104,13 +104,20 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v10`).
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v11`).
 - **Datos del relieve:** el resumen del clima, suelo, agua y área está cerrado inicialmente
   dentro de “Datos del mapa”; se abre solo si el usuario lo elige.
 - **Continuar desde una zona:** “Continuar con esta finca” coloca la marca ilustrativa y
   abre la primera pregunta del recorrido en el mismo clic, conservando el relieve 3D.
 - **Guía sencilla:** Inicio ofrece “Guía sencilla para el campo”. Usa los mismos cálculos y
   preguntas, con explicaciones más directas; el recorrido normal sigue disponible.
+- **Guardado en el dispositivo:** en “Mi plan”, la persona puede guardar el plan localmente
+  y sus respuestas se actualizan allí al cambiar. No crea cuenta ni transmite ubicación.
+  El botón permite borrar el guardado. El módulo está en `web/storage.js`.
+- **Textos y JavaScript:** el diccionario bilingüe `T` está en `web/copy.js`; el controlador
+  de pantallas continúa en `web/app.js`. `web/storage.js` contiene el guardado independiente.
+- **Procedencia visible:** el plan separa clima histórico de NASA POWER, entradas de la
+  persona y zona cartográfica ilustrativa. No se cambia ningún coeficiente agronómico.
 - **Un solo período:** todo usa 2001–2025.
 - Explicación completa del proceso y de dónde están los datos: `docs/como_funciona.md`.
 
@@ -130,7 +137,9 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
 ## Dirección visual actual (rediseño del 14-nov, noche)
 - **Idea:** la impresión de un saco de arroz dominicano. Azul ultramar plano y rojo de
   sello sobre blanco, mayúsculas condensadas gruesas, reglas negras, esquinas rectas.
-  Sin cristal, sin desenfoques, sin degradados decorativos y sin emojis.
+  Sin cristal decorativo por toda la página, sin desenfoques de fondo ni degradados
+  decorativos. El panel del relieve puede usar vidrio translúcido limitado para separar los
+  datos del terreno, con alternativa opaca y texto legible.
 - **Tipografías** (guardadas en `web/fonts/`, licencia abierta SIL OFL): Big Shoulders
   Display para títulos y números, Archivo para el texto.
 - **Iconos:** dibujados en SVG con un solo grosor de línea (`VIEW_ICONS`,
@@ -174,7 +183,7 @@ Si `.venv` no existe: `python3 -m venv .venv && .venv/bin/pip install -r require
 1. Si cambias `rotation.py` o `crops.py`, cambia igual `web/engine.js`, corre
    `build_web.py` y luego las dos verificaciones. Deben quedar en cero fallos.
 2. No inventes cifras. Toda cifra nueva lleva fuente con enlace.
-3. Todo texto de la página va en los dos idiomas (objeto `T` en `web/app.js`).
+3. Todo texto de la página va en los dos idiomas (objeto `T` en `web/copy.js`).
 4. La página debe seguir funcionando sin internet (sin librerías externas).
 5. Mantén los avisos de "herramienta de apoyo" y la declaración de uso de IA.
 6. Python 3.9: no usar sintaxis más nueva (`X | Y` en tipos, `match`).

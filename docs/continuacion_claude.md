@@ -1,5 +1,28 @@
 # Handoff para Claude Code — 14-nov-2026
 
+## Actualización Codex — guardado privado, procedencia y superficies de mapa
+
+- `web/copy.js` contiene ahora el objeto bilingüe `T`, separado de la lógica de pantalla.
+- `web/storage.js` es un módulo clásico independiente. Guarda una lista blanca de respuestas
+  (zona regional, mes, tareas, suelo, agua, prioridad, idioma y preferencias) en
+  `localStorage`; valida el registro al cargarlo. No almacena coordenadas exactas ni hace
+  solicitudes de red. En “Mi plan” se ofrece guardar/borrar; si el navegador falla, avisa y
+  la herramienta sigue funcionando.
+- `web/index.html` carga `copy.js` y `storage.js` antes de `engine.js` y `app.js`. Mantener
+  scripts clásicos para que `file://` y el modo offline sigan funcionando.
+- El resumen del relieve tiene un efecto cristal translúcido con fondo opaco alternativo;
+  se limita a ese panel. Se respeta `prefers-reduced-transparency` cuando el navegador lo
+  soporta.
+- Movimiento reducido ya no elimina toda respuesta visual: detiene oleaje, flujos y entradas
+  de movimiento; mantiene cambios de color/opacidad. El canvas 3D se detiene al cambiar de
+  pestaña del navegador y reacciona si cambia la preferencia del sistema durante la sesión.
+- El panel del plan distingue clima NASA POWER, entradas del productor y mapa ilustrativo.
+  No se cambiaron motor, cultivos ni coeficientes. PWA subida a `plan-b-v11`.
+- Falta revisar en dispositivos reales contraste del vidrio, lectura a 320–390 px, guardado
+  y borrado en Chrome/Safari, reapertura offline y el recorrido con movimiento reducido.
+- `app.js` sigue siendo el controlador grande; solo se separaron contenido y persistencia.
+  Una división ulterior debe ser incremental y mantener `engine.js` + la comparación Python/JS.
+
 ## Actualización Codex — simplificación de la finca y opciones
 
 - El recuadro de clima/suelo/agua/área en el relieve 3D está dentro de un menú nativo

@@ -1,6 +1,5 @@
-/* GroundTruth Cibao - Plan B. Styles written with the assistance of Claude Code.
-   Look: the print on a Dominican rice sack. Flat ultramarine and stamp red on
-   white, heavy condensed capitals, thick rules, square corners, no blur. */
+/* GroundTruth Cibao - Plan B. Dominican rice-sack identity with restrained
+   glass only on map controls, where it separates information from the terrain. */
 @font-face { font-family: "Big Shoulders"; src: url("fonts/big-shoulders.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
 @font-face { font-family: "Archivo"; src: url("fonts/archivo.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
 
@@ -147,7 +146,6 @@ h2 { font-size: clamp(26px, 3vw, 36px); line-height: 1; }
 @keyframes mapflow { to { stroke-dashoffset: -11; } }
 :is(#map, .g-map, #h-map, #j-map) .zone { cursor: pointer; }
 :is(#map, .g-map, #h-map, #j-map) .zone .dot { fill: var(--red); stroke: #fff; stroke-width: 2; transform-box: fill-box; transform-origin: center; transition: transform 160ms var(--ease-out); }
-:is(#map, .g-map, #h-map, #j-map) .zone:hover .dot { transform: scale(1.35); }
 :is(#map, .g-map, #h-map, #j-map) .zone.mine .dot { stroke: var(--ink); stroke-width: 2.5; }
 :is(#map, .g-map, #h-map, #j-map) .zone .pulse { fill: var(--red); transform-box: fill-box; transform-origin: center; animation: pulse 1.8s ease-out infinite; }
 @keyframes pulse { from { transform: scale(0.8); opacity: 0.55; } to { transform: scale(2.8); opacity: 0; } }
@@ -392,7 +390,6 @@ details.more p { margin-top: 6px; max-width: 75ch; }
 .g-area input { border: 0; border-left: 2px solid var(--ink); border-right: 2px solid var(--ink); background: #fff; font-family: var(--display); font-weight: 900; font-size: 40px; text-align: center; padding: 6px; width: 100%; color: var(--blue); border-radius: 0; }
 .g-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .g-option { border: 2px solid var(--ink); background: #fff; padding: 16px; cursor: pointer; display: grid; gap: 10px; justify-items: start; text-align: left; color: var(--ink); transition: transform 160ms var(--ease-out), background-color 160ms ease, color 160ms ease; }
-.g-option:hover { transform: translateY(-2px); }
 .g-option svg:not(.ico) { width: 100%; height: auto; }
 .g-option svg:not(.ico) rect:first-child { rx: 0; }
 .g-option i { font-style: normal; font-size: 44px; line-height: 1; color: var(--blue); }
@@ -476,9 +473,10 @@ body.sheet-mode #sheet { display: block; max-width: 720px; margin: 0 auto; paddi
   .cal-head .cal-name, .cal-cycles .cal-name { display: none; }
   .cal-bar span { display: none; }
 }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition: none !important; animation: none !important; }
-  .journey-chapter, .journey-chapter.current { opacity: 1; transform: none; }
+@media (hover: hover) and (pointer: fine) {
+  .g-option:hover { transform: translateY(-2px); }
+  :is(#map, .g-map, #h-map, #j-map) .zone:hover .dot { transform: scale(1.35); }
+  .scene-context-menu > summary:hover { background: rgba(255,255,255,.92); box-shadow: 0 10px 28px rgba(5,22,60,.24), inset 0 1px rgba(255,255,255,.98); }
 }
 
 /* ---- moving sea, raised land, satellite photo ---- */
@@ -506,11 +504,18 @@ body.sheet-mode #sheet { display: block; max-width: 720px; margin: 0 auto; paddi
 #z-canvas { display: block; width: 100%; height: auto; aspect-ratio: 10 / 7; cursor: grab; touch-action: pan-y; }
 #z-canvas:active { cursor: grabbing; }
 .scene-context-menu { position: absolute; z-index: 2; top: 10px; left: 10px; width: min(265px, calc(100% - 20px)); }
-.scene-context-menu > summary { width: fit-content; min-height: 38px; display: flex; align-items: center; gap: 10px; cursor: pointer; list-style: none; padding: 7px 10px; border: 1px solid var(--ink); background: rgba(255,255,255,.96); color: var(--ink); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; }
+.scene-context-menu > summary { width: fit-content; min-height: 40px; display: flex; align-items: center; gap: 10px; cursor: pointer; list-style: none; padding: 7px 12px; border: 1px solid rgba(255,255,255,.78); border-radius: 10px; background: rgba(248,251,255,.78); color: var(--ink); box-shadow: 0 8px 24px rgba(5,22,60,.2), inset 0 1px rgba(255,255,255,.9); -webkit-backdrop-filter: blur(12px) saturate(130%); backdrop-filter: blur(12px) saturate(130%); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms var(--ease-out); }
+.scene-context-menu > summary:active { transform: scale(.98); }
 .scene-context-menu > summary::-webkit-details-marker { display: none; }
 .scene-context-menu > summary::after { content: "+"; font-family: var(--display); color: var(--blue); font-size: 22px; line-height: .8; }
 .scene-context-menu[open] > summary::after { content: "−"; }
-.scene-context { margin-top: 6px; padding: 9px; display: grid; grid-template-columns: 1fr 1fr; gap: 7px; background: rgba(255,255,255,.97); border: 1px solid var(--ink); }
+.scene-context { margin-top: 6px; padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 7px; background: rgba(248,251,255,.86); border: 1px solid rgba(255,255,255,.82); border-radius: 12px; box-shadow: 0 12px 30px rgba(5,22,60,.24), inset 0 1px rgba(255,255,255,.9); -webkit-backdrop-filter: blur(14px) saturate(135%); backdrop-filter: blur(14px) saturate(135%); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .scene-context-menu > summary, .scene-context { background: #f8fbff; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .scene-context-menu > summary, .scene-context { background: #f8fbff; -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
 .scene-context-head, .scene-context-soil, .scene-context-water { min-width: 0; display: grid; gap: 1px; }
 .scene-context-head { grid-column: 1 / -1; grid-template-columns: 1fr auto; align-items: baseline; border-bottom: 1px solid var(--hair); padding-bottom: 4px; }
 .scene-context-head b, .scene-context-soil b, .scene-context-water b, .scene-context-area b { font-size: 10px; line-height: 1.1; text-transform: uppercase; letter-spacing: .035em; }
@@ -525,10 +530,15 @@ body.sheet-mode #sheet { display: block; max-width: 720px; margin: 0 auto; paddi
 .scene-context-water > i u { display: block; height: 100%; background: var(--water); transition: width 260ms var(--ease-in-out); }
 .scene-context-area { grid-column: 1 / -1; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-top: 4px; border-top: 1px solid var(--hair); }
 .scene-context-area span { color: var(--ink-2); font-size: 12px; font-weight: 700; }
+.parcel-context > .data-origin { grid-column: 1 / -1; min-height: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 9px 0 0; border-top: 1px solid var(--hair); background: transparent; color: var(--muted); font-size: 11px; line-height: 1.35; }
+.data-origin b { color: var(--blue); text-transform: uppercase; letter-spacing: .035em; }
+.local-save-note { color: var(--ink-2); font-size: 13px; line-height: 1.4; }
+.local-save-note:not([hidden]) { padding: 9px 12px; border: 1px solid rgba(18,56,168,.18); border-radius: 8px; background: rgba(232,237,251,.74); }
 @media (max-width: 860px) {
   .scene-context-menu { width: min(235px, calc(100% - 20px)); }
   .scene-context { padding: 7px; gap: 5px; }
   .scene-context-head b, .scene-context-soil b, .scene-context-water b, .scene-context-area b { font-size: 9px; }
+  .parcel-context > .data-origin { display: grid; gap: 4px; }
 }
 .z-stage .note { color: rgba(255, 255, 255, 0.82); margin: 0; padding: 10px 14px 12px; border-top: 2px solid rgba(255, 255, 255, 0.25); }
 .z-info { display: grid; gap: 14px; }
@@ -558,6 +568,22 @@ details.more .soil-table { margin-top: 8px; }
 
 /* ---- the Back button: top bar on a computer, above the tab bar on a phone ---- */
 #back { white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .journey-chapter, .journey-chapter.current { opacity: 1; transform: none; }
+  #h-map, .g-q, .g-sub, .g-body, .g-result .plot span, .stamp, .zone-head h2,
+  :is(#map, .g-map, #h-map, #j-map) .wave,
+  :is(#map, .g-map, #h-map, #j-map) .rv-flow,
+  :is(#map, .g-map, #h-map, #j-map) .pulse, .g-wave { animation: none !important; }
+  .btn, .nav button, .lang button, .seg button, .light button, .scene-context-menu > summary {
+    transition-property: color, background-color, border-color, opacity !important;
+    transition-duration: 140ms !important;
+  }
+  .btn:active, .g-option:active, .g-months button:active, .g-area button:active,
+  .seg button:active, .light button:active, .scene-context-menu > summary:active { transform: none; }
+  .fill, .cap, .meter .fill, .meter .cap, .g-progress i, .parcel-water > i u,
+  .scene-context-water > i u, .g-level, .dam .tank i, .cal-bar { transition: none !important; }
+}
 @media (max-width: 860px) {
   #back { position: fixed; left: 12px; bottom: calc(72px + env(safe-area-inset-bottom)); z-index: 31; padding: 9px 14px; font-size: 14.5px; box-shadow: 0 4px 0 var(--ink); }
 }

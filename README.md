@@ -33,6 +33,8 @@ and soil wetness. From it the engine computes:
 | Path | What it is |
 |---|---|
 | `web/` | The interactive page (open `web/index.html`; works offline) |
+| `web/copy.js` | Spanish and English interface text |
+| `web/storage.js` | Optional farm-plan storage on the current device only |
 | `nasa_power.py` | Downloads NASA POWER data and keeps a saved copy in `data/` |
 | `water.py` | Crop water needs (FAO-56) |
 | `crops.py` | Crop table with its sources |

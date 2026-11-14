@@ -102,3 +102,21 @@ manteniendo visible el relieve.
 En Inicio hay una “Guía sencilla para el campo”. Es el mismo plan y usa los mismos
 cálculos que el recorrido normal; cambia únicamente las preguntas y sus explicaciones
 para que sean más directas. No guarda cuentas ni información personal.
+
+## Guardado local y arquitectura de la interfaz
+
+En “Mi plan”, el botón “Guardar plan en este dispositivo” guarda las respuestas en el
+navegador. Después de activarlo, cada cambio actualiza ese guardado; se recupera al volver
+a abrir la web y se puede borrar desde el mismo botón. No se envían datos a internet ni
+se guarda una coordenada exacta de la finca. Si el navegador bloquea el almacenamiento,
+la herramienta sigue funcionando y muestra un aviso.
+
+La página carga scripts clásicos en orden para conservar el uso por doble clic y sin
+internet: `copy.js` contiene las frases ES/EN, `storage.js` maneja el guardado local,
+`engine.js` calcula las estrategias y `app.js` conecta las pantallas. El renderizado y la
+navegación todavía están juntos en `app.js`; dividirlos más exige extraer cada módulo con
+cuidado y conservar las verificaciones de equivalencia del motor.
+
+En el plan se etiquetan tres procedencias: clima histórico de NASA POWER, datos que el
+productor selecciona (suelo, agua y tamaño) y zona de mapa de referencia. El relieve y la
+marca de finca siguen siendo ilustrativos; no se modificaron los parámetros de cultivos.
