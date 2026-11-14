@@ -317,13 +317,7 @@ window.GT_COPY = { T: {
       parcel_sub: "{name}. Cada cuadro es el 1% de tus {area} tareas.",
       impact_n: "sacos de urea que el suelo recibe sin comprarlos",
       impact_water: "m³ de agua menos que sembrar todo de arroz",
-      impact_land: "tareas sembradas, sin suelo desnudo",
-      save_local: "Save plan on this device", delete_local: "Delete saved plan",
-      saved_local: "This plan is stored only on this device and updates when you change your answers.",
-      storage_error: "This device's storage is unavailable. You can keep using the tool.",
-      origin_nasa: "regional climate, 2001–2025",
-      origin_user_label: "You", origin_user: "soil, water and farm size you selected",
-      origin_map_label: "Map", origin_map: "reference zone; not your farm boundary"
+      impact_land: "tareas sembradas, sin suelo desnudo"
     },
     en: {
       hero_title: "When the water runs short, what do you plant?",
@@ -635,6 +629,12 @@ window.GT_COPY = { T: {
       parcel_sub: "{name}. Each square is 1% of your {area} tareas.",
       impact_n: "sacks of urea the soil gets without buying them",
       impact_water: "m³ less water than planting everything with rice",
-      impact_land: "tareas planted, no bare soil"
+      impact_land: "tareas planted, no bare soil",
+      save_local: "Save plan on this device", delete_local: "Delete saved plan",
+      saved_local: "This plan is stored only on this device and updates when you change your answers.",
+      storage_error: "This device's storage is unavailable. You can keep using the tool.",
+      origin_nasa: "regional climate, 2001–2025",
+      origin_user_label: "You", origin_user: "soil, water and farm size you selected",
+      origin_map_label: "Map", origin_map: "reference zone; not your farm boundary"
     }
   } };

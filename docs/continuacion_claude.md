@@ -17,7 +17,7 @@
   de movimiento; mantiene cambios de color/opacidad. El canvas 3D se detiene al cambiar de
   pestaña del navegador y reacciona si cambia la preferencia del sistema durante la sesión.
 - El panel del plan distingue clima NASA POWER, entradas del productor y mapa ilustrativo.
-  No se cambiaron motor, cultivos ni coeficientes. PWA subida a `plan-b-v11`.
+  No se cambiaron motor, cultivos ni coeficientes. PWA subida a `plan-b-v12`.
 - Falta revisar en dispositivos reales contraste del vidrio, lectura a 320–390 px, guardado
   y borrado en Chrome/Safari, reapertura offline y el recorrido con movimiento reducido.
 - `app.js` sigue siendo el controlador grande; solo se separaron contenido y persistencia.
