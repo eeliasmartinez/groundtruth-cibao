@@ -112,6 +112,18 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   icono + título + texto como estructura, no usar cristal como adorno, un solo sistema
   de iconos, tipografía propia (no la del sistema) y revisar el resultado en pantalla.
 
+## Mapa 3D, océano, foto satelital y guía de suelos (14-nov, noche)
+- **Explorador de zona:** tocar una zona en el mapa hace zoom y abre su relieve real en
+  3D (canvas, sin librerías), con ríos en movimiento, presas y una ficha de clima.
+  El relieve está en `web/relief.js` y lo genera `build_relief.py` (elevación SRTM).
+- **Altitudes de las zonas:** ahora vienen de ese relieve, no de memoria.
+- **Mapa:** mar con olas en movimiento, isla con volumen y capa "Foto satelital"
+  (`web/sat.jpg`, NASA MODIS Terra, 18-feb-2026).
+- **Guía de suelos:** tabla para reconocer el suelo al tacto, en Ayuda y dentro de la
+  pregunta de suelo del recorrido. Las fotos de suelos no se pudieron bajar; usa dibujos.
+- Se quitó el botón del caso de Don Pedro. Hay botón "Volver a mi plan".
+- Evaluación crítica por aspecto: `docs/evaluacion.md`.
+
 ## Cómo correrlo
 ```bash
 cd ~/NASA

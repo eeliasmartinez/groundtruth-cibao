@@ -35,7 +35,7 @@
   // placed by hand from general geographic knowledge: good for orientation, not surveyed.
   var MAP = { w: 760, h: 546, lon0: -72.1, lat0: 20.05, k: 206, cos: 0.947 };
   var NAV_VIEWS = ["home", "plan", "rotation", "options", "map", "data", "help"];
-  var VIEWS = NAV_VIEWS.concat(["guide"]); // the walkthrough is opened from Home, not from the menu
+  var VIEWS = NAV_VIEWS.concat(["guide", "zone"]); // the walkthrough is opened from Home, not from the menu
   // Small drawings for the soil question: water stays on clay, sinks through sand.
   var SOIL_ART = {
     clay: '<svg viewBox="0 0 120 64" aria-hidden="true"><rect width="120" height="64" rx="10" fill="#7a4a2b"/><path d="M0 26h120M0 46h120" stroke="#5d3518" stroke-width="2"/><path d="M34 8v18M72 26v20M98 46v18M18 46v18" stroke="#5d3518" stroke-width="2"/><ellipse cx="60" cy="9" rx="38" ry="6" fill="#6db8f7"/></svg>',
@@ -128,7 +128,10 @@
     ["Presidencia de la República Dominicana: INDRHI informa sobre volúmenes en el sistema nacional de presas", "https://presidencia.gob.do/noticias/indrhi-informa-sobre-volumenes-en-sistema-nacional-de-presas"],
     ["Map rivers: © OpenStreetMap contributors (ODbL)", "https://www.openstreetmap.org/copyright"],
     ["Map coastline: Natural Earth (public domain)", "https://www.naturalearthdata.com/"],
-    ["Typefaces: Big Shoulders Display and Archivo (SIL Open Font License), via Fontsource", "https://fontsource.org/"]
+    ["Typefaces: Big Shoulders Display and Archivo (SIL Open Font License), via Fontsource", "https://fontsource.org/"],
+    ["Satellite photo: NASA Worldview Snapshots, MODIS Terra corrected reflectance, 18 Feb 2026", "https://wvs.earthdata.nasa.gov/"],
+    ["Elevation: Terrain Tiles on AWS Open Data (Mapzen), derived mainly from NASA SRTM", "https://registry.opendata.aws/terrain-tiles/"],
+    ["Soil by feel: USDA NRCS, Guide to Texture by Feel (S. J. Thien, 1979)", "https://www.nrcs.usda.gov/resources/education-and-teaching-materials/guide-to-texture-by-feel"]
   ];
 
   // ------------------------------------------------------------------
@@ -370,9 +373,32 @@
       light_note: "El semáforo es una guía nuestra con los términos del riego dominicano. Los porcentajes no son cifras oficiales del INDRHI: ajústalos con el control.",
       map_title: "El arroz dominicano visto por la NASA",
       map_sub: "Toca una zona para cambiar la finca. Cada cuadro punteado mide unos 50 km: es el tamaño con que NASA POWER describe el clima.",
-      layers: { basins: "Ríos y presas", balance: "Falta de agua", soil: "Humedad del suelo", heat: "Calor" },
+      layers: { basins: "Ríos y presas", sat: "Foto satelital", balance: "Falta de agua", soil: "Humedad del suelo", heat: "Calor" },
+      back_plan: "← Volver a mi plan", back_map: "← Volver al mapa",
+      z_sub: "Cuenca {basin}. Relieve real en 3D de unos 90 km de ancho. Arrastra para girarlo.",
+      z_note: "Relieve: elevación SRTM de la NASA (Terrain Tiles), con la altura exagerada 8 veces para que se note. Ríos: © colaboradores de OpenStreetMap. Clima: NASA POWER, promedio 2001–2025.",
+      z_plan: "Planificar mi finca aquí",
+      z_elev: "altitud de la zona", z_high: "punto más alto cerca", z_heat: "máxima media en {month}, el mes más caliente",
+      z_temp: "temperatura media del año", z_rain: "de lluvia al año", z_et0: "pierde el campo al año",
+      z_hum: "humedad del aire", z_wind: "viento medio", z_soilw: "humedad del suelo en las raíces",
+      z_rivers: "Ríos cerca", z_dams: "Presas cerca", z_none: "ninguno dentro de la ventana",
+      z_soil_title: "Tipo de suelo",
+      z_soil: "No tenemos el tipo de suelo de cada lugar: la base mundial que probamos no respondió de forma confiable. Reconócelo tú con la guía de suelos.",
+      z_soil_btn: "Ver la guía de suelos",
+      soilg_title: "Cómo reconocer tu suelo",
+      soilg_sub: "La prueba de la cinta toma dos minutos y no necesita laboratorio.",
+      soilg_how: "Toma un puñado de tierra sin piedras ni raíces. Mójala poco a poco y amásala hasta que quede como masilla. Apriétala entre el pulgar y el índice, empujando hacia arriba, para sacar una cinta.",
+      soilg_head: ["Suelo", "Cómo se siente", "La cinta", "El agua", "Qué significa para tu finca"],
+      soilg_rows: {
+        clay: ["Pegajoso y liso cuando está mojado. Duro y agrietado cuando se seca.", "Larga: más de 5 cm sin romperse.", "Se queda encima un día o más.", "Guarda el agua: bueno para arroz inundado. La habichuela, el maíz y el guandul necesitan buen drenaje."],
+        loam: ["Suave, un poco áspero. Forma una bola que no se pega mucho.", "Corta: se rompe antes de 2.5 cm.", "Baja en unas horas.", "Sirve para casi todos los cultivos. Es el más fácil para rotar."],
+        sandy: ["Áspero, como azúcar. La bola se desmorona.", "No sale cinta.", "Se cuela en minutos.", "El arroz gasta mucha más agua. Convienen cultivos de poca agua."]
+      },
+      soilg_note: "Método: guía de textura al tacto del USDA (Thien, 1979). Entre 2.5 y 5 cm de cinta es un suelo intermedio (franco arcilloso). Los dibujos son ilustrativos: conviene agregar fotos de suelos de la zona.",
+      g_soil_link: "¿No sabes cuál es? Así se reconoce",
       layer_desc: {
         basins: "Ríos Yaque del Norte, Yuna y Yaque del Sur con sus presas.",
+        sat: "Foto real tomada por el satélite Terra de la NASA (instrumento MODIS) el 18 de febrero de 2026.",
         balance: "Lluvia menos el agua que pierde el campo, en mm por año. Más oscuro: falta más agua.",
         soil: "Humedad en la zona de raíces, en % de saturación. Más oscuro: más húmedo.",
         heat: "Temperatura máxima media del mes más caliente. Más oscuro: más calor."
@@ -623,9 +649,32 @@
       light_note: "The traffic light is our own guide using Dominican irrigation terms (tandeo = turns, veda = ban). The percentages are not official INDRHI figures: adjust them with the control.",
       map_title: "Dominican rice as NASA sees it",
       map_sub: "Tap a zone to change the farm. Each dotted square is about 50 km wide: the size at which NASA POWER describes the climate.",
-      layers: { basins: "Rivers and dams", balance: "Water shortfall", soil: "Soil moisture", heat: "Heat" },
+      layers: { basins: "Rivers and dams", sat: "Satellite photo", balance: "Water shortfall", soil: "Soil moisture", heat: "Heat" },
+      back_plan: "← Back to my plan", back_map: "← Back to the map",
+      z_sub: "{basin} basin. Real 3D relief about 90 km wide. Drag to turn it.",
+      z_note: "Relief: NASA SRTM elevation (Terrain Tiles), with height exaggerated 8 times so it shows. Rivers: © OpenStreetMap contributors. Climate: NASA POWER, 2001–2025 average.",
+      z_plan: "Plan my farm here",
+      z_elev: "elevation of the zone", z_high: "highest point nearby", z_heat: "average maximum in {month}, the hottest month",
+      z_temp: "average temperature of the year", z_rain: "of rain per year", z_et0: "lost by the field per year",
+      z_hum: "air humidity", z_wind: "average wind", z_soilw: "soil moisture in the root zone",
+      z_rivers: "Rivers nearby", z_dams: "Dams nearby", z_none: "none inside the window",
+      z_soil_title: "Soil type",
+      z_soil: "We do not have the soil type of each place: the world database we tried did not answer reliably. Identify it yourself with the soil guide.",
+      z_soil_btn: "See the soil guide",
+      soilg_title: "How to recognize your soil",
+      soilg_sub: "The ribbon test takes two minutes and needs no laboratory.",
+      soilg_how: "Take a handful of soil with no stones or roots. Wet it little by little and knead it until it feels like putty. Squeeze it between thumb and forefinger, pushing upward, to form a ribbon.",
+      soilg_head: ["Soil", "How it feels", "The ribbon", "Water", "What it means for your farm"],
+      soilg_rows: {
+        clay: ["Sticky and smooth when wet. Hard and cracked when dry.", "Long: more than 5 cm without breaking.", "Stays on top for a day or more.", "It holds water: good for flooded rice. Beans, maize and pigeon pea need good drainage."],
+        loam: ["Soft, slightly gritty. Forms a ball that is not very sticky.", "Short: breaks before 2.5 cm.", "Sinks in within hours.", "Suits almost every crop. The easiest soil to rotate on."],
+        sandy: ["Gritty, like sugar. The ball falls apart.", "No ribbon forms.", "Drains away in minutes.", "Rice uses much more water. Low-water crops fit better."]
+      },
+      soilg_note: "Method: USDA guide to texture by feel (Thien, 1979). A ribbon between 2.5 and 5 cm is an in-between soil (clay loam). The drawings are illustrative: photos of local soils should be added.",
+      g_soil_link: "Not sure which one? How to tell",
       layer_desc: {
         basins: "Yaque del Norte, Yuna and Yaque del Sur rivers with their dams.",
+        sat: "Real photo taken by NASA's Terra satellite (MODIS instrument) on 18 February 2026.",
         balance: "Rain minus the water the field loses, in mm per year. Darker: larger shortfall.",
         soil: "Moisture in the root zone, in % of saturation. Darker: wetter.",
         heat: "Average daily maximum of the hottest month. Darker: hotter."
@@ -762,6 +811,7 @@
     $("faq").innerHTML = T[state.lang].faq.map(function (item, i) {
       return "<details><summary>" + esc(item.q) + "</summary><p id=\"faq-" + i + "\"></p></details>";
     }).join("");
+    $("soil-guide").innerHTML = soilGuide();
     $("method").innerHTML = T[state.lang].method.map(function (m) { return "<li>" + esc(m) + "</li>"; }).join("");
     $("sources").innerHTML = SOURCES.map(function (s) {
       return "<li><a href=\"" + s[1] + "\" target=\"_blank\" rel=\"noopener\">" + esc(s[0]) + "</a></li>";
@@ -811,6 +861,7 @@
     drawHelp(result);
     drawRotation(selected, result);
     updateGuide(result, best, byKey);
+    drawZoneInfo();
     drawBasin(selected, result, byKey);
     drawLimits();
   }
@@ -1329,6 +1380,7 @@
     var L = T[state.lang];
     var G = window.GT_GEO;
     var layer = state.layer;
+    var plain = layer === "basins" || layer === "sat"; // layers that do not color the NASA squares
     document.querySelectorAll("#layers button").forEach(function (b) {
       b.classList.toggle("on", b.getAttribute("data-value") === layer);
     });
@@ -1355,9 +1407,11 @@
       "<defs><clipPath id=\"landclip\"><path d=\"" + rings(G.land) + "\"/></clipPath><linearGradient id=\"sea\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#d5e9fb\"/><stop offset=\"1\" stop-color=\"#a9d0f5\"/></linearGradient>" +
       "<linearGradient id=\"landfill\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f6f3e4\"/><stop offset=\"1\" stop-color=\"#dfead0\"/></linearGradient>" +
       "<filter id=\"coast\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feDropShadow dx=\"0\" dy=\"3\" stdDeviation=\"4\" flood-color=\"#1c4f8a\" flood-opacity=\"0.3\"/></filter></defs>" +
-      "<rect class=\"sea\" width=\"" + MAP.w + "\" height=\"" + MAP.h + "\"/>" +
+      "<rect class=\"sea\" width=\"" + MAP.w + "\" height=\"" + MAP.h + "\"/>" + oceanWaves() +
       "<path d=\"" + rings(G.haiti) + "\" class=\"neighbor\"/>" +
+      "<path d=\"" + rings(G.land) + "\" class=\"land-side\" transform=\"translate(0 6)\"/>" +
       "<path d=\"" + rings(G.land) + "\" class=\"land\"/>" +
+      (layer === "sat" ? "<image class=\"sat-img\" href=\"sat.jpg\" width=\"" + MAP.w + "\" height=\"" + MAP.h + "\" preserveAspectRatio=\"none\"/>" : "") +
       "<text class=\"place\" x=\"" + mx(-70.75) + "\" y=\"" + my(19.99) + "\">" + L.ocean + "</text>" +
       "<text class=\"place\" x=\"" + mx(-72.07) + "\" y=\"" + my(19.20) + "\">" + L.haiti + "</text>" +
       "<text class=\"place\" x=\"" + mx(-70.25) + "\" y=\"" + my(17.85) + "\">" + L.caribbean + "</text>";
@@ -1367,7 +1421,7 @@
       var x = mx(sq.lon - 0.3125), y = my(sq.lat + 0.25);
       var w = 0.625 * MAP.cos * MAP.k, h = 0.5 * MAP.k;
       var mine = sq.zones.indexOf(state.zone) >= 0;
-      var value = layer === "basins" ? null :
+      var value = plain ? null :
         total(sq.zones.map(function (i) { return values[i]; })) / sq.zones.length;
       svg += "<rect class=\"sq\" x=\"" + x + "\" y=\"" + y + "\" width=\"" + w + "\" height=\"" + h + "\" fill=\"" +
         (value === null ? "none" : color(value)) + "\" fill-opacity=\"0.9\" clip-path=\"url(#landclip)\" stroke=\"" +
@@ -1416,7 +1470,7 @@
     $("h-map").innerHTML = svg.replace(/landclip/g, "landclip-h");
 
     var key = "<span><i class=\"k-zone\"></i>" + L.zone_dot + "</span><span><i class=\"k-zone mine\"></i>" + L.selected_dot + "</span>";
-    if (layer === "basins") {
+    if (plain) {
       key += "<span><i class=\"k-river\"></i>" + L.river + "</span><span><i class=\"k-dam\"></i>" + L.dam + "</span>";
     } else {
       var ramp = RAMPS[layer].slice();
@@ -1426,7 +1480,7 @@
       }).join("") + " " + layerText(to, layer) + "</span>";
     }
     $("map-key").innerHTML = key + "<span class=\"k-text\">" + esc(L.layer_desc[layer]) +
-      (layer === "basins" ? "" : " " + esc(L.layer_source)) + "</span>";
+      (plain ? "" : " " + esc(L.layer_source)) + "</span>";
   }
 
   // ------------------------------------------------------------------
@@ -1453,7 +1507,8 @@
       body = "<div class=\"g-options\">" + ["clay", "loam", "sandy"].map(function (key) {
         return "<button type=\"button\" class=\"g-option\" data-g-soil=\"" + key + "\">" + SOIL_ART[key] + "<b>" + L.soils[key] + "</b></button>";
       }).join("") + "</div><p class=\"help\" id=\"g-soil-help\"></p>" +
-        "<label class=\"check\"><input id=\"g-salty\" type=\"checkbox\"><span>" + L.salty + "</span></label>";
+        "<label class=\"check\"><input id=\"g-salty\" type=\"checkbox\"><span>" + L.salty + "</span></label>" +
+        "<details class=\"more\"><summary>" + L.g_soil_link + "</summary>" + soilGuide() + "</details>";
     } else if (step === 3) {
       body = "<div class=\"g-water\"><div class=\"g-tank\" aria-hidden=\"true\"><div class=\"g-level\" id=\"g-level\">" +
         "<svg class=\"g-wave\" viewBox=\"0 0 240 16\" preserveAspectRatio=\"none\"><path d=\"M0 8c20-8 40-8 60 0s40 8 60 0 40-8 60 0 40 8 60 0v8H0z\"/></svg></div>" +
@@ -1523,6 +1578,250 @@
       $("g-mix").innerHTML = $("plan-mix").innerHTML;
       $("g-impact").innerHTML = $("impact").innerHTML;
     }
+  }
+
+  // Table that teaches how to tell clay, loam and sandy soil apart by feel.
+  function soilGuide() {
+    var L = T[state.lang];
+    return "<p class=\"soil-how\">" + esc(L.soilg_how) + "</p><div class=\"soil-table\"><table><thead><tr>" +
+      L.soilg_head.map(function (head) { return "<th>" + head + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      ["clay", "loam", "sandy"].map(function (key) {
+        return "<tr><th>" + SOIL_ART[key] + "<b>" + L.soils[key] + "</b></th>" +
+          L.soilg_rows[key].map(function (cell) { return "<td>" + esc(cell) + "</td>"; }).join("") + "</tr>";
+      }).join("") + "</tbody></table></div><p class=\"note\">" + esc(L.soilg_note) + "</p>";
+  }
+
+  // Lines of waves that drift across the sea (built once).
+  var wavesCache = null;
+  function oceanWaves() {
+    if (wavesCache) return wavesCache;
+    var out = "<g class=\"waves\">";
+    for (var row = 0; row < 11; row++) {
+      var y = 24 + row * 50, d = "M-120 " + y;
+      for (var x = -120; x < MAP.w + 120; x += 40) d += "q10 -5 20 0t20 0";
+      out += "<path class=\"wave w" + (row % 3) + "\" d=\"" + d + "\"/>";
+    }
+    wavesCache = out + "</g>";
+    return wavesCache;
+  }
+
+  // ------------------------------------------------------------------
+  // Zone explorer: zoom into a zone and show its real relief in 3D
+  // ------------------------------------------------------------------
+  var RELIEF = (function () {
+    var r = window.GT_RELIEF, bytes = atob(r.data), heights = new Uint16Array(bytes.length / 2);
+    for (var i = 0; i < heights.length; i++) heights[i] = bytes.charCodeAt(2 * i) | (bytes.charCodeAt(2 * i + 1) << 8);
+    return { west: r.west, north: r.north, step: r.step, columns: r.columns, rows: r.rows, heights: heights };
+  })();
+  // Elevation in meters at any point, blended from the four nearest grid values.
+  function elevationAt(lon, lat) {
+    var x = Math.max(0, Math.min(RELIEF.columns - 1.001, (lon - RELIEF.west) / RELIEF.step));
+    var y = Math.max(0, Math.min(RELIEF.rows - 1.001, (RELIEF.north - lat) / RELIEF.step));
+    var i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, c = RELIEF.columns, h = RELIEF.heights;
+    return (h[j * c + i] * (1 - fx) + h[j * c + i + 1] * fx) * (1 - fy) +
+      (h[(j + 1) * c + i] * (1 - fx) + h[(j + 1) * c + i + 1] * fx) * fy;
+  }
+
+  var WINDOW = { lon: 0.44, lat: 0.33 }; // half-size, in degrees, of the area shown around the zone
+  var HEIGHT_BOOST = 8; // mountains are drawn 8 times taller so the relief can be seen
+  var TINTS = [[0, [255, 255, 255]], [120, [240, 244, 254]], [500, [196, 209, 246]], [1200, [134, 157, 232]], [2400, [78, 104, 204]]];
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var scene = { frame: 0, start: 0, angle: -0.35, dragged: false, pointer: null, model: null, zone: -1 };
+
+  function terrainColor(height, shade) {
+    if (height <= 0.5) return null; // sea
+    var k = 0;
+    while (k < TINTS.length - 2 && height > TINTS[k + 1][0]) k++;
+    var a = TINTS[k], b = TINTS[k + 1], t = Math.max(0, Math.min(1, (height - a[0]) / (b[0] - a[0])));
+    var rgb = [0, 1, 2].map(function (n) { return Math.round(Math.min(255, (a[1][n] + (b[1][n] - a[1][n]) * t) * shade)); });
+    return "rgb(" + rgb.join(",") + ")";
+  }
+
+  // Everything the 3D view needs for one zone: the ground as small squares,
+  // the rivers lying on it, the dams and the zones that fall inside the window.
+  function buildScene(index) {
+    var z = D.zones[index], step = RELIEF.step;
+    var cols = Math.round(2 * WINDOW.lon / step), rows = Math.round(2 * WINDOW.lat / step);
+    var west = z.lon - WINDOW.lon, north = z.lat + WINDOW.lat;
+    var kmLon = 111 * Math.cos(z.lat * Math.PI / 180);
+    function place(lon, lat, lift) {
+      return { x: (lon - z.lon) * kmLon, y: (lat - z.lat) * 111, h: Math.max(0, elevationAt(lon, lat)) + (lift || 0) };
+    }
+    function inside(lon, lat) { return Math.abs(lon - z.lon) <= WINDOW.lon && Math.abs(lat - z.lat) <= WINDOW.lat; }
+
+    var points = [], highest = 0, i, j;
+    for (j = 0; j <= rows; j++) {
+      for (i = 0; i <= cols; i++) {
+        var p = place(west + i * step, north - j * step);
+        highest = Math.max(highest, p.h);
+        points.push(p);
+      }
+    }
+    var quads = [];
+    for (j = 0; j < rows; j++) {
+      for (i = 0; i < cols; i++) {
+        var a = j * (cols + 1) + i, b = a + 1, c = a + cols + 2, d = a + cols + 1;
+        var mean = (points[a].h + points[b].h + points[c].h + points[d].h) / 4;
+        // light comes from the north-west: ground that rises toward the south-east faces it
+        var rise = (points[b].h - points[a].h + points[c].h - points[d].h) / 2 + (points[d].h - points[a].h + points[c].h - points[b].h) / 2;
+        quads.push({ a: a, b: b, c: c, d: d, color: terrainColor(mean, Math.max(0.58, Math.min(1.1, 0.95 + rise / 520))) });
+      }
+    }
+
+    var rivers = [], names = [];
+    window.GT_GEO.rivers.forEach(function (river) {
+      river.lines.forEach(function (line) {
+        var run = [];
+        for (var n = 0; n < line.length; n++) {
+          var lon = line[n][0], lat = line[n][1];
+          if (!inside(lon, lat)) { if (run.length > 1) rivers.push({ main: river.main, points: run }); run = []; continue; }
+          if (run.length) { // add points in between so the river follows the ground
+            var prev = line[n - 1], pieces = Math.ceil(Math.hypot((lon - prev[0]) * kmLon, (lat - prev[1]) * 111) / 1.5);
+            for (var s = 1; s < pieces; s++) run.push(place(prev[0] + (lon - prev[0]) * s / pieces, prev[1] + (lat - prev[1]) * s / pieces, 12));
+          }
+          run.push(place(lon, lat, 12));
+          if (names.indexOf(river.name) < 0) names.push(river.name);
+        }
+        if (run.length > 1) rivers.push({ main: river.main, points: run });
+      });
+    });
+    var dams = window.GT_GEO.dams.filter(function (dam) { return inside(dam.lon, dam.lat); }).map(function (dam) {
+      var spot = place(dam.lon, dam.lat, 30); spot.name = dam.name; return spot;
+    });
+    var zones = [];
+    D.zones.forEach(function (other, n) {
+      if (!inside(other.lon, other.lat)) return;
+      var spot = place(other.lon, other.lat, 30); spot.name = shortName(other.name); spot.mine = n === index; zones.push(spot);
+    });
+    return { points: points, quads: quads, rivers: rivers, dams: dams, zones: zones, riverNames: names,
+      highest: highest, widthKm: 2 * WINDOW.lon * kmLon };
+  }
+
+  function drawScene(now) {
+    var canvas = $("z-canvas"), m = scene.model;
+    if (!m || !canvas.width) return;
+    var ctx = canvas.getContext("2d"), W = canvas.width, H = canvas.height, ratio = W / canvas.clientWidth;
+    var seconds = (now - scene.start) / 1000;
+    var grow = reduceMotion ? 1 : 1 - Math.pow(1 - Math.min(1, seconds / 1.6), 3); // the land rises as the view tilts
+    if (!scene.dragged && !reduceMotion) scene.angle = -0.35 + 0.3 * Math.sin(seconds / 5);
+    var tilt = 0.98 * grow, cosA = Math.cos(scene.angle), sinA = Math.sin(scene.angle);
+    var cosT = Math.cos(tilt), sinT = Math.sin(tilt);
+    var scale = W / (m.widthKm * 1.04), cx = W / 2, cy = H * (0.5 + 0.1 * grow);
+    var lift = HEIGHT_BOOST * grow / 1000; // meters to exaggerated kilometers
+
+    var sx = new Float32Array(m.points.length), sy = new Float32Array(m.points.length), depth = new Float32Array(m.points.length);
+    function project(p) {
+      var xr = p.x * cosA - p.y * sinA, yr = p.x * sinA + p.y * cosA;
+      return [cx + xr * scale, cy - (yr * cosT + p.h * lift * sinT) * scale, yr];
+    }
+    m.points.forEach(function (p, n) { var q = project(p); sx[n] = q[0]; sy[n] = q[1]; depth[n] = q[2]; });
+    var order = m.quads.slice().sort(function (p, q) { return depth[q.a] + depth[q.c] - depth[p.a] - depth[p.c]; });
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.lineWidth = 0.8 * ratio;
+    order.forEach(function (q) {
+      ctx.beginPath();
+      ctx.moveTo(sx[q.a], sy[q.a]); ctx.lineTo(sx[q.b], sy[q.b]); ctx.lineTo(sx[q.c], sy[q.c]); ctx.lineTo(sx[q.d], sy[q.d]);
+      ctx.closePath();
+      ctx.fillStyle = ctx.strokeStyle = q.color || "#2a4fc0";
+      ctx.fill(); ctx.stroke();
+    });
+
+    ctx.lineJoin = ctx.lineCap = "round";
+    m.rivers.forEach(function (river) {
+      ctx.beginPath();
+      river.points.forEach(function (p, n) { var q = project(p); if (n) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); });
+      ctx.setLineDash([]);
+      ctx.strokeStyle = "#1238a8"; ctx.lineWidth = (river.main ? 3.4 : 1.3) * ratio; ctx.stroke();
+      if (river.main) { // water moving downstream
+        ctx.setLineDash([3 * ratio, 9 * ratio]); ctx.lineDashOffset = -seconds * 16 * ratio;
+        ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.3 * ratio; ctx.stroke();
+      }
+    });
+    ctx.setLineDash([]);
+
+    function label(text, x, y, bold) {
+      ctx.font = (bold ? "800 " : "700 ") + Math.round((bold ? 15 : 12) * ratio) + "px Archivo, sans-serif";
+      ctx.lineWidth = 3.5 * ratio; ctx.strokeStyle = "#fff"; ctx.strokeText(text, x, y);
+      ctx.fillStyle = "#10131a"; ctx.fillText(text, x, y);
+    }
+    m.dams.forEach(function (dam) {
+      var q = project(dam), r = 5.5 * ratio;
+      ctx.beginPath(); ctx.moveTo(q[0], q[1] - r); ctx.lineTo(q[0] + r, q[1]); ctx.lineTo(q[0], q[1] + r); ctx.lineTo(q[0] - r, q[1]); ctx.closePath();
+      ctx.fillStyle = "#10131a"; ctx.fill(); ctx.lineWidth = 1.5 * ratio; ctx.strokeStyle = "#fff"; ctx.stroke();
+      label(dam.name, q[0] + 9 * ratio, q[1] + 4 * ratio);
+    });
+    m.zones.forEach(function (spot) {
+      var q = project(spot), pole = (spot.mine ? 34 : 0) * ratio * grow, r = (spot.mine ? 8 : 5) * ratio;
+      if (pole) { ctx.beginPath(); ctx.moveTo(q[0], q[1]); ctx.lineTo(q[0], q[1] - pole); ctx.lineWidth = 2.5 * ratio; ctx.strokeStyle = "#10131a"; ctx.stroke(); }
+      ctx.beginPath(); ctx.arc(q[0], q[1] - pole, r, 0, 2 * Math.PI);
+      ctx.fillStyle = "#e2231a"; ctx.fill(); ctx.lineWidth = 2 * ratio; ctx.strokeStyle = spot.mine ? "#10131a" : "#fff"; ctx.stroke();
+      label(spot.name, q[0] + r + 5 * ratio, q[1] - pole + 4 * ratio, spot.mine);
+    });
+
+    // north arrow
+    var nx = -sinA, ny = -cosA * cosT, len = 26 * ratio, ox = 34 * ratio, oy = 44 * ratio, size = Math.hypot(nx, ny) || 1;
+    ctx.beginPath(); ctx.moveTo(ox - nx / size * len / 2, oy - ny / size * len / 2); ctx.lineTo(ox + nx / size * len / 2, oy + ny / size * len / 2);
+    ctx.lineWidth = 3 * ratio; ctx.strokeStyle = "#fff"; ctx.stroke();
+    ctx.font = "800 " + Math.round(14 * ratio) + "px Archivo, sans-serif"; ctx.fillStyle = "#fff";
+    ctx.fillText("N", ox + nx / size * (len / 2 + 9 * ratio) - 5 * ratio, oy + ny / size * (len / 2 + 9 * ratio) + 5 * ratio);
+  }
+
+  function startScene() {
+    var canvas = $("z-canvas"), ratio = Math.min(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(canvas.clientWidth * ratio);
+    canvas.height = Math.round(canvas.clientWidth * 0.7 * ratio);
+    scene.model = buildScene(state.zone);
+    scene.zone = state.zone;
+    scene.start = performance.now();
+    scene.dragged = false;
+    cancelAnimationFrame(scene.frame);
+    (function tick(now) {
+      drawScene(now);
+      if (state.view === "zone" && !reduceMotion) scene.frame = requestAnimationFrame(tick);
+    })(performance.now());
+    drawZoneInfo();
+  }
+  function stopScene() { cancelAnimationFrame(scene.frame); }
+
+  // Map zoom toward the zone, then the 3D view opens.
+  function zoomToZone(container, index) {
+    var svg = container.querySelector("svg"), z = D.zones[index];
+    state.zone = index;
+    function open() { draw(); setView("zone"); }
+    if (!svg || reduceMotion) { open(); return; }
+    svg.style.transformOrigin = (100 * mx(z.lon) / MAP.w) + "% " + (100 * my(z.lat) / MAP.h) + "%";
+    svg.classList.add("zooming");
+    setTimeout(open, 600);
+  }
+
+  // The zone's sheet: relief, climate, rivers, dams and soil.
+  function drawZoneInfo() {
+    if (state.view !== "zone") return;
+    if (scene.zone !== state.zone) { startScene(); return; }
+    var L = T[state.lang], z = zone(), c = z.climate, m = scene.model;
+    var hottest = c.tmax.indexOf(Math.max.apply(null, c.tmax));
+    function mean(list) { return total(list) / list.length; }
+    $("z-title").textContent = z.name;
+    $("z-sub").textContent = tr("z_sub", { basin: z.basin });
+    var rows = [
+      [num(elevationAt(z.lon, z.lat)) + " m", L.z_elev],
+      [num(m.highest) + " m", L.z_high],
+      [num(c.tmax[hottest], 1) + " °C", tr("z_heat", { month: MONTHS[state.lang][hottest] })],
+      [num(mean(c.temp), 1) + " °C", L.z_temp],
+      [num(total(c.rain)) + " mm", L.z_rain],
+      [num(total(c.et0)) + " mm", L.z_et0],
+      [Math.round(mean(c.humidity)) + "%", L.z_hum],
+      [num(mean(c.wind), 1) + " m/s", L.z_wind],
+      [Math.round(mean(c.soil)) + "%", L.z_soilw]
+    ];
+    $("z-stats").innerHTML = rows.map(function (row) {
+      return "<div><b>" + row[0] + "</b><span>" + esc(row[1]) + "</span></div>";
+    }).join("");
+    $("z-lists").innerHTML =
+      "<p><b>" + L.z_rivers + ":</b> " + esc(m.riverNames.length ? m.riverNames.join(", ") : L.z_none) + "</p>" +
+      "<p><b>" + L.z_dams + ":</b> " + esc(m.dams.length ? m.dams.map(function (d) { return d.name; }).join(", ") : L.z_none) + "</p>" +
+      "<p><b>" + L.z_soil_title + ":</b> " + esc(L.z_soil) + " <button type=\"button\" class=\"btn small\" data-go=\"help\">" + L.z_soil_btn + "</button></p>";
   }
 
   // Rotation: what grows on each plot in this cycle and in the next one.
@@ -1646,8 +1945,20 @@
       $("zone").value = state.zone;
       draw();
     }
-    $("map").onclick = pickZone;
-    $("map").onkeydown = pickZone;
+    function exploreZone(event) {
+      var mark = event.target.closest("[data-zone]");
+      if (!mark || (event.type === "keydown" && event.key !== "Enter" && event.key !== " ")) return;
+      event.preventDefault();
+      zoomToZone(event.currentTarget, +mark.getAttribute("data-zone"));
+    }
+    $("map").onclick = exploreZone;
+    $("map").onkeydown = exploreZone;
+    $("h-map").onkeydown = exploreZone;
+    $("z-plan").onclick = function () {
+      state.gstep = 1;
+      draw();
+      setView("guide");
+    };
     $("guide").onclick = function (event) {
       var target = event.target, el;
       if ((el = target.closest("[data-zone]"))) { state.zone = +el.getAttribute("data-zone"); draw(); return; }
@@ -1683,27 +1994,25 @@
     };
     $("h-map").onclick = function (event) {
       var mark = event.target.closest("[data-zone]");
-      if (!mark) return;
-      state.zone = +mark.getAttribute("data-zone");
-      state.gstep = 1;
-      draw();
-      setView("guide");
+      if (mark) zoomToZone($("h-map"), +mark.getAttribute("data-zone"));
     };
+    var stage = $("z-canvas");
+    stage.onpointerdown = function (event) {
+      scene.pointer = { x: event.clientX, angle: scene.angle };
+      scene.dragged = true;
+      stage.setPointerCapture(event.pointerId);
+    };
+    stage.onpointermove = function (event) {
+      if (!scene.pointer) return;
+      scene.angle = scene.pointer.angle + (event.clientX - scene.pointer.x) * 0.008;
+      if (reduceMotion) drawScene(performance.now());
+    };
+    stage.onpointerup = stage.onpointercancel = function () { scene.pointer = null; };
     $("detail").onclick = function (event) {
       var tab = event.target.getAttribute("data-tab");
       if (tab) { state.whyTab = tab; draw(); }
     };
     $("start").onclick = function () {
-      state.gstep = 0;
-      draw();
-      setView("guide");
-    };
-    // Example case: Don Pedro, 100 tareas of clay soil in Mao, 60% of the water.
-    $("don-pedro").onclick = function () {
-      D.zones.forEach(function (z, i) { if (z.name.indexOf("Valverde") === 0) state.zone = i; });
-      state.area = 100; state.soil = "clay"; state.priority = "income";
-      state.allocation = 0.6; state.riceAllowed = true; state.salty = false; state.selected = null;
-      $("zone").value = state.zone; $("area").value = 100; $("salty").checked = false;
       state.gstep = 0;
       draw();
       setView("guide");
@@ -1732,6 +2041,7 @@
     });
     try { history.replaceState(null, "", "#" + view); } catch (e) { /* not allowed on some file:// pages */ }
     if (!keepScroll) window.scrollTo(0, 0);
+    if (view === "zone") startScene(); else stopScene();
   }
   document.addEventListener("click", function (event) {
     var go = event.target.closest("[data-go]");

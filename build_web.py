@@ -45,6 +45,9 @@ def main():
             "rain": [rounded(v, 0) for v in monthly_rain.groupby(monthly_rain.index.month).mean()],
             "et0": [rounded(v, 0) for v in monthly_et0.groupby(monthly_et0.index.month).mean()],
             "tmax": [rounded(v, 1) for v in monthly_tmax.groupby(monthly_tmax.index.month).mean()],
+            "humidity": [rounded(v, 0) for v in daily["humidity"]["2001":"2025"].groupby(daily["2001":"2025"].index.month).mean()],
+            "wind": [rounded(v, 1) for v in daily["wind"]["2001":"2025"].groupby(daily["2001":"2025"].index.month).mean()],
+            "temp": [rounded(v, 1) for v in daily["temp"]["2001":"2025"].groupby(daily["2001":"2025"].index.month).mean()],
         }
 
         zones.append(

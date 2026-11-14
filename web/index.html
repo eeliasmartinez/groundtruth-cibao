@@ -38,9 +38,7 @@
         <p class="lead" data-t="hero_lead"></p>
         <div class="hero-actions">
           <button type="button" class="btn primary big" id="start" data-t="start_btn"></button>
-          <button type="button" class="btn big" id="don-pedro" data-t="pedro_btn"></button>
         </div>
-        <p class="hero-note" data-t="pedro_note"></p>
       </div>
       <div class="hero-map">
         <div id="h-map"></div>
@@ -131,6 +129,7 @@
     </aside>
 
     <div class="results">
+      <button type="button" class="btn back" data-go="plan" data-view="rotation options data" data-t="back_plan"></button>
       <p class="headline" id="headline" aria-live="polite" data-view="plan rotation options"></p>
 
       <section class="panel plan" aria-labelledby="parcel-title" data-view="plan">
@@ -215,8 +214,33 @@
     </div>
   </section>
 
+  <!-- ===================== ZONE EXPLORER (3D) ===================== -->
+  <section class="page zone-page" data-view="zone">
+    <div class="zone-head">
+      <button type="button" class="btn back" data-go="map" data-t="back_map"></button>
+      <h2 id="z-title"></h2>
+      <p class="sub" id="z-sub"></p>
+    </div>
+    <div class="zone-grid">
+      <div class="z-stage">
+        <canvas id="z-canvas" aria-hidden="true"></canvas>
+        <p class="note" data-t="z_note"></p>
+      </div>
+      <div class="panel z-info">
+        <div class="impact" id="z-stats"></div>
+        <div id="z-lists"></div>
+        <button type="button" class="btn primary big" id="z-plan" data-t="z_plan"></button>
+      </div>
+    </div>
+  </section>
+
   <!-- ===================== HELP ===================== -->
   <section class="page" data-view="help">
+    <div class="panel">
+      <h2 data-t="soilg_title"></h2>
+      <p class="sub" data-t="soilg_sub"></p>
+      <div id="soil-guide"></div>
+    </div>
     <div class="panel">
       <h2 data-t="faq_title"></h2>
       <p class="sub" data-t="faq_sub"></p>
@@ -252,6 +276,7 @@
 
   <script src="data.js"></script>
   <script src="geo.js"></script>
+  <script src="relief.js"></script>
   <script src="engine.js"></script>
   <script src="app.js"></script>
 </body>

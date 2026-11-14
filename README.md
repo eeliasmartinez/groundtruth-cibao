@@ -81,6 +81,9 @@ Full links are listed in the page's "Sources" section and in `docs/investigacion
 Built with Python, pandas, NumPy, requests, Streamlit and Altair (open source).
 Map coastline: Natural Earth (public domain). Map rivers: © OpenStreetMap contributors (ODbL).
 Typefaces: Big Shoulders Display and Archivo (SIL Open Font License), via Fontsource.
+Elevation: Terrain Tiles on AWS Open Data (Mapzen), derived mainly from NASA SRTM.
+Satellite photo: NASA Worldview Snapshots, MODIS Terra corrected reflectance, 18 Feb 2026.
+Soil texture by feel: USDA NRCS guide (S. J. Thien, 1979).
 
 ## Use of AI
 
