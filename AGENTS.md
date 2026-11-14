@@ -111,6 +111,9 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   abre la primera pregunta del recorrido en el mismo clic, conservando el relieve 3D.
 - **Guía sencilla:** Inicio ofrece “Guía sencilla para el campo”. Usa los mismos cálculos y
   preguntas, con explicaciones más directas; el recorrido normal sigue disponible.
+- **Relieve durante el recorrido:** al iniciar desde “Empezar con mi finca”, elegir una
+  provincia o zona muestra de inmediato su relieve 3D junto al mapa y lo conserva al avanzar
+  por las preguntas. Elegir otra zona actualiza el relieve.
 - **Guardado en el dispositivo:** en “Mi plan”, la persona puede guardar el plan localmente
   y sus respuestas se actualizan allí al cambiar. No crea cuenta ni transmite ubicación.
   El botón permite borrar el guardado. El módulo está en `web/storage.js`.

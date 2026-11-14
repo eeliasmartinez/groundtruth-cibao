@@ -137,3 +137,21 @@ agente pueda continuar sin volver a investigar ni asumir que los dibujos son dat
 5. Mantener como pendientes la revisión de un agrónomo, el ensayo del pitch y el material
    global (máximo 30 s o 7 diapositivas). La app sigue cubriendo 14 zonas arroceras, no
    toda la agricultura ni todas las fincas dominicanas.
+
+## Corrección del relieve en “Empezar con mi finca” (14-nov-2026)
+
+- Problema: el recorrido iniciado desde Inicio comenzaba con `guideWithScene = false`.
+  Al seleccionar una provincia solo se redibujaba el cuestionario; el panel y el render 3D
+  seguían apagados. Además, al avanzar un paso no se reiniciaba el canvas que acababa de
+  hacerse visible.
+- Corrección en `web/app.js`: al seleccionar provincia o zona en el mapa del cuestionario,
+  activar `guideWithScene`, redibujar y comenzar `startScene()`. Ahora el relieve aparece
+  junto al mapa de selección y permanece junto a las preguntas. `visibleSceneCanvas()` y
+  `sceneVisible()` usan el canvas correcto durante todo ese recorrido; avanzar reinicia el
+  tamaño/render del canvas para evitar una vista vacía.
+- `web/sw.js`: caché aumentada a `plan-b-v13` para que la PWA solicite los archivos nuevos.
+- No se cambió el motor agrícola, los datos ni el flujo que mantiene el mapa 2D cuando aún
+  no se ha elegido una provincia.
+- Validación manual pendiente: elegir “Empezar con mi finca”, tocar una provincia, comprobar
+  relieve 3D a la izquierda del mapa y avanzar; cambiar la selección y confirmar que la zona
+  3D también cambia. Probar en escritorio y teléfono.

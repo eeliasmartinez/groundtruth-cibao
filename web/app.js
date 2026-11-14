@@ -1054,7 +1054,10 @@
     var questions = state.easyMode ? L.easy_g_q : L.g_q;
     var explanations = state.easyMode ? L.easy_g_sub : L.g_sub;
     var tag = step + "|" + state.lang + "|" + (state.easyMode ? "easy" : "full");
-    var showZoneScene = state.guideWithScene && step > 0;
+    // Once a province/zone is chosen, keep its relief beside every guide step.
+    // At step 0 the map remains available on the question panel while the 3D
+    // relief appears alongside it.
+    var showZoneScene = state.guideWithScene;
     $("g-scene-panel").hidden = !showZoneScene;
     $("guide").classList.toggle("with-scene", showZoneScene);
     if (stage.getAttribute("data-step") === tag) return;
@@ -1298,10 +1301,10 @@
   }
 
   function visibleSceneCanvas() {
-    return state.view === "guide" && state.guideWithScene && state.gstep > 0 ? $("g-canvas") : $("z-canvas");
+    return state.view === "guide" && state.guideWithScene ? $("g-canvas") : $("z-canvas");
   }
   function sceneVisible() {
-    return state.view === "zone" || (state.view === "guide" && state.guideWithScene && state.gstep > 0);
+    return state.view === "zone" || (state.view === "guide" && state.guideWithScene);
   }
 
   function drawScene(now) {
@@ -1661,8 +1664,14 @@
     };
     $("guide").onclick = function (event) {
       var target = event.target, el;
-      if ((el = target.closest("[data-province]"))) { state.zone = nearestZoneToMapPoint(event); state.farmPlaced = false; draw(); return; }
-      if ((el = target.closest("[data-zone]"))) { state.zone = +el.getAttribute("data-zone"); draw(); return; }
+      if ((el = target.closest("[data-province]"))) {
+        state.zone = nearestZoneToMapPoint(event); state.farmPlaced = false; state.guideWithScene = true;
+        draw(); startScene(); return;
+      }
+      if ((el = target.closest("[data-zone]"))) {
+        state.zone = +el.getAttribute("data-zone"); state.guideWithScene = true;
+        draw(); startScene(); return;
+      }
       if ((el = target.closest("[data-g-month]"))) { state.month = +el.getAttribute("data-g-month"); draw(); return; }
       if ((el = target.closest("[data-g-soil]"))) { state.soil = el.getAttribute("data-g-soil"); draw(); return; }
       if ((el = target.closest("[data-g-priority]"))) {
@@ -1677,7 +1686,11 @@
       if ((el = target.closest("[data-g-area]"))) {
         state.area = Math.max(1, Math.min(20000, state.area + (+el.getAttribute("data-g-area")))); draw(); return;
       }
-      if (target.closest("[data-g-next]")) { remember(); state.gstep = Math.min(5, state.gstep + 1); draw(); window.scrollTo(0, 0); return; }
+      if (target.closest("[data-g-next]")) {
+        remember(); state.gstep = Math.min(5, state.gstep + 1); draw();
+        if (state.guideWithScene) startScene();
+        window.scrollTo(0, 0); return;
+      }
       if (target.closest("[data-g-back]")) {
         if (trail.length) $("back").click(); else setView("home");
         return;
