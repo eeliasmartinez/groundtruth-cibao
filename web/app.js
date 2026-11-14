@@ -24,7 +24,8 @@
     selected: null, // strategy the user clicked; null = show the best one
     basinShare: 0.25,
     layer: "basins", // what the map shows: basins, balance, soil or heat
-    whyTab: "why" // which explanation of the plan is open
+    whyTab: "why", // which explanation of the plan is open
+    view: "home" // which section of the app is on screen
   };
 
   var STRATEGY_ORDER = ["current", "mixed", "rotation", "green"];
@@ -32,41 +33,16 @@
   // Schematic map of the northern Dominican Republic. Points are [longitude, latitude],
   // placed by hand from general geographic knowledge: good for orientation, not surveyed.
   var MAP = { w: 760, h: 546, lon0: -72.1, lat0: 20.05, k: 206, cos: 0.947 };
+  var VIEWS = ["home", "plan", "rotation", "options", "map", "data", "help"];
+  var VIEW_ICONS = { home: "🏠", plan: "🌾", rotation: "🔄", options: "⚖️", map: "🗺️", data: "📊", help: "❓" };
+  // Coastline and rivers come from geo.js (Natural Earth and OpenStreetMap).
   var GEO = {
-    land: [[-71.75, 19.71], [-71.72, 19.80], [-71.66, 19.88], [-71.45, 19.89], [-71.25, 19.86],
-      [-71.05, 19.92], [-70.93, 19.90], [-70.80, 19.84], [-70.69, 19.81], [-70.52, 19.77],
-      [-70.40, 19.76], [-70.25, 19.68], [-70.08, 19.64], [-69.94, 19.68], [-69.90, 19.62],
-      [-69.86, 19.50], [-69.84, 19.38], [-69.72, 19.31], [-69.54, 19.33], [-69.35, 19.34],
-      [-69.22, 19.36], [-69.15, 19.29], [-69.20, 19.21], [-69.33, 19.20], [-69.48, 19.20],
-      [-69.61, 19.21], [-69.67, 19.17], [-69.60, 19.10], [-69.45, 19.07], [-69.39, 19.06],
-      [-69.20, 19.02], [-69.05, 18.99], [-68.75, 18.95], [-68.55, 18.77], [-68.33, 18.62],
-      [-68.37, 18.50], [-68.45, 18.36], [-68.61, 18.37], [-68.85, 18.33], [-68.97, 18.41],
-      [-69.31, 18.44], [-69.61, 18.44], [-69.90, 18.46], [-70.02, 18.41], [-70.17, 18.23],
-      [-70.55, 18.21], [-70.60, 18.28], [-70.75, 18.38], [-70.83, 18.33], [-71.02, 18.28],
-      [-71.07, 18.20], [-71.10, 18.00], [-71.25, 17.80], [-71.42, 17.60], [-71.55, 17.75],
-      [-71.65, 17.90], [-71.77, 18.04], [-71.72, 18.32], [-71.85, 18.48], [-72.00, 18.62],
-      [-71.75, 18.85], [-71.65, 19.00], [-71.75, 19.12], [-71.70, 19.32], [-71.72, 19.55]],
-    haiti: [[-71.75, 19.71], [-72.40, 19.78], [-72.40, 17.95], [-71.77, 18.04], [-71.72, 18.32],
-      [-71.85, 18.48], [-72.00, 18.62], [-71.75, 18.85], [-71.65, 19.00], [-71.75, 19.12],
-      [-71.70, 19.32], [-71.72, 19.55]],
-    rivers: [
-      { main: true, points: [[-70.95, 19.03], [-70.80, 19.07], [-70.64, 19.12], [-70.72, 19.28], [-70.70, 19.45],
-        [-70.87, 19.57], [-70.98, 19.59], [-71.08, 19.61], [-71.40, 19.67], [-71.50, 19.72], [-71.67, 19.84]] },
-      { main: false, points: [[-71.22, 19.24], [-71.17, 19.42], [-71.08, 19.61]] },
-      { main: true, points: [[-70.50, 18.80], [-70.41, 18.94], [-70.25, 19.03], [-70.05, 19.15], [-69.91, 19.17], [-69.67, 19.17]] },
-      { main: false, points: [[-70.53, 19.22], [-70.33, 19.20], [-70.05, 19.15]] },
-      { main: false, points: [[-70.42, 19.02], [-70.40, 19.10], [-70.33, 19.20]] },
-      { main: true, points: [[-70.98, 18.96], [-70.93, 18.73], [-71.02, 18.58], [-71.20, 18.42], [-71.10, 18.25]] },
-      { main: false, points: [[-71.30, 18.97], [-71.23, 18.81], [-71.02, 18.58]] }
-    ],
-    dams: [
-      { name: "Tavera - Bao", lon: -70.73, lat: 19.29, dx: -9, dy: 4, anchor: "end" },
-      { name: "Monción", lon: -71.17, lat: 19.42, dx: -9, dy: 4, anchor: "end" },
-      { name: "Hatillo", lon: -70.25, lat: 19.03, dx: -8, dy: 16, anchor: "end" },
-      { name: "Rincón", lon: -70.40, lat: 19.10, dx: 8, dy: -6, anchor: "start" },
-      { name: "Sabana Yegua", lon: -70.93, lat: 18.73, dx: 9, dy: 4, anchor: "start" },
-      { name: "Sabaneta", lon: -71.30, lat: 18.97, dx: -9, dy: 4, anchor: "end" }
-    ],
+    // where each dam's name goes
+    damLabels: {
+      "Tavera - Bao": { dx: -9, dy: 4, anchor: "end" }, "Monción": { dx: -9, dy: 4, anchor: "end" },
+      "Hatillo": { dx: -8, dy: 16, anchor: "end" }, "Rincón": { dx: 8, dy: -6, anchor: "start" },
+      "Sabana Yegua": { dx: 9, dy: 4, anchor: "start" }, "Sabaneta": { dx: -9, dy: 4, anchor: "end" }
+    },
     // where each zone's name goes (zones not listed get their name to the right)
     labels: {
       "Santiago (Navarrete)": { dx: 0, dy: -12, anchor: "middle" },
@@ -126,7 +102,10 @@
     ["UNCCD, 23 Aug 2024: Dominican Republic: restoring land to secure clean water for millions", "https://www.unccd.int/news-stories/stories/dominican-republic-restoring-land-secure-clean-water-millions"],
     ["El Caribe, 15 Sep 2019: INDRHI confirma prohibición de siembra de arroz de invierno", "https://www.elcaribe.com.do/2019/09/15/director-del-indrhi-confirma-prohibicion-siembra-de-arroz-de-invierno-en-provincias-del-cibao-central-y-linea-noroeste-por-sequia/"],
     ["Diario Libre, 11 Aug 2026: condiciones de las presas y ríos (INDRHI)", "https://www.diariolibre.com/planeta/clima/2026/08/11/45--menos-lluvias-estas-son-las-condiciones-de-las-presas-y-rios/3625695"],
-    ["Montecristi 24 Horas, 28 Aug 2026: Racionan el agua para la agricultura por falta de lluvias", "https://montecristi24horas.com/2026/08/racionan-el-agua-para-la-agricultura-por-falta-de-lluvias/"]
+    ["Montecristi 24 Horas, 28 Aug 2026: Racionan el agua para la agricultura por falta de lluvias", "https://montecristi24horas.com/2026/08/racionan-el-agua-para-la-agricultura-por-falta-de-lluvias/"],
+    ["Presidencia de la República Dominicana: INDRHI informa sobre volúmenes en el sistema nacional de presas", "https://presidencia.gob.do/noticias/indrhi-informa-sobre-volumenes-en-sistema-nacional-de-presas"],
+    ["Map rivers: © OpenStreetMap contributors (ODbL)", "https://www.openstreetmap.org/copyright"],
+    ["Map coastline: Natural Earth (public domain)", "https://www.naturalearthdata.com/"]
   ];
 
   // ------------------------------------------------------------------
@@ -135,11 +114,11 @@
   var T = {
     es: {
       hero_title: "El Plan B del arrocero",
-      hero_lead: "Cuando el agua de riego no alcanza, al productor le dicen que no siembre arroz. Esta herramienta le muestra qué sí puede sembrar con el agua que le toca, usando 25 años de datos de la NASA.",
+      hero_lead: "Cuando el agua de riego no alcanza, al productor le dicen que no siembre arroz. Esta herramienta le muestra qué sí puede sembrar con el agua que le toca, usando 25 años de datos de la NASA (2001–2025).",
       facts: [
         ["91.5%", "del arroz dominicano se produce en el Cibao, casi todo bajo riego.", 4],
         ["96%", "del agua del río Yaque del Norte ya está comprometida.", 5],
-        ["2019", "el INDRHI prohibió la siembra de arroz de invierno por sequía. En 2026 volvió el riego por turnos.", 6]
+        ["2019", "el INDRHI prohibió la siembra de arroz de invierno por sequía. En 2026 volvió el riego por turnos.", [6, 8]]
       ],
       source: "fuente",
       farm: "Tu finca en 3 pasos",
@@ -184,7 +163,7 @@
         rotation: "Descansar del arroz este ciclo y sembrar {alt}, que pide mucha menos agua y se puede vender.",
         green: "Descansar del arroz este ciclo y sembrar {alt} para devolverle nitrógeno y materia orgánica al suelo."
       },
-      ev_rice: "El arroz necesita {m3} m³ de riego por tarea en {zone} sembrando en {month} (NASA POWER 2001–2026, método FAO-56).",
+      ev_rice: "El arroz necesita {m3} m³ de riego por tarea en {zone} sembrando en {month} (NASA POWER 2001–2025, método FAO-56).",
       ev_alt: "{alt} necesita {m3} m³ por tarea: {ratio} veces menos que el arroz.",
       ev_rain: "En ese ciclo la lluvia cubre solo el {rain}% del agua que consume el arroz.",
       ev_use: "Este plan usa {used} m³ de los {budget} m³ asignados.",
@@ -214,17 +193,17 @@
       share_wa: "Enviar plan por WhatsApp", share_copy: "Copiar plan", copied: "Copiado",
       needs_title: "Agua de riego por tarea",
       needs_sub: "{zone}, suelo {soil}, siembra en {month}.",
-      needs_note: "Calculado para cada año desde 2001 con temperatura, sol, humedad, viento y lluvia de NASA POWER.",
+      needs_note: "Calculado para cada año de 2001 a 2025 con temperatura, sol, humedad, viento y lluvia de NASA POWER.",
       typical: "Año típico", dry: "Año seco (2 de cada 10)",
       climate_title: "Balance de agua mes a mes",
-      climate_sub: "Lluvia contra el agua que pierde el campo, en mm por mes. Promedio 2001–2020 en {zone}.",
+      climate_sub: "Lluvia contra el agua que pierde el campo, en mm por mes. Promedio 2001–2025 en {zone}.",
       rain: "Lluvia", shortfall: "Falta de agua (la pone el riego)",
       et0: "Agua que pierde el campo (evapotranspiración)", cycle: "Meses del ciclo elegido",
       tip_rain: "lluvia", tip_et0: "pierde el campo", tip_gap: "faltan", tip_tmax: "máxima media",
       strip: "Franja de abajo: temperatura máxima media de cada mes, en °C. Más oscuro: más calor.",
       climate_note: "En tu ciclo ({from} a {to}) llueven unos {rain} mm y el campo pierde unos {et0} mm: faltan unos {gap} mm, que tiene que poner el riego. En todo el año llueven {rain_year} mm y el campo pierde {et0_year} mm.",
       heat_title: "Calor durante el ciclo: ¿lo aguanta cada cultivo?",
-      heat_sub: "Temperatura máxima media durante el ciclo de cada cultivo, sembrando en {month} en {zone} (NASA POWER 2001–2026), contra el límite de referencia del cultivo.",
+      heat_sub: "Temperatura máxima media durante el ciclo de cada cultivo, sembrando en {month} en {zone} (NASA POWER 2001–2025), contra el límite de referencia del cultivo.",
       heat_ok: "bajo su límite de {limit} °C",
       heat_over: "+{n} °C sobre su límite de {limit} °C",
       heat_dot: "Máxima media del ciclo", heat_tick: "Límite del cultivo", heat_zone: "Exceso de calor",
@@ -245,7 +224,7 @@
           a: "Con solo arroz y el {alloc}% del agua quedarían vacías {idle} de tus {area} tareas. Esa tierra no da ingreso, y un suelo desnudo queda expuesto al sol, a la lluvia fuerte y a las malezas. Un cultivo de poca agua o un abono verde la mantiene cubierta y produciendo.",
           a_none: "Con el agua que tienes asignada, la estrategia de solo arroz no deja tierra vacía. Si el agua baja, la tierra que quede sin sembrar no da ingreso y queda expuesta al sol, a la lluvia fuerte y a las malezas." },
         { q: "¿Cómo calculan el agua con datos de la NASA?",
-          a: "Usamos NASA POWER, que da para cada día desde 2001 la temperatura, el sol, la humedad, el viento y la lluvia de tu zona. Con eso calculamos cuánta agua pierde el campo cada día (método FAO-56) y la ajustamos a lo que consume cada cultivo en cada etapa. Al restar la lluvia que se aprovecha queda el riego necesario. Repetimos la cuenta para cada año y mostramos el año típico y el año seco." },
+          a: "Usamos NASA POWER, que da para cada día de 2001 a 2025 la temperatura, el sol, la humedad, el viento y la lluvia de tu zona. Con eso calculamos cuánta agua pierde el campo cada día (método FAO-56) y la ajustamos a lo que consume cada cultivo en cada etapa. Al restar la lluvia que se aprovecha queda el riego necesario. Repetimos la cuenta para cada año y mostramos el año típico y el año seco." },
         { q: "¿Esto es una caja negra?",
           a: "No. La recomendación sale de fórmulas fijas que cualquiera puede revisar: con los mismos datos siempre da el mismo resultado. No hay un modelo de inteligencia artificial decidiendo qué sembrar. La IA ayudó al equipo a escribir el código y los textos, y eso está declarado. El cálculo pasa más de 31,000 verificaciones automáticas." },
         { q: "¿Qué tan seguros son estos números?",
@@ -259,6 +238,24 @@
       sheet_sacks: "sacos de urea", sheet_land: "Tareas sembradas",
       sheet_heat: "Meses del ciclo y su temperatura máxima media",
       eyebrow: "NASA Space Apps 2026 · República Dominicana",
+      nav: { home: "Inicio", plan: "Mi plan", rotation: "Rotación", options: "Opciones", map: "Mapa", data: "Datos", help: "Ayuda" },
+      install: "Instalar app",
+      how: [["Dime tu finca", "Zona, mes de siembra, tareas y tipo de suelo."],
+        ["Dime tu agua", "Normal, tandeo o veda: lo que anunció el INDRHI o tu junta de regantes."],
+        ["Mira tu plan", "Qué sembrar, cuánta agua usa y cómo rotar en el ciclo siguiente."]],
+      go_rotation: "Ver la rotación en 2 ciclos", go_options: "Comparar las 4 opciones",
+      name_switch: "Cambiar a {crop}",
+      rotation_title: "La rotación en dos ciclos",
+      rotation_sub: "Rotar es cambiar de cultivo en la misma tierra de un ciclo al siguiente. Así queda tu finca con el plan elegido.",
+      rot_cycle: "Ciclo {n} · siembra en {month}",
+      rot_lot: "Lote {n} · {tareas} tareas",
+      rot_swap: "En el ciclo 2 el arroz se siembra donde estuvo {alt} y aprovecha el nitrógeno que dejó: unos {n} sacos de urea. A su vez, {alt} pasa a la tierra donde estuvo el arroz.",
+      rot_back: "En el ciclo 2 el arroz vuelve a la tierra donde estuvo {alt}.",
+      rot_back_n: "En el ciclo 2 el arroz vuelve a la tierra donde estuvo {alt} y aprovecha el nitrógeno que dejó: unos {n} sacos de urea.",
+      rot_none: "Con solo arroz no hay rotación: el mismo cultivo se repite en la misma tierra, sin nitrógeno nuevo y con las mismas malezas y plagas.",
+      rot_water: "Agua del ciclo {c}: {used} m³ de {budget} m³ asignados.",
+      rot_over: "En el ciclo 2 el agua no alcanzaría para este reparto: habría que sembrar menos arroz.",
+      rot_note: "El ciclo 2 supone que te asignan el mismo {alloc}% de agua y que se puede sembrar arroz. Las fechas son aproximadas: dependen de la variedad y del día de siembra.",
       start_btn: "Empezar con mi finca",
       step1: "¿Dónde y cuándo siembras?", step2: "¿Cuánta agua te toca?", step3: "¿Qué te importa más?",
       what_is: "¿Qué significa esto?", what_scores: "¿Qué significan las notas de agua, suelo e ingreso?",
@@ -312,7 +309,7 @@
         "Agua que pierde el campo cada día: método FAO-56 Penman-Monteith con temperatura, radiación solar, humedad y viento de NASA POWER.",
         "Agua de cada cultivo: esa pérdida diaria por el coeficiente del cultivo en cada etapa (tablas de FAO-56).",
         "Arroz inundado: se suman 200 mm para saturar el suelo, 100 mm de lámina y la filtración diaria según el suelo (manual de riego de FAO).",
-        "Riego necesario: agua del cultivo menos la lluvia aprovechable, para cada año desde 2001. Se muestra el año típico (mediana) y el año seco (percentil 80).",
+        "Riego necesario: agua del cultivo menos la lluvia aprovechable, para cada año de 2001 a 2025. Se muestra el año típico (mediana) y el año seco (percentil 80).",
         "Estrategias: con el agua asignada se reparte la finca sin pasarse del agua ni de la tierra disponible."
       ],
       sources_title: "Fuentes",
@@ -341,10 +338,10 @@
         soil: "Humedad en la zona de raíces, en % de saturación. Más oscuro: más húmedo.",
         heat: "Temperatura máxima media del mes más caliente. Más oscuro: más calor."
       },
-      layer_source: "NASA POWER, promedio 2001–2020.",
+      layer_source: "NASA POWER, promedio 2001–2025.",
       river: "Río", dam: "Presa", zone_dot: "Zona arrocera", selected_dot: "Tu zona",
-      map_aria: "Mapa esquemático del Cibao con las zonas arroceras",
-      map_note: "Mapa esquemático: la costa, los ríos y las presas están dibujados de forma aproximada.",
+      map_aria: "Mapa de la República Dominicana con las zonas arroceras",
+      map_note: "Costa: Natural Earth. Ríos: © colaboradores de OpenStreetMap. La ubicación de las presas y de las zonas es aproximada.",
       ocean: "Océano Atlántico", haiti: "Haití", caribbean: "Mar Caribe",
       parcel_title: "Tu finca desde arriba",
       parcel_sub: "{name}. Cada cuadro es el 1% de tus {area} tareas.",
@@ -354,11 +351,11 @@
     },
     en: {
       hero_title: "The rice farmer's Plan B",
-      hero_lead: "When irrigation water runs short, rice farmers are told not to plant. This tool shows what they can still grow with the water they are given, using 25 years of NASA data.",
+      hero_lead: "When irrigation water runs short, rice farmers are told not to plant. This tool shows what they can still grow with the water they are given, using 25 years of NASA data (2001–2025).",
       facts: [
         ["91.5%", "of Dominican rice is grown in the Cibao valley, almost all of it irrigated.", 4],
         ["96%", "of the Yaque del Norte river's water is already committed.", 5],
-        ["2019", "the water authority banned winter rice planting because of drought. In 2026 irrigation by turns came back.", 6]
+        ["2019", "the water authority banned winter rice planting because of drought. In 2026 irrigation by turns came back.", [6, 8]]
       ],
       source: "source",
       farm: "Your farm in 3 steps",
@@ -403,7 +400,7 @@
         rotation: "Rest from rice this cycle and plant {alt}, which needs far less water and can be sold.",
         green: "Rest from rice this cycle and grow {alt} to return nitrogen and organic matter to the soil."
       },
-      ev_rice: "Rice needs {m3} m³ of irrigation per tarea in {zone} when planted in {month} (NASA POWER 2001–2026, FAO-56 method).",
+      ev_rice: "Rice needs {m3} m³ of irrigation per tarea in {zone} when planted in {month} (NASA POWER 2001–2025, FAO-56 method).",
       ev_alt: "{alt} needs {m3} m³ per tarea: {ratio} times less than rice.",
       ev_rain: "In that cycle rain covers only {rain}% of the water rice uses.",
       ev_use: "This plan uses {used} m³ of the {budget} m³ allocated.",
@@ -433,17 +430,17 @@
       share_wa: "Send plan by WhatsApp", share_copy: "Copy plan", copied: "Copied",
       needs_title: "Irrigation water per tarea",
       needs_sub: "{zone}, {soil} soil, planting in {month}.",
-      needs_note: "Computed for every year since 2001 with temperature, sunshine, humidity, wind and rain from NASA POWER.",
+      needs_note: "Computed for every year from 2001 to 2025 with temperature, sunshine, humidity, wind and rain from NASA POWER.",
       typical: "Typical year", dry: "Dry year (2 out of 10)",
       climate_title: "Water balance month by month",
-      climate_sub: "Rain against the water the field loses, in mm per month. 2001–2020 average in {zone}.",
+      climate_sub: "Rain against the water the field loses, in mm per month. 2001–2025 average in {zone}.",
       rain: "Rain", shortfall: "Water shortfall (irrigation must supply it)",
       et0: "Water the field loses (evapotranspiration)", cycle: "Months of the chosen cycle",
       tip_rain: "rain", tip_et0: "field loses", tip_gap: "short by", tip_tmax: "average maximum",
       strip: "Bottom strip: average daily maximum temperature of each month, in °C. Darker: hotter.",
       climate_note: "In your cycle ({from} to {to}) it rains about {rain} mm and the field loses about {et0} mm: about {gap} mm are missing, and irrigation must supply them. Over the whole year it rains {rain_year} mm and the field loses {et0_year} mm.",
       heat_title: "Heat during the cycle: can each crop take it?",
-      heat_sub: "Average daily maximum during each crop's cycle, planting in {month} in {zone} (NASA POWER 2001–2026), against the crop's reference limit.",
+      heat_sub: "Average daily maximum during each crop's cycle, planting in {month} in {zone} (NASA POWER 2001–2025), against the crop's reference limit.",
       heat_ok: "below its {limit} °C limit",
       heat_over: "+{n} °C above its {limit} °C limit",
       heat_dot: "Average maximum of the cycle", heat_tick: "Crop limit", heat_zone: "Excess heat",
@@ -464,7 +461,7 @@
           a: "With rice only and {alloc}% of the water, {idle} of your {area} tareas would stay empty. That land brings no income, and bare soil is exposed to sun, heavy rain and weeds. A low-water crop or a green manure keeps it covered and producing.",
           a_none: "With the water you were allocated, the rice-only strategy leaves no land empty. If the water drops, any land left unplanted brings no income and is exposed to sun, heavy rain and weeds." },
         { q: "How do you calculate water with NASA data?",
-          a: "We use NASA POWER, which gives the temperature, sunshine, humidity, wind and rain of your zone for every day since 2001. From that we compute how much water the field loses each day (FAO-56 method) and adjust it to what each crop uses at each stage. Subtracting the usable rain leaves the irrigation needed. We repeat this for every year and show the typical year and the dry year." },
+          a: "We use NASA POWER, which gives the temperature, sunshine, humidity, wind and rain of your zone for every day from 2001 to 2025. From that we compute how much water the field loses each day (FAO-56 method) and adjust it to what each crop uses at each stage. Subtracting the usable rain leaves the irrigation needed. We repeat this for every year and show the typical year and the dry year." },
         { q: "Is this a black box?",
           a: "No. The recommendation comes from fixed formulas anyone can review: the same data always gives the same result. No artificial intelligence model decides what to plant. AI helped the team write the code and the texts, and that is disclosed. The calculation passes more than 31,000 automatic checks." },
         { q: "How reliable are these numbers?",
@@ -478,6 +475,24 @@
       sheet_sacks: "sacks of urea", sheet_land: "Tareas planted",
       sheet_heat: "Months of the cycle and their average daily maximum",
       eyebrow: "NASA Space Apps 2026 · Dominican Republic",
+      nav: { home: "Home", plan: "My plan", rotation: "Rotation", options: "Options", map: "Map", data: "Data", help: "Help" },
+      install: "Install app",
+      how: [["Tell us your farm", "Zone, planting month, tareas and soil type."],
+        ["Tell us your water", "Normal, turns or ban: what the water authority or your irrigation board announced."],
+        ["See your plan", "What to plant, how much water it uses and how to rotate in the next cycle."]],
+      go_rotation: "See the 2-cycle rotation", go_options: "Compare the 4 options",
+      name_switch: "Switch to {crop}",
+      rotation_title: "The rotation over two cycles",
+      rotation_sub: "Rotating means changing the crop on the same land from one cycle to the next. This is your farm with the chosen plan.",
+      rot_cycle: "Cycle {n} · planting in {month}",
+      rot_lot: "Plot {n} · {tareas} tareas",
+      rot_swap: "In cycle 2 rice is planted where {alt} grew and uses the nitrogen it left: about {n} sacks of urea. In turn, {alt} moves to the land where rice grew.",
+      rot_back: "In cycle 2 rice returns to the land where {alt} grew.",
+      rot_back_n: "In cycle 2 rice returns to the land where {alt} grew and uses the nitrogen it left: about {n} sacks of urea.",
+      rot_none: "With rice only there is no rotation: the same crop repeats on the same land, with no new nitrogen and the same weeds and pests.",
+      rot_water: "Water in cycle {c}: {used} m³ of {budget} m³ allocated.",
+      rot_over: "In cycle 2 the water would not be enough for this split: less rice would have to be planted.",
+      rot_note: "Cycle 2 assumes you are allocated the same {alloc}% of water and that rice may be planted. Dates are approximate: they depend on the variety and the planting day.",
       start_btn: "Start with my farm",
       step1: "Where and when do you plant?", step2: "How much water do you get?", step3: "What matters most?",
       what_is: "What does this mean?", what_scores: "What do the water, soil and income scores mean?",
@@ -531,7 +546,7 @@
         "Water the field loses each day: FAO-56 Penman-Monteith method with temperature, solar radiation, humidity and wind from NASA POWER.",
         "Water for each crop: that daily loss times the crop coefficient of each growth stage (FAO-56 tables).",
         "Flooded rice: plus 200 mm to saturate the soil, a 100 mm water layer and daily seepage depending on the soil (FAO irrigation manual).",
-        "Irrigation need: crop water minus usable rain, for every year since 2001. We show the typical year (median) and the dry year (80th percentile).",
+        "Irrigation need: crop water minus usable rain, for every year from 2001 to 2025. We show the typical year (median) and the dry year (80th percentile).",
         "Strategies: the allocated water is split across the farm without exceeding the water or the land available."
       ],
       sources_title: "Sources",
@@ -560,10 +575,10 @@
         soil: "Moisture in the root zone, in % of saturation. Darker: wetter.",
         heat: "Average daily maximum of the hottest month. Darker: hotter."
       },
-      layer_source: "NASA POWER, 2001–2020 average.",
+      layer_source: "NASA POWER, 2001–2025 average.",
       river: "River", dam: "Dam", zone_dot: "Rice zone", selected_dot: "Your zone",
-      map_aria: "Schematic map of the Cibao valley with the rice zones",
-      map_note: "Schematic map: the coast, rivers and dams are drawn approximately.",
+      map_aria: "Map of the Dominican Republic with the rice zones",
+      map_note: "Coastline: Natural Earth. Rivers: © OpenStreetMap contributors. Dam and zone locations are approximate.",
       ocean: "Atlantic Ocean", haiti: "Haiti", caribbean: "Caribbean Sea",
       parcel_title: "Your farm from above",
       parcel_sub: "{name}. Each square is 1% of your {area} tareas.",
@@ -611,6 +626,7 @@
   function strategyName(s) {
     if (s.key === "mixed" && s.plots.length && !s.plots.some(function (p) { return p.crop === "rice"; }))
       return tr("name_legume_only");
+    if (s.key === "rotation" && s.alternative) return tr("name_switch", { crop: lower(cropName(s.alternative)) });
     return T[state.lang].names[s.key];
   }
   function mixText(s) {
@@ -642,8 +658,19 @@
     });
 
     $("facts").innerHTML = T[state.lang].facts.map(function (f) {
-      return "<li><b>" + f[0] + "</b><span>" + esc(f[1]) + "</span> <a href=\"" + SOURCES[f[2]][1] +
-        "\" target=\"_blank\" rel=\"noopener\">" + tr("source") + "</a></li>";
+      var links = [].concat(f[2]).map(function (index) {
+        return "<a href=\"" + SOURCES[index][1] + "\" target=\"_blank\" rel=\"noopener\">" + tr("source") + "</a>";
+      }).join(" · ");
+      return "<li><b>" + f[0] + "</b><span>" + esc(f[1]) + "</span> " + links + "</li>";
+    }).join("");
+    $("how").innerHTML = T[state.lang].how.map(function (item, i) {
+      return "<li class=\"glass\"><b>" + (i + 1) + "</b><span><strong>" + esc(item[0]) + "</strong>" + esc(item[1]) + "</span></li>";
+    }).join("");
+    $("nav").innerHTML = VIEWS.map(function (view) {
+      return "<button type=\"button\" data-go=\"" + view + "\">" + T[state.lang].nav[view] + "</button>";
+    }).join("");
+    $("tabbar").innerHTML = VIEWS.map(function (view) {
+      return "<button type=\"button\" data-go=\"" + view + "\"><i>" + VIEW_ICONS[view] + "</i>" + T[state.lang].nav[view] + "</button>";
     }).join("");
 
     $("zone").innerHTML = D.zones.map(function (z, i) {
@@ -725,6 +752,7 @@
     drawFaq(result, byKey);
     drawSheet(selected, result);
     drawHelp(result);
+    drawRotation(selected, result);
     drawBasin(selected, result, byKey);
     drawLimits();
   }
@@ -1240,6 +1268,7 @@
 
   function drawMap() {
     var L = T[state.lang];
+    var G = window.GT_GEO;
     var layer = state.layer;
     document.querySelectorAll("#layers button").forEach(function (b) {
       b.classList.toggle("on", b.getAttribute("data-value") === layer);
@@ -1261,13 +1290,18 @@
       if (layer === "balance") share = 1 - share; // a bigger shortfall is darker
       return RAMPS[layer][Math.min(4, Math.floor(share * 5))];
     }
+    function rings(list) { return list.map(function (ring) { return mapPath(ring, true); }).join(""); }
 
     var svg = "<svg viewBox=\"0 0 " + MAP.w + " " + MAP.h + "\" role=\"group\" aria-label=\"" + esc(L.map_aria) + "\">" +
-      "<rect width=\"" + MAP.w + "\" height=\"" + MAP.h + "\" fill=\"#dcebf7\"/>" +
-      "<path d=\"" + mapPath(GEO.haiti, true) + "\" fill=\"#e9e6dc\"/>" +
-      "<path d=\"" + mapPath(GEO.land, true) + "\" fill=\"#f8f5ec\" stroke=\"#c9c4b4\"/>" +
-      "<text class=\"place\" x=\"" + mx(-70.75) + "\" y=\"" + my(19.98) + "\">" + L.ocean + "</text>" +
-      "<text class=\"place\" x=\"" + mx(-71.97) + "\" y=\"" + my(19.30) + "\">" + L.haiti + "</text>";
+      "<defs><linearGradient id=\"sea\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#d5e9fb\"/><stop offset=\"1\" stop-color=\"#a9d0f5\"/></linearGradient>" +
+      "<linearGradient id=\"landfill\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0\" stop-color=\"#f6f3e4\"/><stop offset=\"1\" stop-color=\"#dfead0\"/></linearGradient>" +
+      "<filter id=\"coast\" x=\"-5%\" y=\"-5%\" width=\"110%\" height=\"110%\"><feDropShadow dx=\"0\" dy=\"3\" stdDeviation=\"4\" flood-color=\"#1c4f8a\" flood-opacity=\"0.3\"/></filter></defs>" +
+      "<rect width=\"" + MAP.w + "\" height=\"" + MAP.h + "\" fill=\"url(#sea)\"/>" +
+      "<path d=\"" + rings(G.haiti) + "\" fill=\"#dde2d8\" opacity=\"0.85\"/>" +
+      "<path d=\"" + rings(G.land) + "\" fill=\"url(#landfill)\" stroke=\"#aab89c\" stroke-width=\"0.8\" filter=\"url(#coast)\"/>" +
+      "<text class=\"place\" x=\"" + mx(-70.75) + "\" y=\"" + my(19.99) + "\">" + L.ocean + "</text>" +
+      "<text class=\"place\" x=\"" + mx(-72.07) + "\" y=\"" + my(19.20) + "\">" + L.haiti + "</text>" +
+      "<text class=\"place\" x=\"" + mx(-70.25) + "\" y=\"" + my(17.85) + "\">" + L.caribbean + "</text>";
 
     Object.keys(squares).forEach(function (key) {
       var sq = squares[key];
@@ -1277,37 +1311,42 @@
       var value = layer === "basins" ? null :
         total(sq.zones.map(function (i) { return values[i]; })) / sq.zones.length;
       svg += "<rect x=\"" + x + "\" y=\"" + y + "\" width=\"" + w + "\" height=\"" + h + "\" fill=\"" +
-        (value === null ? "none" : color(value)) + "\" fill-opacity=\"0.72\" stroke=\"" +
-        (mine ? "#0c5a3c" : "#8a8778") + "\" stroke-width=\"" + (mine ? 2.5 : 1) + "\"" +
+        (value === null ? "none" : color(value)) + "\" fill-opacity=\"0.7\" stroke=\"" +
+        (mine ? "#0b3a82" : "#8a8778") + "\" stroke-width=\"" + (mine ? 2.2 : 0.8) + "\"" +
         (mine ? "" : " stroke-dasharray=\"3 4\"") + "/>";
       if (value !== null) {
-        // The number goes in the corner with the most free space.
         var atLeft = sq.lon < -71;
         svg += "<text class=\"value\" text-anchor=\"" + (atLeft ? "start" : "end") + "\" x=\"" +
-          (atLeft ? x + 7 : x + w - 7) + "\" y=\"" + (y + h - 8) + "\">" + layerText(value, layer) + "</text>";
+          (atLeft ? x + 6 : x + w - 6) + "\" y=\"" + (y + h - 7) + "\">" + layerText(value, layer) + "</text>";
       }
     });
 
-    GEO.rivers.forEach(function (river) {
-      svg += "<path d=\"" + mapPath(river.points) + "\" fill=\"none\" stroke=\"#2a78d6\" stroke-width=\"" +
-        (river.main ? 3 : 1.8) + "\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>";
+    // Real river courses. The three main rivers also get moving white dashes.
+    var flow = "";
+    G.rivers.forEach(function (river) {
+      river.lines.forEach(function (line) {
+        var d = mapPath(line);
+        svg += "<path class=\"rv" + (river.main ? " main" : "") + "\" d=\"" + d + "\"><title>" + esc(river.name) + "</title></path>";
+        if (river.main) flow += "<path class=\"rv-flow\" d=\"" + d + "\"/>";
+      });
     });
-    svg += "<text class=\"river\" x=\"" + mx(-71.70) + "\" y=\"" + my(19.585) + "\">" + L.river + " Yaque del Norte</text>" +
-      "<text class=\"river\" x=\"" + mx(-69.86) + "\" y=\"" + my(19.045) + "\">" + L.river + " Yuna</text>" +
-      "<text class=\"river\" x=\"" + mx(-70.92) + "\" y=\"" + my(18.50) + "\">" + L.river + " Yaque del Sur</text>" +
-      "<text class=\"place\" x=\"" + mx(-70.25) + "\" y=\"" + my(17.85) + "\">" + L.caribbean + "</text>";
+    svg += flow +
+      "<text class=\"river\" x=\"" + mx(-71.72) + "\" y=\"" + my(19.60) + "\">" + L.river + " Yaque del Norte</text>" +
+      "<text class=\"river\" x=\"" + mx(-69.88) + "\" y=\"" + my(19.06) + "\">" + L.river + " Yuna</text>" +
+      "<text class=\"river\" x=\"" + mx(-70.98) + "\" y=\"" + my(18.50) + "\">" + L.river + " Yaque del Sur</text>";
 
-    GEO.dams.forEach(function (dam) {
-      var x = mx(dam.lon), y = my(dam.lat);
-      svg += "<rect x=\"" + (x - 5) + "\" y=\"" + (y - 5) + "\" width=\"10\" height=\"10\" fill=\"#174f96\" stroke=\"#fff\" stroke-width=\"1.5\" transform=\"rotate(45 " +
-        x + " " + y + ")\"/><text class=\"dam-name\" text-anchor=\"" + dam.anchor + "\" x=\"" + (x + dam.dx) + "\" y=\"" + (y + dam.dy) + "\">" + dam.name + "</text>";
+    G.dams.forEach(function (dam) {
+      var x = mx(dam.lon), y = my(dam.lat), at = GEO.damLabels[dam.name] || { dx: 9, dy: 4, anchor: "start" };
+      svg += "<rect x=\"" + (x - 4.5) + "\" y=\"" + (y - 4.5) + "\" width=\"9\" height=\"9\" fill=\"#174f96\" stroke=\"#fff\" stroke-width=\"1.5\" transform=\"rotate(45 " +
+        x + " " + y + ")\"/><text class=\"dam-name\" text-anchor=\"" + at.anchor + "\" x=\"" + (x + at.dx) + "\" y=\"" + (y + at.dy) + "\">" + dam.name + "</text>";
     });
 
     D.zones.forEach(function (z, i) {
       var x = mx(z.lon), y = my(z.lat), label = GEO.labels[z.name] || { dx: 11, dy: 4, anchor: "start" }, mine = i === state.zone;
       svg += "<g class=\"zone" + (mine ? " mine" : "") + "\" data-zone=\"" + i + "\" tabindex=\"0\" role=\"button\" aria-label=\"" +
-        esc(z.name) + "\"><circle cx=\"" + x + "\" cy=\"" + y + "\" r=\"17\" fill=\"transparent\"/>" +
-        "<circle class=\"dot\" cx=\"" + x + "\" cy=\"" + y + "\" r=\"" + (mine ? 9 : 6.5) + "\"/>" +
+        esc(z.name) + "\"><circle cx=\"" + x + "\" cy=\"" + y + "\" r=\"16\" fill=\"transparent\"/>" +
+        (mine ? "<circle class=\"pulse\" cx=\"" + x + "\" cy=\"" + y + "\" r=\"9\"/>" : "") +
+        "<circle class=\"dot\" cx=\"" + x + "\" cy=\"" + y + "\" r=\"" + (mine ? 8 : 5.5) + "\"/>" +
         "<text text-anchor=\"" + label.anchor + "\" x=\"" + (x + label.dx) + "\" y=\"" + (y + label.dy) + "\">" +
         esc(shortName(z.name)) + "</text><title>" + esc(z.name) + "</title></g>";
     });
@@ -1325,6 +1364,59 @@
     }
     $("map-key").innerHTML = key + "<span class=\"k-text\">" + esc(L.layer_desc[layer]) +
       (layer === "basins" ? "" : " " + esc(L.layer_source)) + "</span>";
+  }
+
+  // Rotation: what grows on each plot in this cycle and in the next one.
+  function drawRotation(s, result) {
+    var L = T[state.lang];
+    var month2 = (state.month - 1 + 6) % 12 + 1;
+    var needs2 = D.needs[zone().name + "|" + state.soil + "|" + month2];
+    var hasRice = s.plots.some(function (p) { return p.crop === "rice"; });
+
+    // Each plot of cycle 1 and the crop it gets in cycle 2.
+    var lots = s.plots.map(function (p) {
+      var next = p.crop === "rice" ? (s.key === "mixed" && s.alternative ? s.alternative : "rice") : "rice";
+      return { tareas: p.tareas, first: p.crop, second: next };
+    });
+    if (s.idle_tareas > 0.005) lots.push({ tareas: s.idle_tareas, first: null, second: null });
+
+    function bar(crop, startDay, needs) {
+      if (!crop) {
+        return "<div class=\"cal-bar idle\" style=\"left:" + (100 * startDay / 365) + "%;width:" + (100 * 120 / 365) + "%\">" + tr("idle") + "</div>";
+      }
+      return "<div class=\"cal-bar " + role(crop) + "\" style=\"left:" + (100 * startDay / 365) + "%;width:" +
+        (100 * needs[crop].days / 365) + "%\" title=\"" + esc(cropName(crop)) + " · " + needs[crop].days + " d\">" +
+        cropIcon(crop) + "<span>" + esc(cropName(crop)) + "</span></div>";
+    }
+    var months = "";
+    for (var k = 0; k < 12; k++) months += "<span>" + MONTHS_SHORT[state.lang][(state.month - 1 + k) % 12] + "</span>";
+    var rows = lots.map(function (lot, i) {
+      return "<div class=\"cal-row\"><div class=\"cal-name\">" + tr("rot_lot", { n: String.fromCharCode(65 + i), tareas: tareasText(lot.tareas) }) +
+        "</div><div class=\"cal-track\">" + bar(lot.first, 14, result.needs) + bar(lot.second, 14 + 183, needs2) + "</div></div>";
+    }).join("");
+
+    var water2 = 0;
+    lots.forEach(function (lot) { if (lot.second) water2 += lot.tareas * needs2[lot.second].typical_m3; });
+    var budget2 = state.allocation * needs2.rice.typical_m3 * state.area;
+    var alt = s.alternative ? lower(cropName(s.alternative)) : "";
+    var story;
+    if (!s.plots.length) story = T[state.lang].say_none;
+    else if (s.key === "current") story = L.rot_none;
+    else if (s.key === "mixed" && hasRice) story = tr("rot_swap", { alt: alt, n: num(s.urea_sacks) });
+    else story = s.urea_sacks >= 0.5 ? tr("rot_back_n", { alt: alt, n: num(s.urea_sacks) }) : tr("rot_back", { alt: alt });
+
+    $("rotation").innerHTML =
+      "<div class=\"cal\"><div class=\"cal-row cal-head\"><div class=\"cal-name\"></div><div class=\"cal-months\">" + months + "</div></div>" +
+      "<div class=\"cal-row cal-cycles\"><div class=\"cal-name\"></div><div class=\"cal-track\">" +
+      "<b style=\"left:" + (100 * 14 / 365) + "%\">" + tr("rot_cycle", { n: 1, month: MONTHS[state.lang][state.month - 1] }) + "</b>" +
+      "<b style=\"left:" + (100 * 197 / 365) + "%\">" + tr("rot_cycle", { n: 2, month: MONTHS[state.lang][month2 - 1] }) + "</b></div></div>" +
+      rows + "</div>" +
+      "<p class=\"rot-story\">" + esc(story) + "</p>" +
+      "<div class=\"impact rot-water\"><div><b>" + num(s.water_m3) + "</b><span>" +
+      esc(tr("rot_water", { c: 1, used: num(s.water_m3), budget: num(result.budget_m3) })) + "</span></div><div><b>" +
+      num(water2) + "</b><span>" + esc(tr("rot_water", { c: 2, used: num(water2), budget: num(budget2) })) +
+      (water2 > budget2 * 1.02 ? " " + esc(L.rot_over) : "") + "</span></div></div>" +
+      "<p class=\"note\">" + esc(tr("rot_note", { alloc: Math.round(state.allocation * 100) })) + "</p>";
   }
 
   function drawParcel(s) {
@@ -1356,6 +1448,7 @@
         drawStatic();
         listen();
         draw();
+        setView(state.view, true);
       };
     });
     $("zone").onchange = function () { state.zone = +this.value; draw(); };
@@ -1401,7 +1494,7 @@
       if (tab) { state.whyTab = tab; draw(); }
     };
     $("start").onclick = function () {
-      $("steps").scrollIntoView({ behavior: "smooth", block: "start" });
+      setView("plan");
     };
     // Example case: Don Pedro, 100 tareas of clay soil in Mao, 60% of the water.
     $("don-pedro").onclick = function () {
@@ -1410,7 +1503,7 @@
       state.allocation = 0.6; state.riceAllowed = true; state.salty = false; state.selected = null;
       $("zone").value = state.zone; $("area").value = 100; $("salty").checked = false;
       draw();
-      $("headline").scrollIntoView({ behavior: "smooth", block: "start" });
+      setView("plan");
     };
     $("rice-banned").onchange = function () { state.riceAllowed = !this.checked; state.selected = null; draw(); };
     $("salty").onchange = function () { state.salty = this.checked; draw(); };
@@ -1423,7 +1516,44 @@
   window.onbeforeprint = function () { document.body.classList.add("sheet-mode"); };
   window.onafterprint = function () { document.body.classList.remove("sheet-mode"); };
 
+  // Show one section of the app and hide the others.
+  function setView(view, keepScroll) {
+    if (VIEWS.indexOf(view) < 0) view = "home";
+    state.view = view;
+    document.body.setAttribute("data-view", view);
+    document.querySelectorAll("[data-view]").forEach(function (el) {
+      if (el !== document.body) el.hidden = el.getAttribute("data-view").split(" ").indexOf(view) < 0;
+    });
+    document.querySelectorAll("[data-go]").forEach(function (b) {
+      b.classList.toggle("on", b.getAttribute("data-go") === view);
+    });
+    try { history.replaceState(null, "", "#" + view); } catch (e) { /* not allowed on some file:// pages */ }
+    if (!keepScroll) window.scrollTo(0, 0);
+  }
+  document.addEventListener("click", function (event) {
+    var go = event.target.closest("[data-go]");
+    if (go) { event.preventDefault(); setView(go.getAttribute("data-go")); }
+  });
+  window.addEventListener("hashchange", function () { setView(location.hash.slice(1), true); });
+
+  // Installable app: keep a copy of the page on the device so it opens without internet.
+  if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
+    navigator.serviceWorker.register("sw.js");
+  }
+  var installEvent = null;
+  window.addEventListener("beforeinstallprompt", function (event) {
+    event.preventDefault();
+    installEvent = event;
+    $("install").hidden = false;
+  });
+  $("install").onclick = function () {
+    if (installEvent) installEvent.prompt();
+    installEvent = null;
+    $("install").hidden = true;
+  };
+
   drawStatic();
   listen();
   draw();
+  setView(location.hash.slice(1) || "home", true);
 })();

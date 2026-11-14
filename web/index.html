@@ -2,29 +2,38 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>GroundTruth Cibao · Plan B</title>
   <meta name="description" content="Crop-rotation decision support for rice farmers of the Dominican Republic, powered by NASA POWER data.">
+  <meta name="theme-color" content="#0b3a82">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-view="home">
   <div class="bg" aria-hidden="true"></div>
 
   <header class="top">
-    <div class="brand">
+    <a class="brand" href="#home" data-go="home">
       <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
         <path d="M16 3c5 6 8 10.5 8 15a8 8 0 0 1-16 0c0-4.5 3-9 8-15z" fill="#1463c4"/>
         <path d="M16 29V15m0 6c-3-.5-5-2.5-5.5-5.5M16 18c3-.5 5-2.5 5.5-5.5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
       </svg>
       <span>GroundTruth Cibao</span>
-    </div>
-    <div class="lang" role="group" aria-label="Idioma / Language">
-      <button type="button" data-lang="es" class="on">Español</button>
-      <button type="button" data-lang="en">English</button>
+    </a>
+    <nav class="nav" id="nav" aria-label="Secciones / Sections"></nav>
+    <div class="top-right">
+      <button type="button" class="btn small" id="install" hidden data-t="install"></button>
+      <div class="lang" role="group" aria-label="Idioma / Language">
+        <button type="button" data-lang="es" class="on">ES</button>
+        <button type="button" data-lang="en">EN</button>
+      </div>
     </div>
   </header>
 
-  <section class="hero">
+  <!-- ===================== HOME ===================== -->
+  <section class="hero" data-view="home">
     <!-- Animated landscape: sun, clouds, mountains, river and rice fields. Drawn by hand, no photos. -->
     <svg class="scene" viewBox="0 0 1200 460" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
       <defs>
@@ -66,21 +75,14 @@
         </div>
         <p class="hero-note" data-t="pedro_note"></p>
       </div>
-
-      <section class="glass map-card" aria-labelledby="map-title">
-        <h2 id="map-title" data-t="map_title"></h2>
-        <p class="sub" data-t="map_sub"></p>
-        <div class="seg layers" id="layers" role="group"></div>
-        <div id="map"></div>
-        <div class="key" id="map-key"></div>
-        <p class="note" data-t="map_note"></p>
-      </section>
+      <ol class="how" id="how"></ol>
     </div>
 
     <ul class="facts" id="facts"></ul>
   </section>
 
-  <main class="layout">
+  <!-- ============ MY PLAN · ROTATION · OPTIONS · DATA (share the three steps) ============ -->
+  <main class="layout" data-view="plan rotation options data">
     <aside class="glass controls" id="steps" aria-labelledby="farm-title">
       <h2 id="farm-title" data-t="farm"></h2>
 
@@ -141,9 +143,9 @@
     </aside>
 
     <div class="results">
-      <p class="headline" id="headline" aria-live="polite"></p>
+      <p class="headline" id="headline" aria-live="polite" data-view="plan rotation options"></p>
 
-      <section class="glass plan" aria-labelledby="parcel-title">
+      <section class="glass plan" aria-labelledby="parcel-title" data-view="plan">
         <div>
           <h2 id="parcel-title" data-t="parcel_title"></h2>
           <p class="sub" id="parcel-sub"></p>
@@ -153,10 +155,20 @@
           <div class="mix" id="plan-mix"></div>
           <div class="impact" id="impact"></div>
           <div class="actions" id="plan-actions"></div>
+          <div class="next">
+            <button type="button" class="btn" data-go="rotation" data-t="go_rotation"></button>
+            <button type="button" class="btn" data-go="options" data-t="go_options"></button>
+          </div>
         </div>
       </section>
 
-      <section aria-labelledby="strategies-title">
+      <section class="glass" aria-labelledby="rotation-title" data-view="rotation">
+        <h2 id="rotation-title" data-t="rotation_title"></h2>
+        <p class="sub" data-t="rotation_sub"></p>
+        <div id="rotation"></div>
+      </section>
+
+      <section aria-labelledby="strategies-title" data-view="options">
         <h2 id="strategies-title" data-t="strategies"></h2>
         <p class="sub" data-t="strategies_sub"></p>
         <div class="legend" id="legend"></div>
@@ -167,62 +179,78 @@
         </details>
       </section>
 
-      <section class="glass detail" id="detail" aria-live="polite"></section>
+      <section class="glass detail" id="detail" aria-live="polite" data-view="options"></section>
 
-      <div>
+      <div data-view="data">
         <h2 data-t="data_title"></h2>
         <p class="sub" data-t="data_sub"></p>
       </div>
 
-      <details class="glass fold">
+      <details class="glass fold" data-view="data" open>
         <summary><span class="fold-ico" aria-hidden="true">💧</span><span><b data-t="needs_title"></b><small data-t="needs_fx"></small></span></summary>
         <p class="sub" id="needs-sub"></p>
         <div id="needs"></div>
         <p class="note" data-t="needs_note"></p>
       </details>
 
-      <details class="glass fold">
+      <details class="glass fold" data-view="data">
         <summary><span class="fold-ico" aria-hidden="true">🌧️</span><span><b data-t="climate_title"></b><small data-t="climate_fx"></small></span></summary>
         <p class="sub" id="climate-sub"></p>
         <div id="climate"></div>
         <p class="note" id="climate-note"></p>
       </details>
 
-      <details class="glass fold">
+      <details class="glass fold" data-view="data">
         <summary><span class="fold-ico" aria-hidden="true">🌡️</span><span><b data-t="heat_title"></b><small data-t="heat_fx"></small></span></summary>
         <p class="sub" id="heat-sub"></p>
         <div class="heat" id="heat"></div>
         <div class="key" id="heat-key"></div>
         <p class="note" data-t="heat_note"></p>
       </details>
-
-      <details class="glass fold" id="basin-section">
-        <summary><span class="fold-ico" aria-hidden="true">🏞️</span><span><b data-t="basin_title"></b><small data-t="basin_fx"></small></span></summary>
-        <div id="basin"></div>
-      </details>
-
-      <details class="glass fold">
-        <summary><span class="fold-ico" aria-hidden="true">💬</span><span><b data-t="faq_title"></b><small data-t="faq_sub"></small></span></summary>
-        <div id="faq"></div>
-      </details>
-
-      <details class="glass fold">
-        <summary><span class="fold-ico" aria-hidden="true">🔎</span><span><b data-t="trust_title"></b><small data-t="trust_fx"></small></span></summary>
-        <details open>
-          <summary data-t="limits_title"></summary>
-          <ul id="limits"></ul>
-        </details>
-        <details>
-          <summary data-t="method_title"></summary>
-          <ul id="method"></ul>
-        </details>
-        <details>
-          <summary data-t="sources_title"></summary>
-          <ul id="sources"></ul>
-        </details>
-      </details>
     </div>
   </main>
+
+  <!-- ===================== MAP ===================== -->
+  <section class="page" data-view="map">
+    <div class="glass map-card" aria-labelledby="map-title">
+      <h2 id="map-title" data-t="map_title"></h2>
+      <p class="sub" data-t="map_sub"></p>
+      <div class="seg layers" id="layers" role="group"></div>
+      <div id="map"></div>
+      <div class="key" id="map-key"></div>
+      <p class="note" data-t="map_note"></p>
+    </div>
+    <div class="glass" id="basin-section" aria-labelledby="basin-title">
+      <h2 id="basin-title" data-t="basin_title"></h2>
+      <p class="sub" data-t="basin_fx"></p>
+      <div id="basin"></div>
+    </div>
+  </section>
+
+  <!-- ===================== HELP ===================== -->
+  <section class="page" data-view="help">
+    <div class="glass">
+      <h2 data-t="faq_title"></h2>
+      <p class="sub" data-t="faq_sub"></p>
+      <div id="faq"></div>
+    </div>
+    <div class="glass trust">
+      <h2 data-t="trust_title"></h2>
+      <p class="sub" data-t="trust_fx"></p>
+      <details open>
+        <summary data-t="limits_title"></summary>
+        <ul id="limits"></ul>
+      </details>
+      <details>
+        <summary data-t="method_title"></summary>
+        <ul id="method"></ul>
+      </details>
+      <details>
+        <summary data-t="sources_title"></summary>
+        <ul id="sources"></ul>
+      </details>
+    </div>
+  </section>
 
   <footer class="foot">
     <p data-t="foot_support"></p>
@@ -230,9 +258,12 @@
     <p data-t="foot_nasa"></p>
   </footer>
 
+  <nav class="tabbar" id="tabbar" aria-label="Secciones / Sections"></nav>
+
   <div id="sheet" aria-hidden="true"></div>
 
   <script src="data.js"></script>
+  <script src="geo.js"></script>
   <script src="engine.js"></script>
   <script src="app.js"></script>
 </body>

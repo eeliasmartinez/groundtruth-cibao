@@ -34,11 +34,11 @@ def main():
         et0 = water.reference_et(daily, zone["lat"], zone["elev"])
         usable = water.usable_rain(daily)
 
-        # Typical month-by-month climate (2001-2020): rain and water lost by the field.
-        monthly_rain = daily["rain"].resample("MS").sum()["2001":"2020"]
-        monthly_et0 = et0.resample("MS").sum()["2001":"2020"]
-        monthly_tmax = daily["tmax"].resample("MS").mean()["2001":"2020"]
-        monthly_soil = 100 * daily["soil_root"].resample("MS").mean()["2001":"2020"]
+        # Typical month-by-month climate (2001-2025): rain and water lost by the field.
+        monthly_rain = daily["rain"].resample("MS").sum()["2001":"2025"]
+        monthly_et0 = et0.resample("MS").sum()["2001":"2025"]
+        monthly_tmax = daily["tmax"].resample("MS").mean()["2001":"2025"]
+        monthly_soil = 100 * daily["soil_root"].resample("MS").mean()["2001":"2025"]
         climate = {
             # root-zone soil wetness, % of saturation (NASA POWER GWETROOT)
             "soil": [rounded(v, 0) for v in monthly_soil.groupby(monthly_soil.index.month).mean()],

@@ -5,12 +5,14 @@ Method: FAO Irrigation and Drainage Paper 56 (Allen et al., 1998).
      loses in a day, from temperature, sun, humidity and wind (Penman-Monteith).
   2. Crop water use = ET0 x Kc, where Kc depends on the crop and its growth stage.
   3. Irrigation need = crop water use - the part of the rain the crop can use.
-The calculation is repeated for every year since 2001, so the answer comes with
+The calculation is repeated for every planting year from 2001 to 2025, so the answer comes with
 a typical year (median) and a dry year (8 out of 10 years need less than this).
 """
 
 import numpy as np
 import pandas as pd
+
+from nasa_power import LAST_PLANTING_YEAR
 
 from crops import (
     CROPS,
@@ -113,7 +115,7 @@ def season_needs(daily, et0, rain, crop_key, soil, planting_month):
     kc = kc_curve(crop)
     percolation = RICE_PERCOLATION_MM_PER_DAY[soil] if crop["flooded"] else 0
     rows = []
-    for year in range(daily.index[0].year, daily.index[-1].year + 1):
+    for year in range(daily.index[0].year, LAST_PLANTING_YEAR + 1):
         start = pd.Timestamp(year, planting_month, PLANTING_DAY)
         end = start + pd.Timedelta(days=len(kc) - 1)
         if end > et0.last_valid_index():

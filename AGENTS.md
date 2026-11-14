@@ -72,6 +72,19 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   consultas se quedaron sin respuesta, 4 devolvieron vacío y solo 2 dieron datos. No es
   confiable para el pitch. El suelo se sigue eligiendo a mano.
 
+## Secciones, mapa real, rotación y PWA (14-nov, tarde)
+- La página ahora tiene 7 secciones (Inicio, Mi plan, Rotación, Opciones, Mapa, Datos,
+  Ayuda) y muestra una a la vez. En celular hay una barra de pestañas abajo.
+- **Rotación en dos ciclos:** calendario por lotes que muestra el cambio de cultivo
+  entre el ciclo 1 y el ciclo 2 (6 meses después).
+- **Mapa real:** costa de Natural Earth y ríos de OpenStreetMap, guardados en
+  `web/geo.js` (lo genera `build_geo.py`). Las presas están ubicadas de forma aproximada
+  sobre su río.
+- **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
+  la página, subir el número de `CACHE` en `web/sw.js`.
+- **Un solo período:** todo usa 2001–2025.
+- Explicación completa del proceso y de dónde están los datos: `docs/como_funciona.md`.
+
 ## Cómo correrlo
 ```bash
 cd ~/NASA

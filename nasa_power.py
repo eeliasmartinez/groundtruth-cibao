@@ -18,7 +18,8 @@ import requests
 
 POWER_URL = "https://power.larc.nasa.gov/api/temporal/daily/point"
 FIRST_DAY = "20010101"
-NORMAL_YEARS = ("2001", "2020")  # reference period used as "normal"
+NORMAL_YEARS = ("2001", "2025")  # the 25 complete years used everywhere in the project
+LAST_PLANTING_YEAR = 2025  # crops planted after this year are not counted
 DATA_DIR = Path(__file__).parent / "data"
 
 # NASA POWER describes ~50 km squares. Temperature falls about 6.5 C for every

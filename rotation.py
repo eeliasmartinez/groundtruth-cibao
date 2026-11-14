@@ -27,7 +27,8 @@ PRIORITY_WEIGHT = 0.5  # weight of the farmer's top priority; the other two shar
 # (elDinero, 25 Mar 2026). Each basin's area is that total times the share of
 # national rice production of its provinces (same source).
 # ASSUMPTION: area is proportional to production. To be validated.
-# Dam capacities in millions of m3: INDRHI figures reported by Diario Libre, 11 Aug 2026.
+# Dam capacities in millions of m3: INDRHI figures reported by Diario Libre (11 Aug 2026)
+# and by the Presidency of the Dominican Republic (presidencia.gob.do, INDRHI bulletins).
 NATIONAL_RICE_TAREAS = 1_500_000
 BASINS = {
     "Yaque del Norte": {

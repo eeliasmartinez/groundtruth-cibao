@@ -84,7 +84,7 @@ TEXT = {
         "tab_recent": "Últimos 12 meses",
         "tab_history": "Desde 2001",
         "recent": "Últimos 12 meses",
-        "normal": "Normal 2001–2020",
+        "normal": "Normal 2001–2025",
         "c_rain": "Lluvia por mes",
         "c_temp": "Temperatura media por mes",
         "c_soil": "Humedad del suelo donde están las raíces",
@@ -94,7 +94,7 @@ TEXT = {
         "c_year_rain": "Lluvia total de cada año",
         "year_value": "Valor del año",
         "trend": "Tendencia",
-        "average": "Promedio 2001–2020",
+        "average": "Promedio 2001–2025",
         "limits_title": "Qué tan confiables son estos datos",
         "limits": (
             "- **Son datos de satélite y modelos, no de una estación en tu finca.** "
@@ -145,7 +145,7 @@ TEXT = {
         "tab_recent": "Last 12 months",
         "tab_history": "Since 2001",
         "recent": "Last 12 months",
-        "normal": "Normal 2001–2020",
+        "normal": "Normal 2001–2025",
         "c_rain": "Rainfall by month",
         "c_temp": "Mean temperature by month",
         "c_soil": "Soil moisture in the root zone",
@@ -155,7 +155,7 @@ TEXT = {
         "c_year_rain": "Total rainfall of each year",
         "year_value": "Yearly value",
         "trend": "Trend",
-        "average": "2001–2020 average",
+        "average": "2001–2025 average",
         "limits_title": "How reliable is this data",
         "limits": (
             "- **This is satellite and model data, not a weather station on your "
@@ -335,7 +335,7 @@ if view == t["tab_recent"]:
 
 else:
     years =[str(year) for year in by_year.index]
-    rain_average = by_year.loc[2001:2020, "rain"].mean()
+    rain_average = by_year.loc[2001:2025, "rain"].mean()
     left, right = st.columns(2)
     with left:
         st.markdown(f"**{t['c_year_temp']}**")
