@@ -23,7 +23,8 @@
     salty: false,
     selected: null, // strategy the user clicked; null = show the best one
     basinShare: 0.25,
-    layer: "basins" // what the map shows: basins, balance, soil or heat
+    layer: "basins", // what the map shows: basins, balance, soil or heat
+    whyTab: "why" // which explanation of the plan is open
   };
 
   var STRATEGY_ORDER = ["current", "mixed", "rotation", "green"];
@@ -65,6 +66,25 @@
       { dx: 12, dy: 4, anchor: "start" }
     ]
   };
+  // A small hand-drawn icon for each crop (24 x 24 line drawings).
+  var ICONS = {
+    rice: '<path d="M12 22V9c1-4 4-6 7-5"/><path d="M14 7l-1-2M16.5 5.5l-.5-2M19 4.5l.5-2"/><path d="M12 17c-3-.5-5-2.5-5.5-5.5M12 19c3-.5 5-2.5 5.5-5.5"/>',
+    beans: '<path d="M5 17C5 10 10 5 18 5c1 7-4 13-11 13-1.2 0-2-.3-2-1z"/><circle cx="10" cy="14" r="1"/><circle cx="13.5" cy="10.5" r="1"/>',
+    pigeon_pea: '<path d="M4 15c2-3 4-3 5-1 1-3 4-3 5-1 1-3 4-3 6-1-1 4-4 6-8 6s-7-1-8-3z"/><path d="M12 9V4M12 6c-2 0-3-1-3.5-2.5M12 6c2 0 3-1 3.5-2.5"/>',
+    cowpea: '<path d="M7 4c-2 6-1 12 2 17M13 3c-2 6-1 12 2 18"/><path d="M18 6c1 3 1 6 0 9"/>',
+    maize: '<path d="M12 3c3 3 4 8 3 13-1 3-5 3-6 0-1-5 0-10 3-13z"/><path d="M9 16c-3-1-4-4-4-7M15 16c3-1 4-4 4-7M12 19v3"/><path d="M10.5 8h3M10 11h4M10.5 14h3"/>',
+    sorghum: '<path d="M12 22V12"/><ellipse cx="12" cy="7.5" rx="3.5" ry="5"/><path d="M12 17c-3 0-5-1.5-6-4M12 19c3 0 5-1.5 6-4"/>',
+    squash: '<path d="M12 7c-5 0-8 3-8 7s3 6 8 6 8-2 8-6-3-7-8-7z"/><path d="M12 7c-2 3-2 10 0 13M12 7c2 3 2 10 0 13M12 7V4c0-1 1-1.5 2-1.5"/>',
+    sesbania: '<path d="M12 22V4"/><path d="M12 8c-2-.5-3.5-2-4-4M12 8c2-.5 3.5-2 4-4M12 13c-2.5-.5-4-2-4.5-4M12 13c2.5-.5 4-2 4.5-4M12 18c-2.5-.5-4-2-4.5-4M12 18c2.5-.5 4-2 4.5-4"/>'
+  };
+  function cropIcon(crop) {
+    return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[crop] + "</svg>";
+  }
+  // colored square with the crop's icon, used in lists
+  function cropBadge(crop) {
+    return '<i class="cb ' + role(crop) + '">' + cropIcon(crop) + "</i>";
+  }
+
   // one-hue color steps, light to dark, for each map layer
   var RAMPS = {
     balance: ["#fde3d3", "#f9c0a0", "#f29a6b", "#e6753d", "#c9541f"],
@@ -105,7 +125,7 @@
         ["2019", "el INDRHI prohibió la siembra de arroz de invierno por sequía. En 2026 volvió el riego por turnos.", 6]
       ],
       source: "fuente",
-      farm: "Tu finca",
+      farm: "Tu finca en 3 pasos",
       zone: "Zona arrocera",
       month: "Mes de siembra",
       area: "Tareas",
@@ -221,6 +241,36 @@
       sheet_saved: "Ahorro frente a sembrar todo de arroz", sheet_n: "Nitrógeno que recibe el suelo",
       sheet_sacks: "sacos de urea", sheet_land: "Tareas sembradas",
       sheet_heat: "Meses del ciclo y su temperatura máxima media",
+      eyebrow: "NASA Space Apps 2026 · República Dominicana",
+      start_btn: "Empezar con mi finca",
+      step1: "¿Dónde y cuándo siembras?", step2: "¿Cuánta agua te toca?", step3: "¿Qué te importa más?",
+      what_is: "¿Qué significa esto?", what_scores: "¿Qué significan las notas de agua, suelo e ingreso?",
+      month_help: "Sembrando en {month}, el calor del ciclo ronda {tmax} °C de máxima y la lluvia cubre solo el {rain}% del agua del arroz.",
+      soil_help: {
+        clay: "Arcilloso: guarda el agua. Bueno para el arroz; la habichuela y el maíz sufren si se encharca.",
+        loam: "Franco: equilibrado. Sirve para casi todos los cultivos.",
+        sandy: "Arenoso: el agua se filtra rápido. El arroz gasta mucha más agua."
+      },
+      water_help: {
+        normal: "Hay agua para toda la finca de arroz. Rotar una parte igual ahorra agua y cuida el suelo.",
+        tandeo: "El agua no alcanza para toda la finca de arroz. Combinando cultivos siembras más tierra con la misma agua.",
+        veda: "No se puede sembrar arroz. Un cultivo de poca agua mantiene la finca produciendo."
+      },
+      priority_help: {
+        water: "Gana el plan que ahorra más agua sin dejar tierra vacía.",
+        soil: "Gana el plan que deja más nitrógeno y le da descanso al suelo.",
+        income: "Gana el plan con cultivos de venta más segura."
+      },
+      score_help: "Cada nota va de 0 a 100. Agua: cuánta agua ahorras manteniendo la tierra sembrada. Suelo: cuánto nitrógeno recibe y cuánta tierra descansa del arroz. Ingreso: qué tan segura es la venta de lo que siembras (no usa precios).",
+      tabs: { why: "Por qué", evidence: "Evidencia", benefits: "Beneficios", gaps: "Falta saber", risks: "Riesgos" },
+      why_title: "¿Por qué este plan?",
+      data_title: "Entender los datos",
+      data_sub: "Abre solo lo que quieras ver. Cada sección dice qué mide y cómo afecta a tus cultivos.",
+      needs_fx: "Cuánta agua pide cada cultivo. Mientras menos pide, más tareas siembras con tu asignación.",
+      climate_fx: "Lo que llueve contra lo que el campo pierde. La diferencia es el agua que tiene que poner el riego.",
+      heat_fx: "Qué cultivos aguantan el calor de este ciclo y cuáles pueden perder flores o rendimiento.",
+      basin_fx: "Cuánta agua se ahorra en las presas si muchos productores rotan a la vez.",
+      trust_fx: "De dónde salen los números, cómo se calculan y qué les falta.",
       basin_title: "De tu finca a la cuenca",
       basin_q: "¿Y si el {share}% de los arroceros de la cuenca {basin} sembrara {alt} en vez de arroz este ciclo?",
       basin_big: "{n} millones de m³",
@@ -294,7 +344,7 @@
         ["2019", "the water authority banned winter rice planting because of drought. In 2026 irrigation by turns came back.", 6]
       ],
       source: "source",
-      farm: "Your farm",
+      farm: "Your farm in 3 steps",
       zone: "Rice zone",
       month: "Planting month",
       area: "Tareas",
@@ -410,6 +460,36 @@
       sheet_saved: "Saving compared with planting all rice", sheet_n: "Nitrogen the soil receives",
       sheet_sacks: "sacks of urea", sheet_land: "Tareas planted",
       sheet_heat: "Months of the cycle and their average daily maximum",
+      eyebrow: "NASA Space Apps 2026 · Dominican Republic",
+      start_btn: "Start with my farm",
+      step1: "Where and when do you plant?", step2: "How much water do you get?", step3: "What matters most?",
+      what_is: "What does this mean?", what_scores: "What do the water, soil and income scores mean?",
+      month_help: "Planting in {month}, the cycle's heat is around {tmax} °C at its daily maximum and rain covers only {rain}% of the water rice uses.",
+      soil_help: {
+        clay: "Clay: it holds water. Good for rice; beans and maize suffer if it stays waterlogged.",
+        loam: "Loam: balanced. It suits almost every crop.",
+        sandy: "Sandy: water seeps away fast. Rice uses much more water."
+      },
+      water_help: {
+        normal: "There is water for the whole farm in rice. Rotating part of it still saves water and cares for the soil.",
+        tandeo: "The water is not enough for the whole farm in rice. Combining crops plants more land with the same water.",
+        veda: "Rice cannot be planted. A low-water crop keeps the farm producing."
+      },
+      priority_help: {
+        water: "The plan that saves the most water without leaving land empty wins.",
+        soil: "The plan that leaves the most nitrogen and rests the soil wins.",
+        income: "The plan with the crops that are surest to sell wins."
+      },
+      score_help: "Each score goes from 0 to 100. Water: how much water you save while keeping the land planted. Soil: how much nitrogen it receives and how much land rests from rice. Income: how sure the sale of what you plant is (it does not use prices).",
+      tabs: { why: "Why", evidence: "Evidence", benefits: "Benefits", gaps: "Gaps", risks: "Risks" },
+      why_title: "Why this plan?",
+      data_title: "Understand the data",
+      data_sub: "Open only what you want to see. Each section says what it measures and how it affects your crops.",
+      needs_fx: "How much water each crop needs. The less it needs, the more tareas you plant with your allocation.",
+      climate_fx: "What it rains against what the field loses. The difference is the water irrigation must supply.",
+      heat_fx: "Which crops can take this cycle's heat and which may lose flowers or yield.",
+      basin_fx: "How much water the dams keep if many farmers rotate at the same time.",
+      trust_fx: "Where the numbers come from, how they are computed and what they lack.",
       basin_title: "From your farm to the river basin",
       basin_q: "What if {share}% of the rice farmers in the {basin} basin planted {alt} instead of rice this cycle?",
       basin_big: "{n} million m³",
@@ -627,6 +707,7 @@
     drawHeat(result);
     drawFaq(result, byKey);
     drawSheet(selected, result);
+    drawHelp(result);
     drawBasin(selected, result, byKey);
     drawLimits();
   }
@@ -651,7 +732,7 @@
     paintCells(card.querySelectorAll(".plot span"), s);
 
     var lines = s.plots.map(function (p) {
-      return "<span><i class=\"dot " + role(p.crop) + "\"></i><b>" + tareasText(p.tareas) + "</b> " +
+      return "<span>" + cropBadge(p.crop) + "<b>" + tareasText(p.tareas) + "</b> " +
         tr("tareas") + " · " + esc(cropName(p.crop)) + "</span>";
     });
     if (s.idle_tareas > 0.005) {
@@ -711,7 +792,6 @@
     var alt = s.alternative ? cropName(s.alternative) : "";
     var hasRice = s.plots.some(function (p) { return p.crop === "rice"; });
     var whyKey = s.key === "mixed" && !hasRice ? "mixed_banned" : s.key;
-    var why = fill(L.why_text[whyKey], { alt: lower(alt) });
 
     var evidence = [tr("ev_rice", {
       m3: num(result.needs.rice.typical_m3), zone: zone().name, month: MONTHS[state.lang][state.month - 1]
@@ -737,24 +817,28 @@
     }
     if (!benefits.length) benefits.push("—");
 
-    var plan = planText(s, result);
-    function list(items) {
-      return "<ul>" + items.map(function (i) { return "<li>" + esc(i) + "</li>"; }).join("") + "</ul>";
-    }
+    // One explanation at a time, chosen with the tabs.
+    var content = {
+      why: [fill(L.why_text[whyKey], { alt: lower(alt) })],
+      evidence: evidence,
+      benefits: benefits,
+      gaps: [L.gap_prices, L.gap_cell, L.gap_crops],
+      risks: riskList(s, result)
+    };
     $("detail").innerHTML =
-      "<h2>" + esc(strategyName(s)) + "</h2><p class=\"sub\">" + esc(mixText(s)) + "</p>" +
-      "<div class=\"detail-grid\">" +
-      "<div><h3>" + L.why + "</h3><ul><li>" + esc(why) + "</li></ul></div>" +
-      "<div><h3>" + L.evidence + "</h3>" + list(evidence) + "</div>" +
-      "<div><h3>" + L.benefits + "</h3>" + list(benefits) + "</div>" +
-      "<div><h3>" + L.gaps + "</h3>" + list([L.gap_prices, L.gap_cell, L.gap_crops]) + "</div>" +
-      "<div><h3>" + L.risks + "</h3>" + list(riskList(s, result)) + "</div>" +
-      "</div><div class=\"actions\">" +
+      "<h2>" + L.why_title + "</h2><p class=\"sub\">" + esc(strategyName(s)) + ": " + esc(mixText(s)) + "</p>" +
+      "<div class=\"tabs\" role=\"tablist\">" + Object.keys(L.tabs).map(function (key) {
+        return "<button type=\"button\" role=\"tab\" data-tab=\"" + key + "\" aria-selected=\"" + (state.whyTab === key) +
+          "\" class=\"" + (state.whyTab === key ? "on" : "") + "\">" + L.tabs[key] + "</button>";
+      }).join("") + "</div><ul>" + content[state.whyTab].map(function (i) { return "<li>" + esc(i) + "</li>"; }).join("") + "</ul>";
+
+    var plan = planText(s, result);
+    $("plan-actions").innerHTML =
       "<a class=\"btn primary\" target=\"_blank\" rel=\"noopener\" href=\"https://wa.me/?text=" +
       encodeURIComponent(plan) + "\">" + L.share_wa + "</a>" +
       "<button type=\"button\" class=\"btn\" id=\"copy-plan\">" + L.share_copy + "</button>" +
       (window.speechSynthesis ? "<button type=\"button\" class=\"btn\" id=\"listen-plan\">" + L.listen + "</button>" : "") +
-      "<button type=\"button\" class=\"btn\" id=\"print-plan\">" + L.print + "</button></div>";
+      "<button type=\"button\" class=\"btn\" id=\"print-plan\">" + L.print + "</button>";
     $("copy-plan").onclick = function () {
       var button = this;
       var done = function () { button.textContent = L.copied; };
@@ -767,6 +851,18 @@
       document.body.classList.add("sheet-mode");
       window.print();
     };
+  }
+
+  // One short sentence under each control: what it is and how it affects the crops.
+  function drawHelp(result) {
+    var L = T[state.lang];
+    $("month-help").textContent = tr("month_help", {
+      month: MONTHS[state.lang][state.month - 1], tmax: num(result.needs.rice.tmax, 1),
+      rain: Math.round(result.needs.rice.rain_share * 100)
+    });
+    $("soil-help").textContent = L.soil_help[state.soil];
+    $("water-help").textContent = L.water_help[waterStatus()];
+    $("priority-help").textContent = L.priority_help[state.priority];
   }
 
   // ------------------------------------------------------------------
@@ -1068,13 +1164,19 @@
   // ------------------------------------------------------------------
 
   // 100 squares: each crop gets its share of the farm, the rest stays empty.
-  function paintCells(cells, s) {
+  function paintCells(cells, s, withIcons) {
     var index = 0;
+    function paint(cell, kind, crop) {
+      cell.className = kind;
+      if (!withIcons || cell.getAttribute("data-crop") === (crop || "")) return;
+      cell.setAttribute("data-crop", crop || "");
+      cell.innerHTML = crop ? cropIcon(crop) : "";
+    }
     s.plots.forEach(function (p) {
       var count = Math.round(100 * p.tareas / state.area);
-      for (var n = 0; n < count && index < 100; n++) cells[index++].className = role(p.crop);
+      for (var n = 0; n < count && index < 100; n++) paint(cells[index++], role(p.crop), p.crop);
     });
-    while (index < 100) cells[index++].className = "idle";
+    while (index < 100) paint(cells[index++], "idle", null);
   }
 
   // Normal: most of the water. Tandeo: water by turns. Veda: rice is banned.
@@ -1208,8 +1310,16 @@
 
   function drawParcel(s) {
     var L = T[state.lang];
-    paintCells($("parcel").children, s);
+    paintCells($("parcel").children, s, true);
     $("parcel-sub").textContent = tr("parcel_sub", { name: strategyName(s), area: tareasText(state.area) });
+    var lines = s.plots.map(function (p) {
+      return "<span>" + cropBadge(p.crop) + "<b>" + tareasText(p.tareas) + "</b> " + tr("tareas") + " · " +
+        esc(cropName(p.crop)) + "</span>";
+    });
+    if (s.idle_tareas > 0.005) {
+      lines.push("<span><i class=\"cb idle\"></i><b>" + tareasText(s.idle_tareas) + "</b> " + tr("tareas") + " · " + tr("idle") + "</span>");
+    }
+    $("plan-mix").innerHTML = lines.join("");
     function tile(value, text) { return "<div><b>" + value + "</b><span>" + esc(text) + "</span></div>"; }
     $("impact").innerHTML =
       tile(num(s.urea_sacks), L.impact_n) +
@@ -1267,6 +1377,13 @@
     }
     $("map").onclick = pickZone;
     $("map").onkeydown = pickZone;
+    $("detail").onclick = function (event) {
+      var tab = event.target.getAttribute("data-tab");
+      if (tab) { state.whyTab = tab; draw(); }
+    };
+    $("start").onclick = function () {
+      $("steps").scrollIntoView({ behavior: "smooth", block: "start" });
+    };
     // Example case: Don Pedro, 100 tareas of clay soil in Mao, 60% of the water.
     $("don-pedro").onclick = function () {
       D.zones.forEach(function (z, i) { if (z.name.indexOf("Valverde") === 0) state.zone = i; });
