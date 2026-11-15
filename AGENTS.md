@@ -83,10 +83,9 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
 - **Límites provinciales:** geoBoundaries ADM1 (2022, dominio público), guardados en
   `data/provinces.geojson` y `web/provinces.js` (lo genera `build_provinces.py`). Tocar
   una provincia selecciona el punto arrocero más cercano, no una parcela exacta.
-- **Autopista Duarte:** `data/duarte_osrm.json` guarda los tramos nombrados de la ruta
-  OSRM sobre OpenStreetMap; `build_roads.py` genera `web/roads.js`. En el mapa aparecen
-  la línea y carritos animados. Los carros son ilustrativos, no tráfico en vivo. La línea
-  es referencia OSM, no levantamiento oficial del MOPC.
+- **Autopista Duarte: se quitó (15-nov).** La línea y los carritos no ayudaban a decidir
+  qué sembrar ni cuánta agua usar, y añadían movimiento y peso a la página. No volver a
+  ponerla sin un motivo agronómico (por ejemplo, distancia al mercado con fuente).
 - **Arroz en el mapa:** los brotes marcan las 14 zonas arroceras del prototipo. No son
   campos detectados por satélite ni parcelas exactas. No se añadieron animales ni otros
   cultivos porque no hay capas georreferenciadas fiables para ubicarlos.
@@ -104,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v12`).
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v17`).
 - **Datos del relieve:** el resumen del clima, suelo, agua y área está cerrado inicialmente
   dentro de “Datos del mapa”; se abre solo si el usuario lo elige.
 - **Continuar desde una zona:** “Continuar con esta finca” coloca la marca ilustrativa y
@@ -170,6 +169,15 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
 - Evaluación crítica por aspecto: `docs/evaluacion.md`.
 - Continuación para Claude Code: `docs/continuacion_claude.md`.
 
+## Correcciones de la revisión (15-nov)
+- El mapa solo se redibuja cuando cambia la zona, la capa o el idioma (antes se rehacían
+  cuatro copias en cada movimiento de un control).
+- Tocar una provincia abre una zona arrocera de esa provincia. Si no tiene ninguna, abre la
+  más cercana y lo dice en pantalla (texto `province_nearest`).
+- El plan guardado recuerda la zona por su nombre y no reescribe el guardado si no cambió.
+- El botón Adelante del navegador ya avanza (lista `ahead` en `web/app.js`).
+- La etiqueta FINCA/FARM del relieve va encima de la casa, lejos del nombre de la zona.
+
 ## Botón Atrás general
 - El botón "← Atrás" (barra superior; en celular flota sobre la barra de pestañas)
   vuelve a la pantalla anterior, incluidas las preguntas del recorrido. Usa la lista
@@ -206,6 +214,18 @@ Si `.venv` no existe: `python3 -m venv .venv && .venv/bin/pip install -r require
 4. **Página del proyecto en inglés** en spaceappschallenge.org, con declaración de IA.
 5. Cotejar los coeficientes de `crops.py` con las tablas 11 y 12 de FAO-56.
 6. Opcional: precios y rendimientos reales para la nota de ingreso.
+
+## Catálogo agrícola (14-nov, noche)
+- `web/crops_local.js` alimenta una vista de búsqueda de 39 cultivos/rubros dominicanos,
+  con filtros y cifras nacionales preliminares de ONE 2025 cuando hay dato individual.
+- Se accede desde Inicio; queda bilingüe y offline y su archivo se incluye en la caché PWA.
+- Este catálogo amplía la exploración de la web, pero no cambia el motor de rotación:
+  las ocho fichas de cultivo existentes siguen dentro del planificador centrado en arroz.
+- No afirmar que el planificador recomienda yuca, plátano, cacao o frutales. Un cultivo
+  solo pasa a cálculo cuando tenga calendario, Kc/etapas, reglas de suelo/agua y validación
+  agronómica local. Ver `docs/catalogo_cultivos.md`.
+- La estadística ONE agrupa parte de los productos como "otros"; el directorio no es una
+  lista botánica exhaustiva de cada especie o variedad cultivada en el país.
 
 ## Límites conocidos (decirlos con honestidad en el pitch)
 - NASA POWER usa cuadros de ~50 km; Valverde y Montecristi comparten datos.

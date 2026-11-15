@@ -36,7 +36,8 @@
   };
 
   var STRATEGY_ORDER = ["current", "mixed", "rotation", "green"];
-  var storedPlan = window.GTStorage.load(D.zones.length, STRATEGY_ORDER);
+  var ZONE_NAMES = D.zones.map(function (z) { return z.name; });
+  var storedPlan = window.GTStorage.load(ZONE_NAMES, STRATEGY_ORDER);
   if (storedPlan.plan) {
     Object.keys(storedPlan.plan).forEach(function (key) { state[key] = storedPlan.plan[key]; });
     state.savedOnDevice = true;
@@ -46,13 +47,14 @@
   var trail = [];
   var ready = false; // becomes true once the first screen is on
   var browserSteps = 0; // how many of those screens the browser's own Back button knows about
+  var ahead = []; // screens left with Back, so the browser's Forward button can return to them
 
   // Schematic map of the northern Dominican Republic. Points are [longitude, latitude],
   // placed by hand from general geographic knowledge: good for orientation, not surveyed.
   var MAP = { w: 760, h: 546, lon0: -72.1, lat0: 20.05, k: 206, cos: 0.947 };
-  var mapRenderCount = 0;
   var NAV_VIEWS = ["home", "plan", "rotation", "options", "map", "data", "help"];
-  var VIEWS = NAV_VIEWS.concat(["guide", "zone"]); // the walkthrough is opened from Home, not from the menu
+  var VIEWS = NAV_VIEWS.concat(["guide", "zone", "crops"]); // crops opens from Home, outside the main farm-planning tabs
+  var selectedLocalCrop = "plantain";
   // Small drawings for the soil question: water stays on clay, sinks through sand.
   var SOIL_ART = {
     clay: '<svg viewBox="0 0 120 64" aria-hidden="true"><rect width="120" height="64" rx="10" fill="#7a4a2b"/><path d="M0 26h120M0 46h120" stroke="#5d3518" stroke-width="2"/><path d="M34 8v18M72 26v20M98 46v18M18 46v18" stroke="#5d3518" stroke-width="2"/><ellipse cx="60" cy="9" rx="38" ry="6" fill="#6db8f7"/></svg>',
@@ -145,8 +147,6 @@
     ["Montecristi 24 Horas, 28 Aug 2026: Racionan el agua para la agricultura por falta de lluvias", "https://montecristi24horas.com/2026/08/racionan-el-agua-para-la-agricultura-por-falta-de-lluvias/"],
     ["Presidencia de la República Dominicana: INDRHI informa sobre volúmenes en el sistema nacional de presas", "https://presidencia.gob.do/noticias/indrhi-informa-sobre-volumenes-en-sistema-nacional-de-presas"],
     ["Map rivers: © OpenStreetMap contributors (ODbL)", "https://www.openstreetmap.org/copyright"],
-    ["Autopista Duarte route reference: OpenStreetMap contributors via OSRM (ODbL)", "https://www.openstreetmap.org/copyright"],
-    ["Autopista Duarte official corridor description: MOPC / RD Vial", "https://rdvial.gob.do/wp-content/uploads/2024/02/SIMVFOP-003-P2-PS-11231.pdf"],
     ["Map coastline: Natural Earth (public domain)", "https://www.naturalearthdata.com/"],
     ["Typefaces: Big Shoulders Display and Archivo (SIL Open Font License), via Fontsource", "https://fontsource.org/"],
     ["Satellite photo: NASA Worldview Snapshots, MODIS Terra corrected reflectance, 18 Feb 2026", "https://wvs.earthdata.nasa.gov/"],
@@ -223,6 +223,9 @@
     document.querySelectorAll("[data-t]").forEach(function (el) {
       el.textContent = tr(el.getAttribute("data-t"));
     });
+    document.querySelectorAll("[data-t-placeholder]").forEach(function (el) {
+      el.setAttribute("placeholder", tr(el.getAttribute("data-t-placeholder")));
+    });
     document.querySelectorAll(".lang button").forEach(function (b) {
       b.classList.toggle("on", b.getAttribute("data-lang") === state.lang);
     });
@@ -282,7 +285,66 @@
     $("sources").innerHTML = SOURCES.map(function (s) {
       return "<li><a href=\"" + s[1] + "\" target=\"_blank\" rel=\"noopener\">" + esc(s[0]) + "</a></li>";
     }).join("");
+    drawCropDirectory();
     setJourneyBeat(state.journeyBeat);
+  }
+
+  function cropNumber(value) {
+    return new Intl.NumberFormat(state.lang === "es" ? "es-DO" : "en-US", { maximumFractionDigits: 1 }).format(value);
+  }
+
+  function drawCropDirectory() {
+    var L = T[state.lang], rows = window.GT_LOCAL_CROPS || [];
+    var query = ($("crop-search").value || "").toLocaleLowerCase();
+    var groupSelect = $("crop-group"), modelSelect = $("crop-model");
+    var group = groupSelect.value || "all", model = modelSelect.value || "all";
+    groupSelect.innerHTML = "<option value=\"all\">" + esc(L.crop_groups.all) + "</option>" +
+      Object.keys(L.crop_groups).filter(function (key) { return key !== "all"; }).map(function (key) {
+        return "<option value=\"" + key + "\">" + esc(L.crop_groups[key]) + "</option>";
+      }).join("");
+    modelSelect.innerHTML = "<option value=\"all\">" + esc(L.crop_models.all) + "</option>" +
+      "<option value=\"modeled\">" + esc(L.crop_models.modeled) + "</option>" +
+      "<option value=\"pending\">" + esc(L.crop_models.pending) + "</option>";
+    groupSelect.value = group;
+    modelSelect.value = model;
+    var filtered = rows.filter(function (crop) {
+      var name = crop[state.lang] || crop.es;
+      var searchMatch = !query || (name + " " + crop.es + " " + crop.en).toLocaleLowerCase().indexOf(query) >= 0;
+      return searchMatch && (group === "all" || crop.group === group) &&
+        (model === "all" || (model === "modeled") === !!crop.modelKey);
+    });
+    if (!filtered.some(function (crop) { return crop.id === selectedLocalCrop; }) && filtered.length)
+      selectedLocalCrop = filtered[0].id;
+    $("crop-total").textContent = rows.length;
+    $("crop-result-count").textContent = L.crop_results.replace("{n}", filtered.length);
+    $("crop-overview").innerHTML = L.crop_overview.map(function (item) {
+      return "<div><b>" + esc(item[1]) + "</b><span>" + esc(item[0]) + "</span></div>";
+    }).join("");
+    $("crop-list").innerHTML = filtered.length ? filtered.map(function (crop) {
+      var name = crop[state.lang] || crop.es;
+      var metric = crop.production == null ? L.crop_no_stat : cropNumber(crop.production) + " " + L.crop_tonnes;
+      return "<button type=\"button\" class=\"crop-row" + (crop.id === selectedLocalCrop ? " selected" : "") +
+        "\" data-crop-id=\"" + crop.id + "\"><span class=\"crop-row-main\"><b>" + esc(name) +
+        "</b><small>" + esc(L.crop_groups[crop.group]) + "</small></span><span class=\"crop-row-stat\">" +
+        esc(metric) + "</span><span class=\"crop-row-mark\" aria-hidden=\"true\">" + (crop.modelKey ? "●" : "○") + "</span></button>";
+    }).join("") : "<p class=\"crop-empty\">" + esc(L.crop_empty) + "</p>";
+    renderCropProfile(rows.filter(function (crop) { return crop.id === selectedLocalCrop; })[0]);
+  }
+
+  function renderCropProfile(crop) {
+    if (!crop) { $("crop-profile").innerHTML = ""; return; }
+    var L = T[state.lang], name = crop[state.lang] || crop.es;
+    var stat = crop.production == null ? "" : "<div class=\"crop-stat\"><b>" + cropNumber(crop.production) +
+      "</b><span>" + esc(L.crop_tonnes_2025) + "</span></div>";
+    var exportLine = crop.exportShare == null ? "" : "<p class=\"crop-export\">" +
+      esc(L.crop_export_share.replace("{n}", cropNumber(crop.exportShare))) + "</p>";
+    var modelCopy = crop.modelKey ? L.crop_modelled_detail : L.crop_pending_detail;
+    $("crop-profile").innerHTML = "<p class=\"crop-profile-kicker\">" + esc(L.crop_profile_kicker) + "</p>" +
+      "<h3>" + esc(name) + "</h3><p class=\"crop-profile-group\">" + esc(L.crop_groups[crop.group]) + "</p>" +
+      stat + exportLine + "<div class=\"crop-model-note " + (crop.modelKey ? "available" : "pending") + "\"><b>" +
+      esc(crop.modelKey ? L.crop_models.modeled : L.crop_models.pending) + "</b><p>" + esc(modelCopy) + "</p></div>" +
+      "<a href=\"https://www.one.gob.do/media/njpkonqj/bolet%C3%ADn-estad%C3%ADstico-agropecuario-enero-diciembre-2025.pdf\" target=\"_blank\" rel=\"noopener\">" +
+      esc(L.crop_open_source) + "</a>";
   }
 
   function setJourneyBeat(beat) {
@@ -361,7 +423,7 @@
   }
 
   function drawStorageStatus() {
-    if (state.savedOnDevice && !window.GTStorage.save(state, D.zones.length, STRATEGY_ORDER)) {
+    if (state.savedOnDevice && !window.GTStorage.save(state, ZONE_NAMES, STRATEGY_ORDER)) {
       state.savedOnDevice = false;
       state.storageError = true;
     }
@@ -517,7 +579,7 @@
         state.storageError = !window.GTStorage.clear();
         state.savedOnDevice = false;
       } else {
-        state.savedOnDevice = window.GTStorage.save(state, D.zones.length, STRATEGY_ORDER);
+        state.savedOnDevice = window.GTStorage.save(state, ZONE_NAMES, STRATEGY_ORDER);
         state.storageError = !state.savedOnDevice;
       }
       draw();
@@ -893,23 +955,56 @@
     return inside ? inside[1] : name;
   }
 
-  function nearestZoneToMapPoint(event) {
+  // Which rice zone to open when a province (not a zone dot) is tapped. Zones that lie
+  // inside the province come first; if it has none, the nearest one is used and the
+  // page says so, so nobody reads another province's climate as their own.
+  function insideRings(lon, lat, rings) {
+    var inside = false;
+    rings.forEach(function (ring) {
+      for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        var a = ring[i], b = ring[j];
+        if ((a[1] > lat) !== (b[1] > lat) && lon < (b[0] - a[0]) * (lat - a[1]) / (b[1] - a[1]) + a[0]) inside = !inside;
+      }
+    });
+    return inside;
+  }
+  function zoneFromProvince(event) {
     var svg = event.target.closest("svg") || event.currentTarget.querySelector("svg");
+    var line = event.target.closest("[data-province]");
+    var province = line && (window.GT_PROVINCES || [])[+line.getAttribute("data-province")];
     if (!svg) return state.zone;
     var rect = svg.getBoundingClientRect();
     var x = (event.clientX - rect.left) / rect.width * MAP.w;
     var y = (event.clientY - rect.top) / rect.height * MAP.h;
     var lon = x / (MAP.cos * MAP.k) + MAP.lon0, lat = MAP.lat0 - y / MAP.k;
-    var best = 0, distance = Infinity;
-    D.zones.forEach(function (z, index) {
-      var dx = (z.lon - lon) * Math.cos(lat * Math.PI / 180), dy = z.lat - lat;
-      var d = dx * dx + dy * dy;
+    var own = D.zones.map(function (z, index) { return index; }).filter(function (index) {
+      return province && insideRings(D.zones[index].lon, D.zones[index].lat, province.rings);
+    });
+    var choices = own.length ? own : D.zones.map(function (z, index) { return index; });
+    var best = choices[0], distance = Infinity;
+    choices.forEach(function (index) {
+      var z = D.zones[index];
+      var dx = (z.lon - lon) * 111.3 * Math.cos(lat * Math.PI / 180), dy = (z.lat - lat) * 110.6;
+      var d = Math.sqrt(dx * dx + dy * dy);
       if (d < distance) { distance = d; best = index; }
     });
+    state.pickNote = province && !own.length
+      ? { zone: best, province: province.name, km: Math.max(5, Math.round(distance / 5) * 5) } : null;
     return best;
   }
+  function pickNoteText() {
+    var note = state.pickNote;
+    if (!note || note.zone !== state.zone) return "";
+    return tr("province_nearest", { province: note.province, zone: zone().name, km: note.km });
+  }
 
+  var mapKey = "";
   function drawMap() {
+    // The four map copies only show the zone, the layer and the language, so the
+    // sliders and other answers do not need to rebuild them.
+    var key = state.zone + "|" + state.layer + "|" + state.lang;
+    if (key === mapKey && $("map").firstChild && (!$("g-map") || $("g-map").firstChild)) return;
+    mapKey = key;
     var L = T[state.lang];
     var G = window.GT_GEO;
     var layer = state.layer;
@@ -988,23 +1083,6 @@
       "<text class=\"river\" x=\"" + mx(-69.88) + "\" y=\"" + my(19.06) + "\">" + L.river + " Yuna</text>" +
       "<text class=\"river\" x=\"" + mx(-70.98) + "\" y=\"" + my(18.50) + "\">" + L.river + " Yaque del Sur</text>";
 
-    // The route follows the named Autopista Duarte segments in an OSRM route
-    // over OpenStreetMap. The two tiny cars are an illustration, not live traffic.
-    if (window.GT_ROADS && window.GT_ROADS.duarte) {
-      var routeId = "duarte-route-" + (++mapRenderCount), routeD = mapPath(window.GT_ROADS.duarte);
-      svg += "<path id=\"" + routeId + "\" class=\"highway-casing\" d=\"" + routeD + "\" clip-path=\"url(#landclip)\"><title>Autopista Duarte</title></path>" +
-        "<path class=\"highway\" d=\"" + routeD + "\" clip-path=\"url(#landclip)\" pointer-events=\"none\"/>" +
-        "<text class=\"highway-label\" x=\"" + mx(-70.27) + "\" y=\"" + my(18.80) + "\">Autopista Duarte</text>";
-      if (!reduceMotion) {
-        function car(color, begin, reverse) {
-          return "<g class=\"map-car\" aria-hidden=\"true\"><animateMotion dur=\"64s\" begin=\"" + begin + "s\" repeatCount=\"indefinite\" rotate=\"auto\"" +
-            (reverse ? " keyPoints=\"1;0\" keyTimes=\"0;1\" calcMode=\"linear\"" : "") + "><mpath href=\"#" + routeId + "\"/></animateMotion>" +
-            "<g transform=\"translate(-7 -3.5)\"><rect x=\"1\" y=\"0\" width=\"12\" height=\"7\" rx=\"2.2\" fill=\"" + color + "\" stroke=\"#10131a\" stroke-width=\".7\"/>" +
-            "<rect x=\"4\" y=\"1\" width=\"5\" height=\"5\" rx=\"1.3\" fill=\"#f7f4e8\"/><circle cx=\"3\" cy=\"1\" r=\"1\"/><circle cx=\"11\" cy=\"1\" r=\"1\"/><circle cx=\"3\" cy=\"6\" r=\"1\"/><circle cx=\"11\" cy=\"6\" r=\"1\"/></g></g>";
-        }
-        svg += car("#e2231a", "0", false) + car("#1238a8", "-32", true);
-      }
-    }
 
     G.dams.forEach(function (dam) {
       var x = mx(dam.lon), y = my(dam.lat), at = GEO.damLabels[dam.name] || { dx: 9, dy: 4, anchor: "start" };
@@ -1066,7 +1144,8 @@
     if (stage.getAttribute("data-step") === tag) return;
     var body;
     if (step === 0) {
-      body = "<div id=\"g-map\" class=\"g-map\"></div><p class=\"g-pick\">" + L.g_zone + " <b id=\"g-zone\"></b></p>";
+      body = "<div id=\"g-map\" class=\"g-map\"></div><p class=\"g-pick\">" + L.g_zone + " <b id=\"g-zone\"></b></p>" +
+        "<p class=\"note g-pick-note\" id=\"g-pick-note\" aria-live=\"polite\" hidden></p>";
     } else if (step === 1) {
       body = "<p class=\"g-label\">" + L.g_month + "</p><div class=\"g-months\">" + MONTHS_SHORT[state.lang].map(function (m, i) {
         return "<button type=\"button\" data-g-month=\"" + (i + 1) + "\">" + m + "</button>";
@@ -1125,6 +1204,8 @@
     }
     if (step === 0) {
       $("g-zone").textContent = zone().name;
+      $("g-pick-note").textContent = pickNoteText();
+      $("g-pick-note").hidden = !pickNoteText();
     } else if (step === 1) {
       mark("[data-g-month]", "data-g-month", state.month);
       $("g-month-help").textContent = $("month-help").textContent;
@@ -1263,19 +1344,6 @@
         if (run.length > 1) provinceLines.push(run);
       });
     });
-    var roadRuns = [], roadRun = [];
-    ((window.GT_ROADS && window.GT_ROADS.duarte) || []).forEach(function (point) {
-      if (!inside(point[0], point[1])) {
-        if (roadRun.length > 1) roadRuns.push(roadRun);
-        roadRun = [];
-      } else roadRun.push(place(point[0], point[1], 14));
-    });
-    if (roadRun.length > 1) roadRuns.push(roadRun);
-    roadRuns = roadRuns.map(function (run) {
-      var distances = [0];
-      for (var n = 1; n < run.length; n++) distances.push(distances[n - 1] + Math.hypot(run[n].x - run[n - 1].x, run[n].y - run[n - 1].y));
-      return { points: run, distances: distances, length: distances[distances.length - 1] };
-    }).filter(function (run) { return run.length > 0.5; });
     var rivers = [], names = [];
     window.GT_GEO.rivers.forEach(function (river) {
       river.lines.forEach(function (line) {
@@ -1301,7 +1369,7 @@
       if (!inside(other.lon, other.lat)) return;
       var spot = place(other.lon, other.lat, 30); spot.name = shortName(other.name); spot.mine = n === index; zones.push(spot);
     });
-    return { points: points, quads: quads, provinceLines: provinceLines, roads: roadRuns, rivers: rivers, dams: dams, zones: zones, riverNames: names,
+    return { points: points, quads: quads, provinceLines: provinceLines, rivers: rivers, dams: dams, zones: zones, riverNames: names,
       highest: highest, widthKm: 2 * WINDOW.lon * kmLon };
   }
 
@@ -1362,36 +1430,6 @@
     });
     ctx.setLineDash([]);
 
-    m.roads.forEach(function (run) {
-      ctx.beginPath();
-      run.points.forEach(function (p, n) { var q = project(p); if (n) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); });
-      ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = 6.2 * ratio; ctx.stroke();
-      ctx.strokeStyle = "#45484d"; ctx.lineWidth = 4.1 * ratio; ctx.stroke();
-      ctx.setLineDash([4 * ratio, 5 * ratio]); ctx.lineDashOffset = -seconds * 3 * ratio;
-      ctx.strokeStyle = "#f3d777"; ctx.lineWidth = 0.8 * ratio; ctx.stroke(); ctx.setLineDash([]);
-      if (run === m.roads[0]) {
-        var roadLabelPoint = project(run.points[Math.floor(run.points.length / 2)]);
-        label("Autopista Duarte", roadLabelPoint[0] + 5 * ratio, roadLabelPoint[1] - 7 * ratio, true);
-      }
-
-      // Two tiny vehicles follow this mapped road; motion is decorative, not traffic data.
-      for (var vehicle = 0; vehicle < 2; vehicle++) {
-        var distance = (seconds * run.length / 56 + vehicle * run.length / 2) % run.length, segment = 0;
-        while (segment < run.distances.length - 2 && run.distances[segment + 1] < distance) segment++;
-        var segmentLength = run.distances[segment + 1] - run.distances[segment] || 1;
-        var portion = (distance - run.distances[segment]) / segmentLength;
-        var a = run.points[segment], b = run.points[segment + 1];
-        var here = { x: a.x + (b.x - a.x) * portion, y: a.y + (b.y - a.y) * portion, h: a.h + (b.h - a.h) * portion };
-        var p0 = project(a), p1 = project(b), carPoint = project(here);
-        ctx.save(); ctx.translate(carPoint[0], carPoint[1]); ctx.rotate(Math.atan2(p1[1] - p0[1], p1[0] - p0[0]));
-        ctx.fillStyle = "rgba(0,0,0,.28)"; ctx.beginPath(); ctx.ellipse(0, 3.2 * ratio, 6.2 * ratio, 2.5 * ratio, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = vehicle ? "#e2231a" : "#f7f4e8"; ctx.strokeStyle = "#10131a"; ctx.lineWidth = 0.9 * ratio;
-        ctx.beginPath(); ctx.moveTo(-6 * ratio, -2.5 * ratio); ctx.lineTo(4 * ratio, -2.5 * ratio); ctx.lineTo(6 * ratio, 0); ctx.lineTo(4 * ratio, 2.5 * ratio); ctx.lineTo(-6 * ratio, 2.5 * ratio); ctx.closePath(); ctx.fill(); ctx.stroke();
-        ctx.fillStyle = "#1238a8"; ctx.fillRect(-1.5 * ratio, -1.7 * ratio, 3.5 * ratio, 3.4 * ratio);
-        ctx.restore();
-      }
-    });
-
     function label(text, x, y, bold) {
       ctx.font = (bold ? "800 " : "700 ") + Math.round((bold ? 15 : 12) * ratio) + "px Archivo, sans-serif";
       ctx.lineWidth = 3.5 * ratio; ctx.strokeStyle = "#fff"; ctx.strokeText(text, x, y);
@@ -1432,7 +1470,8 @@
         ctx.fillStyle = "#fff"; ctx.fillRect(-5 * ratio, -16 * ratio, 10 * ratio, 12 * ratio);
         ctx.fillStyle = "#e2231a"; ctx.beginPath(); ctx.moveTo(-8 * ratio, -16 * ratio); ctx.lineTo(0, -23 * ratio); ctx.lineTo(8 * ratio, -16 * ratio); ctx.closePath(); ctx.fill();
         ctx.restore();
-        label("FINCA", fx + 25 * ratio, fy + 3 * ratio, true);
+        // Above the roof, so it never sits on top of the zone's name (drawn to the right of the pin).
+        ctx.save(); ctx.textAlign = "center"; label(state.lang === "es" ? "FINCA" : "FARM", fx, fy - 29 * ratio, true); ctx.restore();
       }
     });
 
@@ -1470,7 +1509,7 @@
     var svg = container.querySelector("svg"), z = D.zones[index];
     if (state.zone !== index) state.farmPlaced = false;
     state.zone = index;
-    function open() { draw(); setView("zone"); }
+    function open() { if (svg) svg.classList.remove("zooming"); draw(); setView("zone"); }
     if (!svg || reduceMotion) { open(); return; }
     svg.style.transformOrigin = (100 * mx(z.lon) / MAP.w) + "% " + (100 * my(z.lat) / MAP.h) + "%";
     svg.classList.add("zooming");
@@ -1488,6 +1527,8 @@
     $("z-plan").textContent = state.farmPlaced ? L.z_continue : L.z_plan;
     $("z-farm-note").textContent = state.farmPlaced ? L.z_farm_placed : L.z_farm_note;
     $("z-sub").textContent = tr("z_sub", { basin: z.basin });
+    $("z-pick-note").textContent = pickNoteText();
+    $("z-pick-note").hidden = !pickNoteText();
     var rows = [
       [num(elevationAt(z.lon, z.lat)) + " m", L.z_elev],
       [num(m.highest) + " m", L.z_high],
@@ -1611,6 +1652,19 @@
   // Reacting to the farmer
   // ------------------------------------------------------------------
   function listen() {
+    $("crop-search").oninput = drawCropDirectory;
+    $("crop-group").onchange = drawCropDirectory;
+    $("crop-model").onchange = drawCropDirectory;
+    $("crop-list").onclick = function (event) {
+      var row = event.target.closest("[data-crop-id]");
+      if (!row) return;
+      selectedLocalCrop = row.getAttribute("data-crop-id");
+      drawCropDirectory();
+    };
+    $("crop-overview").onclick = function (event) {
+      var groupButton = event.target.closest("[data-crop-group]");
+      if (groupButton) { $("crop-group").value = groupButton.getAttribute("data-crop-group"); drawCropDirectory(); }
+    };
     document.querySelectorAll(".lang button").forEach(function (button) {
       button.onclick = function () {
         state.lang = button.getAttribute("data-lang");
@@ -1658,9 +1712,10 @@
     }
     function exploreZone(event) {
       var mark = event.target.closest("[data-zone]"), province = event.target.closest("[data-province]");
-      if (!mark && province && event.type !== "keydown") mark = { getAttribute: function () { return nearestZoneToMapPoint(event); } };
+      if (!mark && province && event.type !== "keydown") mark = { getAttribute: function () { return zoneFromProvince(event); } };
       if (!mark || (event.type === "keydown" && event.key !== "Enter" && event.key !== " ")) return;
       event.preventDefault();
+      if (mark.nodeType) state.pickNote = null;
       zoomToZone(event.currentTarget, +mark.getAttribute("data-zone"));
     }
     $("map").onclick = exploreZone;
@@ -1676,11 +1731,11 @@
     $("guide").onclick = function (event) {
       var target = event.target, el;
       if ((el = target.closest("[data-province]"))) {
-        state.zone = nearestZoneToMapPoint(event); state.farmPlaced = false; state.guideWithScene = true;
+        state.zone = zoneFromProvince(event); state.farmPlaced = false; state.guideWithScene = true;
         draw(); startScene(); return;
       }
       if ((el = target.closest("[data-zone]"))) {
-        state.zone = +el.getAttribute("data-zone"); state.guideWithScene = true;
+        state.zone = +el.getAttribute("data-zone"); state.guideWithScene = true; state.pickNote = null;
         draw(); startScene(); return;
       }
       if ((el = target.closest("[data-g-month]"))) { state.month = +el.getAttribute("data-g-month"); draw(); return; }
@@ -1719,8 +1774,8 @@
     };
     $("h-map").onclick = function (event) {
       var mark = event.target.closest("[data-zone]"), province = event.target.closest("[data-province]");
-      if (mark) zoomToZone($("h-map"), +mark.getAttribute("data-zone"));
-      else if (province) zoomToZone($("h-map"), nearestZoneToMapPoint(event));
+      if (mark) { state.pickNote = null; zoomToZone($("h-map"), +mark.getAttribute("data-zone")); }
+      else if (province) zoomToZone($("h-map"), zoneFromProvince(event));
     };
     ["z-canvas", "g-canvas"].forEach(function (id) {
       var stage = $(id);
@@ -1769,6 +1824,7 @@
   // Remember the screen that is being left (also tells the browser, so its Back button works).
   function remember() {
     trail.push({ view: state.view, gstep: state.gstep });
+    ahead = [];
     try { history.pushState({ step: trail.length }, ""); browserSteps += 1; } catch (e) { /* not allowed on some file:// pages */ }
     $("back").hidden = false;
   }
@@ -1777,9 +1833,20 @@
     var previous = trail.pop();
     $("back").hidden = !trail.length;
     if (!previous) return;
+    ahead.push({ view: state.view, gstep: state.gstep });
     state.gstep = previous.gstep;
     draw();
     setView(previous.view, false, true);
+  }
+  // Open again the screen that was left with Back (browser or phone Forward button).
+  function goForward() {
+    var next = ahead.pop();
+    if (!next) return;
+    trail.push({ view: state.view, gstep: state.gstep });
+    $("back").hidden = false;
+    state.gstep = next.gstep;
+    draw();
+    setView(next.view, false, true);
   }
   function setView(view, keepScroll, returning) {
     if (VIEWS.indexOf(view) < 0) view = "home";
@@ -1794,9 +1861,9 @@
     document.querySelectorAll("[data-go]").forEach(function (b) {
       b.classList.toggle("on", b.getAttribute("data-go") === view);
     });
-    try { history.replaceState(null, "", "#" + view); } catch (e) { /* not allowed on some file:// pages */ }
+    try { history.replaceState(history.state, "", "#" + view); } catch (e) { /* not allowed on some file:// pages */ }
     if (!keepScroll) window.scrollTo(0, 0);
-    if (view === "zone" || (view === "guide" && state.guideWithScene && state.gstep > 0)) startScene(); else stopScene();
+    if (sceneVisible()) startScene(); else stopScene();
   }
   document.addEventListener("click", function (event) {
     var go = event.target.closest("[data-go]");
@@ -1812,8 +1879,11 @@
   $("back").onclick = function () {
     if (browserSteps > 0) history.back(); else goBack();
   };
-  window.addEventListener("popstate", function () {
-    if (browserSteps > 0) { browserSteps -= 1; goBack(); }
+  // Each saved browser step carries its position, so Back and Forward can be told apart.
+  window.addEventListener("popstate", function (event) {
+    var step = event.state && typeof event.state.step === "number" ? event.state.step : 0;
+    while (step < trail.length) { browserSteps = Math.max(0, browserSteps - 1); goBack(); }
+    while (step > trail.length && ahead.length) { browserSteps += 1; goForward(); }
   });
 
   // Installable app: keep a copy of the page on the device so it opens without internet.

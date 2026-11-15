@@ -39,3 +39,17 @@ Documento del equipo. Redacción asistida por IA (Claude Code). Notas de 1 a 10.
   observación de NASA.
 - Verificación de código: sintaxis JS correcta; `check_web.js` pasó 409 escenarios y
   comparó 36,316 valores sin diferencias. El motor Python no se modificó en esta ronda.
+
+## Actualización: directorio agrícola dominicano (14-nov, noche)
+
+- Se añadió una vista bilingüe de directorio con 39 cultivos/rubros, búsqueda, filtros
+  por grupo y estado del modelo, cifras de ONE 2025 cuando existen y enlaces a la fuente.
+- Mejora la cobertura de exploración y el contexto nacional. No amplía el cálculo
+  agronómico: el motor automático sigue centrado en arroz.
+- Nota crítica: 74/100 como prototipo de apoyo a la decisión en República Dominicana;
+  36/100 como planificador automático de todos los cultivos. Son notas internas, no
+  puntuaciones oficiales del jurado. La lista no es exhaustiva y falta validación con
+  agricultores y agrónomos.
+- Siguiente mejora de mayor valor: elegir una familia (por ejemplo yuca o musáceas),
+  conseguir calendario regional y parámetros técnicos con una persona agrónoma e
+  implementar un modelo independiente antes de sumar más cultivos al cálculo.

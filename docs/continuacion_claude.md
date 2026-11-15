@@ -1,5 +1,8 @@
 # Handoff para Claude Code — 14-nov-2026
 
+> **15-nov:** la Autopista Duarte (`build_roads.py`, `data/duarte_osrm.json`, `web/roads.js`)
+> se quitó del proyecto. Las notas de abajo sobre ella quedan solo como historia.
+
 ## Actualización Codex — bug de finca, calendario, botones y presas
 
 - Bug visto en la captura del recorrido: el texto decía que se vería la marca de finca,

@@ -52,6 +52,10 @@
   <section class="why" data-view="home">
     <h2 data-t="why_title"></h2>
     <ul class="facts" id="facts"></ul>
+    <div class="crop-entry">
+      <p data-t="crop_entry_copy"></p>
+      <button type="button" class="btn" data-go="crops" data-t="crop_entry_button"></button>
+    </div>
   </section>
 
   <section class="journey" data-view="home" aria-labelledby="journey-title">
@@ -79,6 +83,34 @@
         </article>
       </div>
     </div>
+  </section>
+
+  <!-- ============ DOMINICAN CROP DIRECTORY ============ -->
+  <section class="page crop-page" data-view="crops">
+    <div class="crop-heading">
+      <button type="button" class="btn back" data-go="home" data-t="crop_back"></button>
+      <div>
+        <p class="crop-kicker" data-t="crop_kicker"></p>
+        <h2 data-t="crop_title"></h2>
+        <p class="sub" data-t="crop_intro"></p>
+      </div>
+      <div class="crop-count"><b id="crop-total">39</b><span data-t="crop_count_label"></span></div>
+    </div>
+    <div class="crop-overview" id="crop-overview"></div>
+    <div class="crop-controls">
+      <label><span data-t="crop_search_label"></span><input id="crop-search" type="search" data-t-placeholder="crop_search_placeholder"></label>
+      <label><span data-t="crop_group_label"></span><select id="crop-group"></select></label>
+      <label><span data-t="crop_model_label"></span><select id="crop-model"></select></label>
+    </div>
+    <p class="crop-key" data-t="crop_key"></p>
+    <div class="crop-browser">
+      <div class="crop-list-wrap">
+        <p class="crop-result-count" id="crop-result-count" aria-live="polite"></p>
+        <div class="crop-list" id="crop-list"></div>
+      </div>
+      <aside class="crop-profile" id="crop-profile" aria-live="polite"></aside>
+    </div>
+    <p class="note crop-source" data-t="crop_source_note"></p>
   </section>
 
   <!-- ===================== GUIDED WALKTHROUGH ===================== -->
@@ -272,6 +304,7 @@
       <button type="button" class="btn back" data-go="map" data-t="back_map"></button>
       <h2 id="z-title"></h2>
       <p class="sub" id="z-sub"></p>
+      <p class="note pick-note" id="z-pick-note" aria-live="polite" hidden></p>
     </div>
     <div class="zone-grid">
       <div class="z-stage">
@@ -334,8 +367,8 @@
   <script src="data.js"></script>
   <script src="geo.js"></script>
   <script src="provinces.js"></script>
-  <script src="roads.js"></script>
   <script src="relief.js"></script>
+  <script src="crops_local.js"></script>
   <script src="copy.js"></script>
   <script src="storage.js"></script>
   <script src="engine.js"></script>

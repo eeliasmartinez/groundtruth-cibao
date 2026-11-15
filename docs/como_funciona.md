@@ -13,7 +13,6 @@ proyecto, y se pueden abrir y revisar:
 | Resultados ya calculados que usa la página | `web/data.js` | Es un archivo de texto generado por el motor |
 | Costa y ríos del mapa | `web/geo.js` | Generado desde Natural Earth y OpenStreetMap |
 | Límites de las 32 provincias | `data/provinces.geojson` y `web/provinces.js` | geoBoundaries ADM1 (2022, dominio público); se regenera con `python3 build_provinces.py` |
-| Autopista Duarte | `data/duarte_osrm.json` y `web/roads.js` | Segmentos con ese nombre en ruta OSRM sobre OpenStreetMap; se regenera con `python3 build_roads.py` |
 
 Cada CSV tiene una fila por día desde el 1 de enero de 2001 y estas columnas:
 temperatura media, máxima y mínima (°C), lluvia (mm/día), radiación solar, humedad del
@@ -52,12 +51,6 @@ Al tocar una provincia en el mapa, la app selecciona el punto arrocero más cerc
 los 14 disponibles. Es una referencia regional: no identifica una parcela ni cambia la
 resolución aproximada de 50 km de NASA POWER. La marca de casita en el relieve 3D también
 es ilustrativa, no un levantamiento del terreno.
-
-La línea de la Autopista Duarte es una referencia de OpenStreetMap, no un trazado vial
-certificado por el MOPC. Se obtuvo de los tramos de la ruta OSRM entre Santo Domingo y
-Santiago cuyo nombre en el mapa es Autopista Duarte; el resultado mide cerca de 145.6 km.
-El MOPC describe el corredor oficial como 146.6 km. Los carritos recorren esa línea como
-animación visual: no representan vehículos ni tránsito en vivo.
 
 La siguiente pantalla del cuestionario conserva el mismo relieve 3D en una columna al lado
 de la pregunta. El usuario puede girarlo allí y volver a la ficha de zona con el botón
