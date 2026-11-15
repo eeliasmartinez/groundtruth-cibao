@@ -1511,7 +1511,7 @@
     stage.innerHTML = "<h2 class=\"g-q\">" + (step < RESULT_STEP ? questions[step] : L.g_result) + "</h2><p class=\"g-sub\" id=\"g-sub\">" +
       (step < RESULT_STEP ? esc(explanations[step]) : "") + "</p><div class=\"g-body\">" + body + "</div>";
     stage.setAttribute("data-step", tag);
-    if (step === RESULT_STEP) setTimeout(function () { countUp(stage); }, 0);
+    if (step === RESULT_STEP) { wipe(); setTimeout(function () { countUp(stage); }, 0); }
     $("guide").setAttribute("data-step", step);
   }
 
@@ -2279,6 +2279,7 @@
     });
   }
   window.GTCountUp = countUp;
+  window.GTWipe = function () { wipe(); };
   // A blue band with a red edge sweeps off the screen and uncovers the new one, like a print plate.
   function wipe() {
     if (reduceMotion) return;
@@ -2286,9 +2287,9 @@
     if (!band) { band = document.createElement("div"); band.id = "wipe"; band.setAttribute("aria-hidden", "true"); document.body.appendChild(band); }
     band.classList.remove("run"); void band.offsetWidth; band.classList.add("run");
   }
+  // The blue "Plan B" curtain plays only when a plan is revealed, not on every screen change.
   function playEntrance() {
     if (reduceMotion) return;
-    wipe();
     // only the outermost visible blocks of the screen, so nothing moves twice
     var shown = [].filter.call(document.querySelectorAll("[data-view]:not(body)"), function (el) {
       return !el.hidden && !(el.parentElement && el.parentElement.closest("[data-view]:not(body)"));

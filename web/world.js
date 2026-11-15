@@ -936,6 +936,7 @@
       $("wq-stage").classList.remove("wq-step-in"); void $("wq-stage").offsetWidth; $("wq-stage").classList.add("wq-step-in");
       clearTimeout(renderQuiz.timer);
       renderQuiz.timer = setTimeout(function () { $("wq-stage").classList.remove("wq-step-in"); }, 900);
+      if (kind === "result" && window.GTWipe) window.GTWipe();
       if (kind === "result" && window.GTCountUp) window.GTCountUp($("wq-stage"));
     }
     $("wq-stage").setAttribute("data-step", stepTag);

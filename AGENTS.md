@@ -103,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v36`). Desde el
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v37`). Desde el
   15-nov el service worker pide **primero la red** (la página y el código siempre
   completos) y usa la copia guardada solo sin conexión o si la red tarda más de 4 s; al
   activarse una versión nueva, la página se recarga una vez sola.
@@ -293,7 +293,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   `check_web.js` prueba ahora 609 casos (200 con `prefer`). En RD, si marca más que arroz,
   el plan principal es el mejor hecho solo con sus cultivos (`mainPlan` en `web/app.js`);
   con solo arroz se muestra el Plan B del motor (arroz + leguminosa).
-- Cambio de pantalla con una "cortina" azul de borde rojo (`#wipe`) y cifras que cuentan
+- La "cortina" azul de borde rojo con "PLAN B" (`#wipe`) sale solo al revelar el plan (resultado del recorrido de RD y del mundo), no en cada cambio de pantalla; antes: cambio de pantalla con esa cortina y cifras que cuentan
   (`countUp`). Todo se apaga con "reducir movimiento".
 - Optimización: `earth.jpg` se pide al abrir el modo mundo; `world_rivers.js` ya no se guarda
   en la descarga inicial; las tipografías se precargan; conexión anticipada a NASA POWER,
