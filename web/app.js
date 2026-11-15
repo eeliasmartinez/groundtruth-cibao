@@ -144,6 +144,8 @@
     ["World prototype globe: NASA Blue Marble shaded relief and bathymetry, via NASA GIBS", "https://gibs.earthdata.nasa.gov"],
     ["World prototype climate: NASA POWER climatology API, monthly 2001-2025", "https://power.larc.nasa.gov/docs/services/api/temporal/climatology/"],
     ["World prototype countries: Natural Earth 1:110m (public domain)", "https://www.naturalearthdata.com/"],
+    ["World prototype relief: Terrain Tiles on AWS Open Data (mostly NASA SRTM)", "https://registry.opendata.aws/terrain-tiles/"],
+    ["World prototype rivers: Natural Earth 1:10m rivers and lake centerlines (public domain)", "https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-rivers-lake-centerlines/"],
     ["World prototype provinces: geoBoundaries ADM1 (open licences)", "https://www.geoboundaries.org/"],
     ["World prototype crops: FAOSTAT Crops and livestock products, area harvested (CC BY 4.0)", "https://www.fao.org/faostat/en/#data/QCL"],
     ["FAO Irrigation Water Management Training Manual No. 3: Irrigation water needs (1986)", "https://www.fao.org/4/s2022e/s2022e00.htm"],

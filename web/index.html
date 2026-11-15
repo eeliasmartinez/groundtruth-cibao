@@ -185,9 +185,14 @@
       <p class="w-status" id="wr-status" aria-live="polite"></p>
     </div>
     <div class="wr-layout">
-      <div class="wc-map" id="wr-map"></div>
+      <aside class="wr-relief">
+        <canvas id="wr-canvas" data-t-label="w_relief_label"></canvas>
+        <p class="wr-relief-status" aria-live="polite"></p>
+        <p class="wr-relief-note"></p>
+      </aside>
       <div class="wr-climate" id="wr-climate"></div>
     </div>
+    <details class="more wr-photo"><summary data-t="w_photo_summary"></summary><div class="wc-map" id="wr-map"></div></details>
     <div class="crop-controls wr-controls">
       <label><span data-t="cw_month"></span><select id="wr-month"></select></label>
       <label><span data-t="cw_soil"></span><select id="wr-soil"></select></label>
@@ -203,10 +208,19 @@
       <span class="wq-count" id="wq-count"></span>
       <div class="g-progress"><i id="wq-bar"></i></div>
     </div>
-    <div class="wq-stage" id="wq-stage" aria-live="polite"></div>
-    <div class="wq-nav">
-      <button type="button" class="btn" data-wq-back></button>
-      <button type="button" class="btn primary" data-wq-next></button>
+    <div class="wq-layout">
+      <aside class="wr-relief">
+        <canvas id="wq-canvas" data-t-label="w_relief_label"></canvas>
+        <p class="wr-relief-status" aria-live="polite"></p>
+        <p class="wr-relief-note"></p>
+      </aside>
+      <div class="wq-main">
+        <div class="wq-stage" id="wq-stage" aria-live="polite"></div>
+        <div class="wq-nav">
+          <button type="button" class="btn" data-wq-back></button>
+          <button type="button" class="btn primary" data-wq-next></button>
+        </div>
+      </div>
     </div>
   </section>
 

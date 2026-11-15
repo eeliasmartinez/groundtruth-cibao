@@ -371,6 +371,7 @@
     if (st.quizMode) { st.qstep = 0; st.mine = defaultMine(); }
     if (window.GTApp) window.GTApp.go(st.quizMode ? "wquiz" : "region");
     renderRegion(); renderQuiz();
+    buildRelief(p);
     if (st.climate) return;
     fetch("https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M,T2M_RANGE,PRECTOTCORR,ALLSKY_SFC_SW_DWN,RH2M,WS2M" +
       "&community=AG&longitude=" + center[0].toFixed(3) + "&latitude=" + center[1].toFixed(3) + "&format=JSON")
@@ -522,6 +523,213 @@
     $("wr-rec").innerHTML = html;
   }
 
+
+  // ------------------------------------------------------------------ 3D relief of a province
+  // Elevation: Terrain Tiles on AWS Open Data ("terrarium", built mostly from NASA SRTM),
+  // fetched for the province's box when it is opened. Rivers: Natural Earth 1:10m
+  // (web/world_rivers.js, loaded the first time it is needed). Drawn like the
+  // Dominican relief: small squares of ground, back to front, turned by dragging.
+  var TILE = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png";
+  var LAND = [[0, [246, 248, 255]], [200, [214, 224, 250]], [800, [168, 186, 238]], [2000, [120, 142, 218]], [4500, [86, 106, 190]]];
+  var relief = { model: null, key: "", status: "", angle: -0.35, dragged: false, pointer: null, frame: 0, start: 0, canvas: null };
+  var riversLoading = null;
+  function loadRivers() {
+    if (window.GT_WORLD_RIVERS) return Promise.resolve(window.GT_WORLD_RIVERS);
+    if (!riversLoading) riversLoading = new Promise(function (resolve) {
+      var tag = document.createElement("script");
+      tag.src = "world_rivers.js";
+      tag.onload = function () { resolve(window.GT_WORLD_RIVERS || []); };
+      tag.onerror = function () { resolve([]); };
+      document.head.appendChild(tag);
+    });
+    return riversLoading;
+  }
+  function tileXY(lon, lat, z) {
+    var n = Math.pow(2, z), r = lat * Math.PI / 180;
+    return [(lon + 180) / 360 * n, (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n];
+  }
+  function loadImage(url) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image(); img.crossOrigin = "anonymous";
+      img.onload = function () { resolve(img); }; img.onerror = reject; img.src = url;
+    });
+  }
+  function landColor(h, shade, inside) {
+    if (h <= 0) return inside ? "#2a4fc0" : "#1d3a94";
+    var k = 0;
+    while (k < LAND.length - 2 && h > LAND[k + 1][0]) k++;
+    var a = LAND[k], b = LAND[k + 1], t = Math.max(0, Math.min(1, (h - a[0]) / (b[0] - a[0])));
+    var dim = inside ? 1 : 0.62;
+    return "rgb(" + [0, 1, 2].map(function (n) { return Math.round(Math.min(255, (a[1][n] + (b[1][n] - a[1][n]) * t) * shade * dim)); }).join(",") + ")";
+  }
+  function buildRelief(p) {
+    var key = p.name + "|" + (st.country ? st.country.iso3 : "");
+    if (relief.key === key && (relief.model || relief.status === "loading")) return;
+    relief.key = key; relief.model = null; relief.status = "loading"; drawRelief();
+    var all = [].concat.apply([], p.rings);
+    var b = [Infinity, Infinity, -Infinity, -Infinity];
+    all.forEach(function (q) { b[0] = Math.min(b[0], q[0]); b[1] = Math.min(b[1], q[1]); b[2] = Math.max(b[2], q[0]); b[3] = Math.max(b[3], q[1]); });
+    if (b[2] - b[0] > 300) { relief.status = "failed"; drawRelief(); return; } // crosses the 180th meridian
+    var span = Math.max(b[2] - b[0], (b[3] - b[1]) / Math.cos((b[1] + b[3]) / 2 * Math.PI / 180), 0.25);
+    var lon0 = (b[0] + b[2]) / 2, lat0 = (b[1] + b[3]) / 2, k = Math.cos(lat0 * Math.PI / 180);
+    var halfLon = span * 0.56, halfLat = Math.min(80 - Math.abs(lat0), span * 0.42 * k);
+    var west = lon0 - halfLon, east = lon0 + halfLon, north = lat0 + halfLat, south = lat0 - halfLat;
+    var z = 11, t0, t1;
+    for (; z > 2; z--) {
+      t0 = tileXY(west, north, z); t1 = tileXY(east, south, z);
+      if ((Math.floor(t1[0]) - Math.floor(t0[0]) + 1) * (Math.floor(t1[1]) - Math.floor(t0[1]) + 1) <= 12) break;
+    }
+    var x0 = Math.floor(t0[0]), y0 = Math.floor(t0[1]), nx = Math.floor(t1[0]) - x0 + 1, ny = Math.floor(t1[1]) - y0 + 1;
+    var jobs = [];
+    for (var ty = 0; ty < ny; ty++) for (var tx = 0; tx < nx; tx++) {
+      jobs.push(loadImage(TILE.replace("{z}", z).replace("{x}", x0 + tx).replace("{y}", y0 + ty)));
+    }
+    Promise.all([Promise.all(jobs), loadRivers()]).then(function (res) {
+      if (relief.key !== key) return;
+      var canvas = document.createElement("canvas"); canvas.width = nx * 256; canvas.height = ny * 256;
+      var c2 = canvas.getContext("2d");
+      res[0].forEach(function (img, n) { c2.drawImage(img, (n % nx) * 256, Math.floor(n / nx) * 256); });
+      var px = c2.getImageData(0, 0, canvas.width, canvas.height).data;
+      function height(lon, lat) {
+        var t = tileXY(lon, lat, z), x = Math.min(canvas.width - 1, Math.max(0, Math.floor((t[0] - x0) * 256)));
+        var y = Math.min(canvas.height - 1, Math.max(0, Math.floor((t[1] - y0) * 256))), o = (y * canvas.width + x) * 4;
+        return px[o] * 256 + px[o + 1] + px[o + 2] / 256 - 32768;
+      }
+      var kmLon = 111.32 * k, cols = 96, rows = Math.max(30, Math.min(96, Math.round(cols * (north - south) * 111 / ((east - west) * kmLon))));
+      function place(lon, lat, lift) { return { x: (lon - lon0) * kmLon, y: (lat - lat0) * 111, h: Math.max(0, height(lon, lat)) + (lift || 0) }; }
+      function inside(lon, lat) { return lon >= west && lon <= east && lat >= south && lat <= north; }
+      function inProvince(lon, lat) { return p.rings.some(function (ring) { return inRing(lon, lat, ring); }); }
+      var points = [], highest = 0, i, j;
+      for (j = 0; j <= rows; j++) for (i = 0; i <= cols; i++) {
+        var q = place(west + (east - west) * i / cols, north - (north - south) * j / rows);
+        highest = Math.max(highest, q.h); points.push(q);
+      }
+      var quads = [];
+      for (j = 0; j < rows; j++) for (i = 0; i < cols; i++) {
+        var a = j * (cols + 1) + i, bb = a + 1, c = a + cols + 2, d = a + cols + 1;
+        var mean = (points[a].h + points[bb].h + points[c].h + points[d].h) / 4;
+        var rise = (points[bb].h - points[a].h + points[c].h - points[d].h) / 2 + (points[d].h - points[a].h + points[c].h - points[bb].h) / 2;
+        var clon = west + (east - west) * (i + 0.5) / cols, clat = north - (north - south) * (j + 0.5) / rows;
+        quads.push({ a: a, b: bb, c: c, d: d, color: landColor(mean, Math.max(0.6, Math.min(1.1, 0.95 + rise / 700)), inProvince(clon, clat)) });
+      }
+      var widthKm = (east - west) * kmLon;
+      // exaggerate so the highest ground stands about a tenth of the window's width
+      var boost = Math.max(1, Math.min(30, Math.round(0.1 * widthKm * 1000 / Math.max(highest, 60))));
+      function densify(line, lift) {
+        var out = [];
+        for (var n = 0; n < line.length; n++) {
+          var lon = line[n][0], lat = line[n][1];
+          if (n) {
+            var prev = line[n - 1], pieces = Math.min(20, Math.ceil(Math.hypot((lon - prev[0]) * kmLon, (lat - prev[1]) * 111) / (widthKm / 120)));
+            for (var s2 = 1; s2 < pieces; s2++) out.push(place(prev[0] + (lon - prev[0]) * s2 / pieces, prev[1] + (lat - prev[1]) * s2 / pieces, lift));
+          }
+          out.push(place(lon, lat, lift));
+        }
+        return out;
+      }
+      var outline = p.rings.map(function (ring) { return densify(ring, 4); });
+      var rivers = [], names = [];
+      (res[1] || []).forEach(function (river) {
+        river.l.forEach(function (line) {
+          var run = [];
+          function keep() {
+            if (run.length > 1) {
+              rivers.push({ main: river.r <= 5, points: densify(run, 6) });
+              if (river.n && names.indexOf(river.n) < 0) names.push(river.n);
+            }
+            run = [];
+          }
+          line.forEach(function (pt) { if (inside(pt[0], pt[1])) run.push(pt); else keep(); });
+          keep();
+        });
+      });
+      var center = p.center || centroid(p.rings);
+      relief.model = { points: points, quads: quads, outline: outline, rivers: rivers, names: names, widthKm: widthKm,
+        boost: boost, highest: highest, farm: place(center[0], center[1], 0) };
+      relief.status = ""; relief.start = performance.now(); relief.dragged = false;
+      startRelief();
+      if (st.quizMode) renderQuiz(); else renderRegion();
+    }).catch(function () { if (relief.key === key) { relief.status = "failed"; drawRelief(); } });
+  }
+  function reliefCanvas() {
+    var view = document.body.getAttribute("data-view");
+    return view === "wquiz" ? $("wq-canvas") : view === "region" ? $("wr-canvas") : null;
+  }
+  function drawRelief(now) {
+    var canvas = reliefCanvas();
+    if (!canvas) return;
+    var cssW = canvas.clientWidth || canvas.parentNode.clientWidth || 600, ratio = Math.min(window.devicePixelRatio || 1, 2);
+    var W = Math.round(cssW * ratio), H = Math.round(cssW * 0.72 * ratio);
+    if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+    var ctx = canvas.getContext("2d"), m = relief.model;
+    ctx.clearRect(0, 0, W, H);
+    var note = canvas.parentNode.querySelector(".wr-relief-status");
+    if (note) note.textContent = relief.status === "loading" ? L().w_relief_loading : relief.status === "failed" ? L().w_relief_failed : "";
+    if (!m) return;
+    var seconds = ((now || performance.now()) - relief.start) / 1000;
+    var grow = reduceMotion ? 1 : 1 - Math.pow(1 - Math.min(1, seconds / 1.4), 3);
+    if (!relief.dragged && !reduceMotion) relief.angle = -0.35 + 0.3 * Math.sin(seconds / 5);
+    var tilt = 0.98 * grow, cosA = Math.cos(relief.angle), sinA = Math.sin(relief.angle), cosT = Math.cos(tilt), sinT = Math.sin(tilt);
+    var scale = W / (m.widthKm * 1.08), cx = W / 2, cy = H * (0.5 + 0.08 * grow), lift = m.boost * grow / 1000;
+    function project(q) {
+      var xr = q.x * cosA - q.y * sinA, yr = q.x * sinA + q.y * cosA;
+      return [cx + xr * scale, cy - (yr * cosT + q.h * lift * sinT) * scale, yr];
+    }
+    var n = m.points.length, sx = new Float32Array(n), sy = new Float32Array(n), depth = new Float32Array(n);
+    m.points.forEach(function (q, i) { var r = project(q); sx[i] = r[0]; sy[i] = r[1]; depth[i] = r[2]; });
+    var order = m.quads.slice().sort(function (a, b) { return depth[b.a] + depth[b.c] - depth[a.a] - depth[a.c]; });
+    ctx.lineWidth = 0.8 * ratio;
+    order.forEach(function (q) {
+      ctx.beginPath(); ctx.moveTo(sx[q.a], sy[q.a]); ctx.lineTo(sx[q.b], sy[q.b]); ctx.lineTo(sx[q.c], sy[q.c]); ctx.lineTo(sx[q.d], sy[q.d]); ctx.closePath();
+      ctx.fillStyle = ctx.strokeStyle = q.color; ctx.fill(); ctx.stroke();
+    });
+    function path(points) { points.forEach(function (q, i) { var r = project(q); if (i) ctx.lineTo(r[0], r[1]); else ctx.moveTo(r[0], r[1]); }); }
+    ctx.lineJoin = ctx.lineCap = "round";
+    m.rivers.forEach(function (river) {
+      ctx.beginPath(); path(river.points);
+      ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.lineWidth = (river.main ? 5.6 : 3.8) * ratio; ctx.stroke(); // light casing so it shows on dark ground
+      ctx.strokeStyle = "#0b7bd6"; ctx.lineWidth = (river.main ? 3.2 : 1.9) * ratio; ctx.stroke();
+      if (!reduceMotion) { // water moving along the river
+        ctx.setLineDash([3 * ratio, 9 * ratio]); ctx.lineDashOffset = -seconds * 16 * ratio;
+        ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.2 * ratio; ctx.stroke(); ctx.setLineDash([]);
+      }
+    });
+    ctx.beginPath(); m.outline.forEach(path);
+    ctx.strokeStyle = "#ffd23f"; ctx.lineWidth = 2.6 * ratio; ctx.stroke();
+    var f = project(m.farm), pole = 34 * ratio * grow;
+    ctx.strokeStyle = "#10131a"; ctx.lineWidth = 2 * ratio; ctx.beginPath(); ctx.moveTo(f[0], f[1]); ctx.lineTo(f[0], f[1] - pole); ctx.stroke();
+    ctx.fillStyle = "#e2231a"; ctx.beginPath(); ctx.arc(f[0], f[1] - pole, 8 * ratio, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = 2 * ratio; ctx.strokeStyle = "#fff"; ctx.stroke();
+    ctx.font = "800 " + Math.round(14 * ratio) + "px Archivo, sans-serif"; ctx.textAlign = "center";
+    ctx.lineWidth = 3.5 * ratio; ctx.strokeStyle = "#fff"; ctx.strokeText(L().w_relief_point, f[0], f[1] - pole - 14 * ratio);
+    ctx.fillStyle = "#10131a"; ctx.fillText(L().w_relief_point, f[0], f[1] - pole - 14 * ratio); ctx.textAlign = "start";
+    var caption = canvas.parentNode.querySelector(".wr-relief-note");
+    if (caption) caption.textContent = tr("w_relief_note", { boost: m.boost, rivers: m.names.slice(0, 4).join(", ") || "—" });
+  }
+  function reliefLoop(now) {
+    if (!relief.frame) return;
+    drawRelief(now);
+    relief.frame = requestAnimationFrame(reliefLoop);
+  }
+  function startRelief() {
+    if (!reliefCanvas()) return;
+    drawRelief(performance.now());
+    if (!relief.frame && !reduceMotion) relief.frame = requestAnimationFrame(reliefLoop);
+  }
+  function stopRelief() { if (relief.frame) cancelAnimationFrame(relief.frame); relief.frame = 0; }
+  function listenRelief() {
+    ["wq-canvas", "wr-canvas"].forEach(function (id) {
+      var c = $(id);
+      if (!c) return;
+      c.onpointerdown = function (e) { relief.pointer = { x: e.clientX, angle: relief.angle }; relief.dragged = true; c.setPointerCapture(e.pointerId); };
+      c.onpointermove = function (e) {
+        if (!relief.pointer) return;
+        relief.angle = relief.pointer.angle + (e.clientX - relief.pointer.x) * 0.008;
+        if (reduceMotion) drawRelief();
+      };
+      c.onpointerup = c.onpointercancel = function () { relief.pointer = null; };
+    });
+  }
 
   // ------------------------------------------------------------------ the farmer's questionnaire
   // Water only, average year. The farmer marks one or more crops with their hectares; the
@@ -742,7 +950,8 @@
   var wired = false;
   window.GTWorld = {
     show: function (view) {
-      if (!wired && $("w-globe")) { listenGlobe(); listenPages(); listenQuiz(); wired = true; }
+      if (!wired && $("w-globe")) { listenGlobe(); listenPages(); listenQuiz(); listenRelief(); wired = true; }
+      if ((view === "wquiz" || view === "region") && st.province) { buildRelief(st.province); startRelief(); } else stopRelief();
       if (view === "home") st.quizMode = false;
       if (view === "world") {
         fillCountrySelect();

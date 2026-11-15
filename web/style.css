@@ -849,3 +849,15 @@ details.more .soil-table { margin-top: 8px; }
 .g-mine-extra { display: grid; gap: 10px; margin-top: 18px; }
 .g-mine-extra:empty { display: none; }
 .guide [data-g-next][disabled] { opacity: .45; cursor: not-allowed; }
+
+/* World relief beside the questions, like the Dominican walkthrough */
+.wq-layout { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.wq-main { display: grid; gap: 14px; }
+.wr-relief { position: sticky; top: 76px; display: grid; gap: 6px; padding: 10px; background: var(--blue); border: 2px solid var(--ink); }
+.wr-relief canvas { display: block; width: 100%; aspect-ratio: 1 / 0.72; touch-action: none; cursor: grab; }
+.wr-relief canvas:active { cursor: grabbing; }
+.wr-relief-status { margin: 0; color: #ffd23f; font-weight: 800; min-height: 0; }
+.wr-relief-status:empty { display: none; }
+.wr-relief-note { margin: 0; color: #dfe6ff; font-size: 12px; line-height: 1.4; }
+.wr-photo { margin-top: 4px; }
+@media (max-width: 860px) { .wq-layout { grid-template-columns: 1fr; } .wr-relief { position: static; } }

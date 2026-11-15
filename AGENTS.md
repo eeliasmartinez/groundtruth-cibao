@@ -103,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v25`).
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v27`).
 - **Datos del relieve:** el resumen del clima, suelo, agua y área está cerrado inicialmente
   dentro de “Datos del mapa”; se abre solo si el usuario lo elige.
 - **Continuar desde una zona:** “Continuar con esta finca” coloca la marca ilustrativa y
@@ -216,6 +216,22 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   seguir con sus cultivos, toda la tierra con su cultivo que menos agua pide, cambiar
   todo y mezcla; recomienda el que siembra más tierra sin helada; en empate decide la
   prioridad. Solo agua, año promedio, en hectáreas.
+
+## Cuestionario de RD: "¿Qué siembras ahora?" (15-nov)
+- El recorrido tiene 6 preguntas: zona, **cultivos que siembra (varios)**, mes y tareas,
+  suelo, agua, prioridad. Los pasos tienen nombre (`GUIDE_STEPS` en `web/app.js`), no
+  números fijos; el resultado es el paso `RESULT_STEP`.
+- Si marca arroz: el plan del arrocero de siempre, y debajo sus otros cultivos por agua.
+  Si no marca arroz: el resultado muestra sus propios cultivos y los mejores de todos por
+  agua, y el agua asignada se mide sobre lo que piden sus cultivos (`usualNeedPerTarea`).
+  El motor (`engine.js`) no cambió.
+
+## Relieve 3D del modo mundo (15-nov)
+- En el cuestionario mundial (junto a las preguntas) y en la ficha de provincia: relieve
+  3D de la provincia con elevación de Terrain Tiles en AWS ("terrarium", sobre todo NASA
+  SRTM; se piden por internet), ríos de Natural Earth 1:10m (`web/world_rivers.js`, se
+  carga solo en el modo mundo; lo genera `build_world.py`), límite en amarillo y el punto
+  donde se pide el clima. Se gira arrastrando.
 
 ## Mis cultivos y dos recomendaciones (15-nov)
 - En "Agua y cultivos" el agricultor marca qué cultivos tiene (los 48 del directorio; los
