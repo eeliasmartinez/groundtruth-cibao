@@ -11,126 +11,128 @@ Página: https://eeliasmartinez.github.io/groundtruth-cibao/
 
 ## Antes de entrar (lista de control)
 
-- [ ] Abrir la página en la computadora del pitch **y recargarla una vez** (Cmd + Shift + R
-      en Mac). Así toma la versión nueva; desde ahí se actualiza sola y queda guardada
-      aunque falle el Wi-Fi.
-- [ ] Probar una vez el modo mundo con internet (globo → México → Sinaloa → preguntas).
+- [ ] Abrir la página en la computadora del pitch y pulsar **Cmd + Shift + R** una vez.
+      La página abre en **inglés**: al empezar, tocar **ES** arriba a la derecha.
+- [ ] Probar una vez el modo mundo con internet (globo → México → Sinaloa).
 - [ ] Probar que el relieve 3D se mueve y que el globo gira en esa computadora.
-- [ ] Dejar la página en **Inicio**, en español, con el zoom del navegador al 100%.
-- [ ] Tener abierta una segunda pestaña con la página por si la primera se traba.
+- [ ] Zoom del navegador al 100%, pantalla completa (Cmd + Ctrl + F en Mac).
+- [ ] Segunda pestaña abierta con la página, por si la primera se traba.
 - [ ] Cronómetro: una persona levanta la mano a los 5:00.
-- [ ] Plan si no hay internet: la demo de RD funciona sin internet. Si el globo no carga
-      provincias, mostrar solo el globo girando y decir "aquí se piden por internet".
+- [ ] Sin internet: la parte de RD funciona igual; en el mundo, mostrar solo el globo.
+- [ ] Las diapositivas **no** se usan en el pitch: son solo para subirlas al envío global.
 
 ---
 
 ## Reparto (6 personas)
 
-| Tiempo | Quién | Parte |
-|---|---|---|
-| 0:00–0:30 | Persona 1 | Gancho |
-| 0:30–1:30 | Persona 2 | El problema |
-| 1:30–2:10 | Persona 3 | La idea y los datos de NASA |
-| 2:10–3:50 | Persona 4 maneja, Persona 3 narra | Demo de RD |
-| 3:50–4:30 | Persona 4 maneja, Persona 6 narra | Demo del mundo |
-| 4:30–5:10 | Persona 5 | Por qué confiar (y qué falta) |
-| 5:10–5:40 | Persona 6 | Impacto y siguiente paso |
-| 5:40–6:00 | Persona 1 | Cierre |
+| Tiempo | Quién habla | Quién maneja la página | Pantalla |
+|---|---|---|---|
+| 0:00–0:30 | Persona 1 | — | Inicio (portada) |
+| 0:30–1:15 | Persona 2 | Persona 4 | Inicio, bajando a "¿Por qué este plan?" |
+| 1:15–1:50 | Persona 3 | Persona 4 | Relieve 3D de la zona |
+| 1:50–2:50 | Persona 3 | Persona 4 | Las 6 preguntas |
+| 2:50–3:40 | Persona 3 | Persona 4 | Plan B, plan completo y rotación |
+| 3:40–4:00 | Persona 5 | Persona 4 | Agua y cultivos |
+| 4:00–4:40 | Persona 6 | Persona 4 | Modo mundo |
+| 4:40–5:20 | Persona 5 | — | Por qué confiar y qué falta |
+| 5:20–6:00 | Persona 6 y Persona 1 | — | Cierre |
 
 ---
 
-## Guion
+## Recorrido por la web (guion)
 
-### 0:00 — Gancho (Persona 1)
+Ruta fija. Persona 4 solo toca lo que dice cada paso; quien habla señala la pantalla.
+
+### 0:00 — Gancho · Inicio (Persona 1)
+
+*Pantalla: la portada, en inglés. Persona 4 toca **ES** mientras Persona 1 habla.*
 
 > "Imaginen que ustedes siembran arroz en Mao. Llega el aviso: este ciclo el agua no
 > alcanza, no siembren arroz. Y la pregunta que nadie les contesta es:
-> **¿entonces qué siembro?** Nosotros somos GroundTruth Cibao y construimos
-> el Plan B del arrocero."
+> **¿entonces qué siembro?** Somos GroundTruth Cibao y esto es el Plan B del arrocero."
 
-### 0:30 — El problema (Persona 2)
+### 0:30 — El problema · Inicio, "¿Por qué este plan?" (Persona 2)
+
+*Persona 4 baja despacio hasta las cifras con fuente de la portada.*
 
 > "El arroz dominicano es del Cibao: la región Norte produce el **91.5%** del arroz del
 > país, y el **99.5%** se siembra bajo riego. Viven de él unos **30,000 productores**.
->
-> Pero el agua del río Yaque del Norte ya está casi toda comprometida: la presión
-> hídrica es de alrededor del **96%**. Por eso, cuando llueve poco, se raciona. En 2019
-> el INDRHI **prohibió** el arroz de invierno en Tavera, Monción, Mao y Montecristi. Y
-> este año, 2026, las lluvias estuvieron entre **20 y 45% por debajo de lo normal** y
-> el riego se dio por turnos.
->
-> En las notas oficiales que revisamos de 2018, 2019 y 2026 se dice cuándo **no**
-> sembrar arroz. En ninguna se dice **qué sembrar** en su lugar. Ese es el hueco."
+> El río Yaque del Norte ya está casi todo comprometido: presión hídrica de alrededor del
+> **96%**. En 2019 el INDRHI **prohibió** el arroz de invierno en Tavera, Monción, Mao y
+> Montecristi; en 2026 las lluvias estuvieron entre **20 y 45%** por debajo de lo normal.
+> Las autoridades dicen cuándo **no** sembrar arroz. Nadie dice **qué sembrar**."
 
 *(Fuentes: elDinero 25-mar-2026; UNCCD 2024; El Caribe 15-sep-2019; Diario Libre
-11-ago-2026; Montecristi 24 Horas 28-ago-2026.)*
+11-ago-2026. Están en la misma página, en "fuente".)*
 
-### 1:30 — La idea y los datos de NASA (Persona 3)
+### 1:15 — El terreno real · Relieve 3D (Persona 3)
 
-> "Nuestra herramienta no adivina cuánta agua va a dar el INDRHI: **el productor nos
-> dice cuánta agua le tocó**. Con eso le mostramos qué puede sembrar.
->
-> Usamos **25 años de datos diarios de NASA POWER**, de 2001 a 2025: temperatura,
-> lluvia, sol, humedad y viento de cada zona arrocera. Con el método FAO-56 de la FAO
-> calculamos cuánta agua de riego necesita cada cultivo en esa zona y en ese mes, en
-> un año normal y en un año seco.
->
-> Y comparamos cuatro planes: seguir con arroz, arroz con leguminosa, rotar con un
-> cultivo que gaste poca agua, o abono verde."
+*Persona 4 sube y toca **Mao - Esperanza** en el mapa: la zona hace zoom y aparece el
+relieve 3D. Lo gira un poco con el mouse y abre "Datos del mapa".*
 
-### 2:10 — Demo de RD (Persona 4 maneja, Persona 3 narra)
+> "Esto es el terreno real de la zona, con elevación de NASA, los ríos y las presas.
+> Aquí está el clima de 25 años de NASA POWER para este mes: lluvia, calor, humedad del
+> suelo. Con eso y el método FAO-56 calculamos cuánta agua pide cada cultivo aquí."
 
-Ruta fija. No improvisar: hay más pantallas de las que caben en 2 minutos.
+### 1:50 — Las preguntas (Persona 3)
 
-1. **Inicio** → tocar **Santiago (Navarrete)** en el mapa → aparece el **relieve 3D**
-   real de la zona (elevación SRTM de NASA) con ríos y presas.
-   > "Este es el terreno real de la zona, con datos de elevación de NASA."
-2. **"Continuar con esta finca"** → las preguntas, rápido:
-   qué siembra (dejar **arroz** y marcar **habichuela**) → mes y tareas → suelo →
-   **agua: poner 60%** → prioridad.
-   > "Son cosas que el productor ya sabe: qué siembra, cuándo, cuánta tierra tiene, qué
-   > suelo, cuánta agua le dieron y qué le importa más."
-3. **Sale el plan con el sello "Plan B"**. Leer la frase de arriba tal como sale en
-   pantalla (las cifras cambian con el mes; ensayen con la computadora del pitch).
-   > "Con el 60% del agua, en vez de dejar tierra sin sembrar, le proponemos..."
-4. **"Ver la rotación"** → el calendario de dos ciclos.
-   > "Y no es solo para arroceros: si marca tomate o cebolla, el plan sale con sus
-   > propios cultivos y cuánta tierra le alcanza el agua."
+*Persona 4 toca **Continuar con esta finca** y responde rápido:*
+1. **Qué siembras:** dejar arroz y marcar **habichuela roja**.
+2. **Mes y tareas:** dejar el mes, 100 tareas.
+3. **Suelo:** arcilloso (abrir un segundo la guía de suelos al tacto).
+4. **Agua:** tocar **Tandeo** o poner **60%**.
+5. **Prioridad:** la que esté.
 
-### 3:50 — Demo del mundo (Persona 4 maneja, Persona 6 narra)
+> "Son seis cosas que el productor ya sabe: dónde está, qué siembra, cuándo, cuánta
+> tierra, qué suelo y cuánta agua le anunció el INDRHI o su junta. No adivinamos el agua:
+> él nos la dice."
 
-1. **Inicio → "Todo el mundo · prototipo"** → el globo de NASA gira.
-   > "El mismo método sirve en cualquier país, porque NASA POWER cubre todo el planeta."
-2. Elegir **México** en la lista → tocar **Sinaloa** → aparece el **relieve 3D con sus
-   ríos** al lado de las mismas preguntas.
-3. Pasar rápido las preguntas (maíz, 60% de agua) → sale el **mismo Plan B** que en RD,
-   con la finca de 100 cuadros, "Ver mi plan completo" y "Ver la rotación".
-   > "Es un prototipo: clima mensual de NASA, tablas de la FAO y cultivos de cada país
-   > según la FAO. El siguiente paso es validarlo con agrónomos de cada lugar."
+### 2:50 — El Plan B (Persona 3)
 
-### 4:30 — Por qué confiar (y qué falta) (Persona 5)
+*Sale el sello **PLAN B**. Leer la frase de arriba tal como sale.*
+
+> "Con el 60% del agua, en vez de dejar tierra sin sembrar, el plan reparte arroz y
+> habichuela: toda la finca sembrada, miles de metros cúbicos menos y nitrógeno que el
+> suelo recibe gratis. El plan principal usa **los cultivos que él ya siembra**."
+
+*Persona 4 toca **Ver mi plan completo** (las 4 tarjetas comparadas) y luego **Ver la
+rotación** (dos ciclos, lote por lote).*
+
+> "Aquí se comparan los cuatro planes, con su evidencia y sus riesgos. Y aquí la rotación:
+> donde hubo arroz va habichuela, y al revés."
+
+### 3:40 — Agua y cultivos (Persona 5)
+
+*Persona 4 va a Inicio → **Agua y cultivos** y baja a la tabla.*
+
+> "Y si siembra otra cosa: 31 cultivos, cuánta agua pide cada uno en su zona y cuántas
+> tareas le alcanzan con su agua."
+
+### 4:00 — El mundo (Persona 6)
+
+*Persona 4 toca **Todo el mundo · prototipo** (el globo de NASA gira), elige **México**,
+toca **Sinaloa** (relieve 3D con sus ríos) y pasa rápido las preguntas.*
+
+> "El mismo método sirve en cualquier país, porque NASA POWER cubre todo el planeta.
+> Aquí, Sinaloa: relieve con sus ríos, los cultivos del país según la FAO, y el mismo
+> Plan B. Es un prototipo: falta validarlo con agrónomos de cada lugar."
+
+### 4:40 — Por qué confiar y qué falta (Persona 5)
 
 > "Lo comprobamos: el cálculo de la página y el del motor en Python coinciden en
-> **63,548 comprobaciones**, sin una sola diferencia.
+> **54,358 valores**, sin una sola diferencia. Y decimos lo que no sabemos: NASA POWER
+> usa cuadros de unos 50 km; los valores de los cultivos vienen de la FAO y **los tiene
+> que validar un agrónomo dominicano**; y no usamos precios, así que no prometemos
+> ganancias. Es una herramienta de apoyo, no reemplaza al técnico."
+
+### 5:20 — Impacto y cierre (Persona 6, luego Persona 1)
+
+> *(Persona 6)* "Hoy funciona en las 14 zonas arroceras del país, en español e inglés, en
+> el celular y sin internet. Lo siguiente: validarlo con agrónomos, probarlo con una
+> junta de regantes antes de una sequía y sumar pronósticos de temporada de NASA."
 >
-> Y decimos lo que no sabemos. NASA POWER usa cuadros de unos 50 km y su lluvia sale
-> más baja que la real. Los valores de cada cultivo vienen de las tablas de la FAO y
-> **todavía los tiene que validar un agrónomo dominicano**. Y no usamos precios: no
-> prometemos ganancias. Es una herramienta de apoyo, no reemplaza al técnico."
-
-### 5:10 — Impacto y siguiente paso (Persona 6)
-
-> "Hoy funciona para las **14 zonas arroceras** del país, en español e inglés, en el
-> celular y sin internet, y como prototipo en cualquier país.
->
-> Lo siguiente: validar los cultivos con un agrónomo, probarlo con una junta de regantes
-> antes de una sequía y, más adelante, sumar pronósticos de temporada de NASA para
-> avisar antes de que llegue un año seco."
-
-### 5:40 — Cierre (Persona 1)
-
-> "Cuando falta el agua, el productor no necesita que le digan qué **no** sembrar.
-> Necesita un **Plan B**. Gracias."
+> *(Persona 1)* "Cuando falta el agua, el productor no necesita que le digan qué **no**
+> sembrar. Necesita un **Plan B**. Gracias."
 
 ---
 
@@ -159,7 +161,14 @@ que no prometemos ganancias. La nota de ingreso mide qué tan segura es la venta
 
 **¿Por qué la lechuga sale primero en la tabla de agua?**
 "Porque esa tabla mira solo el agua. La página dice que no revisa suelo, calor ni
-mercado. Para decidir, el plan principal sí considera suelo y calor."
+mercado. Para decidir, el plan principal sí considera suelo y calor, y usa los cultivos
+que el productor ya siembra."
+
+**¿El programa da el mejor plan posible?**
+"Da el mejor de cuatro planes según la prioridad del productor, con reglas fijas y
+comprobadas. No es un optimizador de todas las combinaciones posibles, y sus valores de
+cultivos todavía deben validarse. Por eso muestra los cuatro planes con sus riesgos, para
+que el productor y su técnico decidan."
 
 **¿El modo mundial es real?**
 "Es un prototipo: usa el clima de NASA POWER de cualquier punto y las tablas de la FAO,
@@ -192,6 +201,10 @@ ni prácticas del IDIAF sin fuente.)*
 confiables del Cibao, y no queremos inventar cifras. Lo que sí medimos es el agua que
 ahorra, la tierra que queda sembrada y una nota de qué tan segura es la venta de cada
 cultivo, para no dejar al productor con una cosecha difícil de vender."
+
+**¿Por qué la página está en inglés?**
+"Porque el concurso se evalúa a nivel mundial; con un toque cambia a español, que es la
+lengua del productor."
 
 **¿Qué hizo la IA y qué hicieron ustedes?**
 "Usamos IA (Claude Code y OpenAI Codex) para programar y redactar, y lo declaramos en

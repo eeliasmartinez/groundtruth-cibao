@@ -1013,7 +1013,8 @@
     function tile(value, text) { return "<div><b>" + value + "</b><span>" + esc(text) + "</span></div>"; }
     return tile(num(Math.max(0, base - p.used)), Lx.wq_imp_water) +
       tile(esc(num(toUnit(p.planted), toUnit(p.planted) < 10 ? 1 : 0) + " / " + num(toUnit(r.area), toUnit(r.area) < 10 ? 1 : 0)), tr("wq_imp_land", { u: L()[st.unit === "tareas" ? "w_u_tareas" : "w_u_ha"] })) +
-      tile(esc(areaText(legumes)), Lx.wq_imp_legume);
+      (legumes > 0.005 ? tile(esc(areaText(legumes)), Lx.wq_imp_legume)
+        : tile(Math.round(100 * p.used / Math.max(r.budget, 1e-9)) + "%", Lx.wq_imp_used));
   }
   function headlineHtml(r, p) {
     return tr("wq_headline", { pct: Math.round(st.pct * 100), name: "<b>" + esc(L()["wq_plan_" + p.kind]) + "</b>", mix: esc(partsText(p)) });
