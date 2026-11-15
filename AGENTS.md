@@ -103,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v35`). Desde el
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v36`). Desde el
   15-nov el service worker pide **primero la red** (la página y el código siempre
   completos) y usa la copia guardada solo sin conexión o si la red tarda más de 4 s; al
   activarse una versión nueva, la página se recarga una vez sola.
@@ -299,6 +299,27 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   en la descarga inicial; las tipografías se precargan; conexión anticipada a NASA POWER,
   geoBoundaries y los tiles de elevación.
 - En el relieve de RD, el nombre de la zona se corre a la derecha de la casita de la finca.
+
+## Plan solo con los cultivos del agricultor y mapa del mundo (15-nov, mediodía)
+- **Regla:** el plan principal (Mi plan, resultado del recorrido, rotación) solo lleva
+  cultivos que el agricultor marcó. Si marca arroz + plátano + yuca, el plan es arroz (el
+  plátano y la yuca duran más de 180 días y se nombran aparte). Las 4 estrategias del motor
+  quedan como "otras opciones".
+- `mainPlan` en `web/app.js`: para arroceros, la mejor estrategia del motor hecha solo con
+  sus cultivos; si no hay o si un reparto propio siembra más tierra, usa `farmerPlans`
+  (sus cultivos como siempre, solo el que menos agua pide, o el más sediento + el que menos
+  pide con toda la tierra). Gana el que más tierra siembra; diferencias de menos del 5% de
+  la finca cuentan como empate y entonces gana el que conserva más de sus cultivos.
+- Los cultivos fuera del motor usan solo el agua de FAO-56 (`cropWater`), un icono de hoja
+  y el aviso `risk.not_checked`. La rotación del plan propio rota entre sus cultivos (su
+  leguminosa si tiene). El agua "habitual" ya no cuenta los cultivos de ciclo largo.
+- Se quitó el botón "Guía sencilla" (hacía lo mismo que el recorrido normal). Los textos
+  `easy_*` siguen en `copy.js` sin uso.
+- **Mapa del modo mundo** (vista `wmap`, `renderWMap` en `web/world.js`): si la persona viene
+  del modo mundo, "Mapa" muestra el país elegido con 5 capas como RD: ríos (Natural Earth;
+  no hay presas mundiales), foto NASA (GIBS), falta de agua, humedad del suelo y calor
+  (NASA POWER en el centro de cada provincia, 4 pedidos a la vez). Tocar una provincia abre
+  su ficha. Necesita internet.
 
 ## Botón Atrás general
 - El botón "← Atrás" (barra superior; en celular flota sobre la barra de pestañas)

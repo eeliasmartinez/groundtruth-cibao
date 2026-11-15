@@ -111,11 +111,14 @@ rotación** (dos ciclos, lote por lote).*
 ### 4:00 — El mundo (Persona 6)
 
 *Persona 4 toca **Todo el mundo · prototipo** (el globo de NASA gira), elige **México**,
-toca **Sinaloa** (relieve 3D con sus ríos) y pasa rápido las preguntas.*
+toca **Sinaloa** (relieve 3D con sus ríos) y pasa rápido las preguntas. Si sobra tiempo,
+toca **Mapa** abajo: México con las mismas capas que RD (pulsar **Calor**; tarda unos
+segundos porque pide el clima de cada estado a NASA POWER).*
 
 > "El mismo método sirve en cualquier país, porque NASA POWER cubre todo el planeta.
 > Aquí, Sinaloa: relieve con sus ríos, los cultivos del país según la FAO, y el mismo
-> Plan B. Es un prototipo: falta validarlo con agrónomos de cada lugar."
+> Plan B con los cultivos que el agricultor siembra. Es un prototipo: falta validarlo con
+> agrónomos de cada lugar."
 
 ### 4:40 — Por qué confiar y qué falta (Persona 5)
 

@@ -48,7 +48,6 @@
         <p class="lead" data-t="hero_lead"></p>
         <div class="hero-actions">
           <button type="button" class="btn primary big" id="start" data-t="start_btn"></button>
-          <button type="button" class="btn big" id="start-easy" data-t="easy_start"></button>
         </div>
       </div>
       <div class="hero-map">
@@ -182,6 +181,17 @@
     <h3 data-t="w_provinces"></h3>
     <div class="wc-list" id="wc-list"></div>
     <p class="note" data-t="w_country_note"></p>
+  </section>
+  <section class="page world-page" data-view="wmap">
+    <div class="panel map-card">
+      <h2 id="wm-title"></h2>
+      <p class="sub" id="wm-sub"></p>
+      <div class="seg layers" id="wm-layers" role="group"></div>
+      <p class="w-status" id="wm-status" aria-live="polite"></p>
+      <div class="wc-map wm-map" id="wm-map"></div>
+      <div class="key" id="wm-key"></div>
+      <p class="note" data-t="wm_note"></p>
+    </div>
   </section>
   <section class="page world-page" data-view="region">
     <div class="world-head">

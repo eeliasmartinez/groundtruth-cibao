@@ -774,6 +774,12 @@ details.more .soil-table { margin-top: 8px; }
 .w-prov { fill: rgba(255, 210, 63, .14); stroke: #fff; stroke-width: 1; cursor: pointer; transition: fill .15s ease-out; }
 .w-prov:hover, .w-prov:focus { fill: rgba(226, 35, 26, .55); outline: none; }
 .w-prov.solo { fill: rgba(255, 210, 63, .18); stroke: #ffd23f; stroke-width: 2.5; cursor: default; }
+.wm-map { background: #f6f4ee; }
+.wm-map .w-prov { fill: #e9e6dc; stroke: #fff; stroke-width: 1.2; }
+.wm-map .w-prov.clear { fill: rgba(255, 255, 255, .04); stroke: rgba(255, 255, 255, .85); }
+.wm-map .w-prov:hover, .wm-map .w-prov:focus { stroke: var(--red); stroke-width: 2.5; }
+.wm-map .wm-river { fill: none; stroke: var(--blue); stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.wm-empty { display: grid; place-items: center; min-height: 240px; }
 .w-center { fill: var(--red); stroke: #fff; stroke-width: 3; }
 .wc-side h3, .world-page > h3, .wr-climate h3 { margin: 0 0 8px; font-family: var(--display); font-size: 24px; text-transform: uppercase; }
 .wc-crops { margin: 0; padding: 0; list-style: none; border-top: 2px solid var(--ink); }

@@ -323,10 +323,10 @@
           return { name: f.properties.shapeName || "?", rings: geoRings(f.geometry) };
         }).filter(function (p) { return p.rings.length; }).sort(function (a, b) { return a.name.localeCompare(b.name); });
         cache.provinces[c.iso3] = list;
-        if (st.country === c) { st.provinces = list; st.provinceStatus = ""; renderCountry(); }
+        if (st.country === c) { st.provinces = list; st.provinceStatus = ""; renderCountry(); renderWMap(); }
       })
       .catch(function () {
-        if (st.country === c) { st.provinceStatus = "failed"; renderCountry(); }
+        if (st.country === c) { st.provinceStatus = "failed"; renderCountry(); renderWMap(); }
       });
   }
   function renderCountry() {
@@ -367,15 +367,25 @@
     st.province = p; st.climate = null;
     var center = centroid(p.rings);
     p.center = center;
-    var key = center[0].toFixed(2) + "," + center[1].toFixed(2);
-    st.climate = cache.climate[key] || null;
+    st.climate = cache.climate[climateKey(center)] || null;
     st.climateStatus = st.climate ? "" : "loading";
     if (st.quizMode) { st.qstep = 0; st.mine = defaultMine(); }
     if (window.GTApp) window.GTApp.go(st.quizMode ? "wquiz" : "region");
     renderRegion(); renderQuiz();
     buildRelief(p);
     if (st.climate) return;
-    fetch("https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M,T2M_RANGE,PRECTOTCORR,ALLSKY_SFC_SW_DWN,RH2M,WS2M,GWETROOT" +
+    fetchClimate(center).then(function (climate) {
+      if (st.province === p) { st.climate = climate; st.climateStatus = ""; renderRegion(); renderQuiz(); }
+    }, function () { if (st.province === p) { st.climateStatus = "failed"; renderRegion(); renderQuiz(); } });
+  }
+  // NASA POWER monthly climatology (2001-2025) at one point; cached by its coordinates.
+  var climateLoading = {};
+  function climateKey(center) { return center[0].toFixed(2) + "," + center[1].toFixed(2); }
+  function fetchClimate(center) {
+    var key = climateKey(center);
+    if (cache.climate[key]) return Promise.resolve(cache.climate[key]);
+    if (climateLoading[key]) return climateLoading[key];
+    climateLoading[key] = fetch("https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M,T2M_RANGE,PRECTOTCORR,ALLSKY_SFC_SW_DWN,RH2M,WS2M,GWETROOT" +
       "&community=AG&longitude=" + center[0].toFixed(3) + "&latitude=" + center[1].toFixed(3) + "&format=JSON")
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (json) {
@@ -394,9 +404,10 @@
         climate.et0 = monthlyEt0(climate);
         climate.usable = usableRain(climate.rain);
         cache.climate[key] = climate;
-        if (st.province === p) { st.climate = climate; st.climateStatus = ""; renderRegion(); renderQuiz(); }
-      })
-      .catch(function () { if (st.province === p) { st.climateStatus = "failed"; renderRegion(); renderQuiz(); } });
+        delete climateLoading[key];
+        return climate;
+      }, function (error) { delete climateLoading[key]; throw error; });
+    return climateLoading[key];
   }
   // FAO-56 Penman-Monteith with monthly means: the same formulas as water.py (daily there).
   function monthlyEt0(c) {
@@ -1116,6 +1127,165 @@
     });
   }
 
+
+  // ------------------------------------------------------------------ country map with layers
+  // The same five layers as the Dominican map, for the chosen country: rivers, NASA photo,
+  // water shortfall, root-zone soil moisture and heat. The three data layers use the NASA
+  // POWER 2001-2025 climatology at the centre of each province (one request per province).
+  var RAMPS = {
+    balance: ["#fde3d3", "#f9c0a0", "#f29a6b", "#e6753d", "#c9541f"],
+    soil: ["#cde2fb", "#9ec5f4", "#6da7ec", "#3987e5", "#1c5cab"],
+    heat: ["#fbd9d9", "#f5aeae", "#ec8080", "#dc5252", "#b93131"]
+  };
+  var WM_LAYERS = ["basins", "sat", "balance", "soil", "heat"];
+  st.mapLayer = "basins";
+  var mapQueue = { iso: "", running: 0, list: [], failed: 0 };
+  function mapUnits() { // provinces, or the whole country when its provinces could not be loaded
+    if (st.provinces && st.provinces.length) return st.provinces;
+    return st.country && st.provinceStatus === "failed" ? [{ name: countryName(st.country), rings: st.country.rings }] : [];
+  }
+  function unitClimate(p) {
+    if (!p.center) p.center = centroid(p.rings);
+    return cache.climate[climateKey(p.center)] || null;
+  }
+  function loadMapClimate() {
+    var c = st.country, units = mapUnits();
+    if (!c || !units.length) return;
+    if (mapQueue.iso !== c.iso3) mapQueue = { iso: c.iso3, running: 0, list: units.slice(), failed: 0 };
+    function next() {
+      if (mapQueue.iso !== c.iso3) return;
+      while (mapQueue.running < 4 && mapQueue.list.length) {
+        var p = mapQueue.list.shift();
+        if (unitClimate(p)) continue;
+        mapQueue.running++;
+        fetchClimate(p.center).then(function () { return true; }, function () { mapQueue.failed++; return false; }).then(function () {
+          mapQueue.running--;
+          if (document.body.getAttribute("data-view") === "wmap") renderWMap();
+          next();
+        });
+      }
+    }
+    next();
+  }
+  function layerValue(cl, layer) {
+    if (!cl) return null;
+    if (layer === "balance") {
+      var sum = 0;
+      for (var m = 0; m < 12; m++) sum += (cl.rain[m] - cl.et0[m]) * DAYS[m];
+      return sum; // mm per year
+    }
+    if (layer === "soil") {
+      if (!cl.soil || cl.soil.some(function (v) { return v === null; })) return null;
+      return 100 * cl.soil.reduce(function (a, b) { return a + b; }, 0) / 12;
+    }
+    if (layer === "heat") return Math.max.apply(null, cl.tmax);
+    return null;
+  }
+  function layerText(value, layer) {
+    if (layer === "balance") return num(value) + " mm";
+    if (layer === "soil") return num(value) + "%";
+    return num(value, 1) + " °C";
+  }
+  function riverPaths(f) {
+    if (!window.GT_WORLD_RIVERS) return "";
+    var b = f.box, pad = 0.5, out = [];
+    window.GT_WORLD_RIVERS.forEach(function (river) {
+      river.l.forEach(function (line) {
+        var inside = line.some(function (pt) {
+          var x = f.wrap && pt[0] < 0 ? pt[0] + 360 : pt[0];
+          return x >= b[0] - pad && x <= b[2] + pad && pt[1] >= b[1] - pad && pt[1] <= b[3] + pad;
+        });
+        if (!inside) return;
+        var d = line.map(function (pt, i) { return (i ? "L" : "M") + f.x(pt[0]).toFixed(1) + " " + f.y(pt[1]).toFixed(1); }).join("");
+        out.push("<path class=\"wm-river\" d=\"" + d + "\" style=\"stroke-width:" + (river.r <= 3 ? 2.6 : river.r <= 6 ? 1.8 : 1.2) +
+          "\"><title>" + esc(river.n || "") + "</title></path>");
+      });
+    });
+    return out.join("");
+  }
+  function renderWMap() {
+    if (!$("wm-map")) return;
+    var Lx = L(), c = st.country, layer = st.mapLayer;
+    $("wm-layers").innerHTML = WM_LAYERS.map(function (key) {
+      return "<button type=\"button\" data-wm-layer=\"" + key + "\" class=\"" + (key === layer ? "on" : "") + "\" aria-pressed=\"" +
+        (key === layer) + "\">" + esc(key === "basins" ? Lx.wm_layer_rivers : Lx.layers[key]) + "</button>";
+    }).join("");
+    if (!c) {
+      $("wm-title").textContent = Lx.wm_title_none;
+      $("wm-sub").textContent = Lx.wm_pick;
+      $("wm-status").textContent = "";
+      $("wm-map").innerHTML = "<div class=\"wm-empty\"><button type=\"button\" class=\"btn primary\" data-go=\"world\">" + esc(Lx.wm_pick_btn) + "</button></div>";
+      $("wm-key").innerHTML = "";
+      return;
+    }
+    $("wm-title").textContent = tr("wm_title", { country: countryName(c) });
+    $("wm-sub").textContent = Lx.wm_sub;
+    var units = mapUnits(), data = layer === "balance" || layer === "soil" || layer === "heat";
+    if (data) loadMapClimate();
+    if (layer === "basins" && !window.GT_WORLD_RIVERS) loadRivers().then(function () {
+      if (document.body.getAttribute("data-view") === "wmap") renderWMap();
+    });
+    var values = units.map(function (p) { return data ? layerValue(unitClimate(p), layer) : null; });
+    var known = values.filter(function (v) { return v !== null; });
+    var low = known.length ? Math.min.apply(null, known) : 0, high = known.length ? Math.max.apply(null, known) : 0;
+    function color(v) {
+      var share = high > low ? (v - low) / (high - low) : 0.5;
+      if (layer === "balance") share = 1 - share; // a bigger shortfall is darker
+      return RAMPS[layer][Math.min(4, Math.floor(share * 5))];
+    }
+    var loading = st.provinceStatus === "loading" ? Lx.w_loading_prov
+      : data && known.length < units.length ? tr("wm_loading", { n: known.length, total: units.length }) +
+        (mapQueue.failed ? " " + tr("wm_failed", { n: mapQueue.failed }) : "") : "";
+    $("wm-status").textContent = loading;
+    var width = 800, height = 560;
+    var outline = units.length ? [].concat.apply([], units.map(function (p) { return p.rings; })) : c.rings;
+    var f = fitter(outline, width, height);
+    var svg = "<svg viewBox=\"0 0 " + width + " " + height + "\" role=\"img\" aria-label=\"" + esc(countryName(c)) + "\">";
+    if (layer === "sat") svg += nasaImage(f, width, height);
+    svg += units.map(function (p, i) {
+      var v = values[i], fill = data && v !== null ? " style=\"fill:" + color(v) + ";fill-opacity:.92\"" : "";
+      var tip = esc(p.name) + (data && v !== null ? " · " + layerText(v, layer) : "");
+      return "<path class=\"w-prov wm-prov" + (data ? " data" : "") + (layer === "sat" ? " clear" : "") + "\" data-wm-prov=\"" + i + "\" d=\"" +
+        f.path(p.rings) + "\" tabindex=\"0\" role=\"button\"" + fill + "><title>" + tip + "</title></path>";
+    }).join("");
+    if (!units.length) svg += "<path class=\"w-prov solo\" d=\"" + f.path(c.rings) + "\"/>";
+    if (layer === "basins") svg += riverPaths(f);
+    $("wm-map").innerHTML = svg + "</svg>";
+    var key;
+    if (data) {
+      key = known.length ? "<span class=\"k-ramp\">" + layerText(layer === "balance" ? high : low, layer) + " " + RAMPS[layer].map(function (col) {
+        return "<i style=\"background:" + col + "\"></i>";
+      }).join("") + " " + layerText(layer === "balance" ? low : high, layer) + "</span>" : "";
+      key += "<span class=\"k-text\">" + esc(Lx.layer_desc[layer]) + " " + esc(Lx.wm_source) + "</span>";
+    } else if (layer === "basins") {
+      key = "<span><i class=\"k-river\"></i>" + esc(Lx.river) + "</span><span class=\"k-text\">" + esc(Lx.wm_rivers_desc) + "</span>";
+    } else {
+      key = "<span class=\"k-text\">" + esc(Lx.wm_sat_desc) + "</span>";
+    }
+    $("wm-key").innerHTML = key;
+  }
+  function listenWMap() {
+    $("wm-layers").onclick = function (event) {
+      var el = event.target.closest("[data-wm-layer]");
+      if (el) { st.mapLayer = el.getAttribute("data-wm-layer"); renderWMap(); }
+    };
+    function open(el) {
+      var units = mapUnits(), p = units[+el.getAttribute("data-wm-prov")];
+      if (!p) return;
+      st.quizMode = false;
+      openProvince(p);
+    }
+    $("wm-map").onclick = function (event) {
+      var el = event.target.closest("[data-wm-prov]");
+      if (el) open(el);
+    };
+    $("wm-map").onkeydown = function (event) {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      var el = event.target.closest("[data-wm-prov]");
+      if (el) { event.preventDefault(); open(el); }
+    };
+  }
+
   // ------------------------------------------------------------------ wiring
   function listenPages() {
     $("wc-map").onclick = $("wc-list").onclick = function (event) {
@@ -1143,7 +1313,7 @@
   var wired = false;
   window.GTWorld = {
     show: function (view) {
-      if (!wired && $("w-globe")) { listenGlobe(); listenPages(); listenQuiz(); listenRelief(); listenPlanPages(); wired = true; }
+      if (!wired && $("w-globe")) { listenGlobe(); listenPages(); listenQuiz(); listenRelief(); listenPlanPages(); listenWMap(); wired = true; }
       if ((view === "wquiz" || view === "region") && st.province) { buildRelief(st.province); startRelief(); } else stopRelief();
       if (view === "home") st.quizMode = false;
       if (view === "world") {
@@ -1157,7 +1327,9 @@
       if (view === "wquiz") renderQuiz();
       if (view === "wplan") renderWPlan();
       if (view === "wrot") renderWRot();
+      if (view === "wmap") renderWMap();
     },
+    country: function () { return st.country; },
     render: function (view) {
       if (view === "world") { fillCountrySelect(); if (!st.hover) $("w-hover").textContent = L().w_hover_hint; }
       if (view === "country") renderCountry();
@@ -1165,6 +1337,7 @@
       if (view === "wquiz") renderQuiz();
       if (view === "wplan") renderWPlan();
       if (view === "wrot") renderWRot();
+      if (view === "wmap") renderWMap();
     },
     // for checks: the monthly water calculation for a set of monthly climate values
     _need: function (key, climate, month, soil) {

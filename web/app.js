@@ -55,7 +55,9 @@
   // placed by hand from general geographic knowledge: good for orientation, not surveyed.
   var MAP = { w: 760, h: 546, lon0: -72.1, lat0: 20.05, k: 206, cos: 0.947 };
   var NAV_VIEWS = ["home", "plan", "rotation", "options", "map", "data", "help"];
-  var VIEWS = NAV_VIEWS.concat(["guide", "zone", "crops", "world", "country", "region", "wquiz", "wplan", "wrot"]); // crops opens from Home, outside the main farm-planning tabs
+  var VIEWS = NAV_VIEWS.concat(["guide", "zone", "crops", "world", "country", "region", "wquiz", "wplan", "wrot", "wmap"]);
+  var WORLD_VIEWS = ["world", "country", "region", "wquiz", "wplan", "wrot", "wmap"];
+  var worldMode = false; // the last screens were the whole-world version // crops opens from Home, outside the main farm-planning tabs
   var selectedLocalCrop = "cacao";
   // Small drawings for the soil question: water stays on clay, sinks through sand.
   var SOIL_ART = {
@@ -103,6 +105,8 @@
     }
   };
   // A small hand-drawn icon for each crop (24 x 24 line drawings).
+  // crops outside the rotation engine share one plain leaf
+  var LEAF_ICON = '<path d="M5 19C5 11 10 5 19 5c0 9-6 14-14 14z"/><path d="M5 19l8-8"/>';
   var ICONS = {
     rice: '<path d="M12 22V9c1-4 4-6 7-5"/><path d="M14 7l-1-2M16.5 5.5l-.5-2M19 4.5l.5-2"/><path d="M12 17c-3-.5-5-2.5-5.5-5.5M12 19c3-.5 5-2.5 5.5-5.5"/>',
     beans: '<path d="M5 17C5 10 10 5 18 5c1 7-4 13-11 13-1.2 0-2-.3-2-1z"/><circle cx="10" cy="14" r="1"/><circle cx="13.5" cy="10.5" r="1"/>',
@@ -114,7 +118,7 @@
     sesbania: '<path d="M12 22V4"/><path d="M12 8c-2-.5-3.5-2-4-4M12 8c2-.5 3.5-2 4-4M12 13c-2.5-.5-4-2-4.5-4M12 13c2.5-.5 4-2 4.5-4M12 18c-2.5-.5-4-2-4.5-4M12 18c2.5-.5 4-2 4.5-4"/>'
   };
   function cropIcon(crop) {
-    return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[crop] + "</svg>";
+    return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">' + (ICONS[crop] || LEAF_ICON) + "</svg>";
   }
   // colored square with the crop's icon, used in lists
   function cropBadge(crop) {
@@ -191,7 +195,8 @@
     return num(value, value < 20 && value % 1 ? 1 : 0);
   }
   function cropName(key) {
-    return D.crops[key][state.lang];
+    if (D.crops[key]) return D.crops[key][state.lang];
+    return D.other_crops[key] ? D.other_crops[key][state.lang] : key;
   }
   function lower(text) {
     return text.charAt(0).toLowerCase() + text.slice(1);
@@ -199,7 +204,7 @@
   function role(crop) {
     if (crop === "rice") return "rice";
     if (crop === "sesbania") return "green";
-    return D.legumes.indexOf(crop) >= 0 ? "legume" : "cash";
+    return isLegume(crop) ? "legume" : "cash";
   }
   function zone() { return D.zones[state.zone]; }
   function esc(text) {
@@ -208,6 +213,12 @@
     });
   }
   function strategyName(s) {
+    if (s.key === "mine") {
+      if (!s.plots.length) return tr("name_mine_none");
+      if (s.variant === "own" || s.plots.length === 1) return tr("name_mine_one", { crop: lower(cropName(s.plots[0].crop)) });
+      if (s.variant === "mix") return tr("name_mine_mix", { a: cropName(s.plots[0].crop), b: lower(cropName(s.plots[1].crop)) });
+      return tr("name_mine_keep");
+    }
     if (s.key === "mixed" && s.plots.length && !s.plots.some(function (p) { return p.crop === "rice"; }))
       return tr("name_legume_only");
     if (s.key === "rotation" && s.alternative) return tr("name_switch", { crop: lower(cropName(s.alternative)) });
@@ -236,17 +247,93 @@
     });
     return keys;
   }
-  // Main plan: when the farmer grows more than rice, the best plan made only of their crops
-  // (any plan if none is). With rice alone, the engine's Plan B, which brings in a legume.
-  function mainPlan(result) {
-    var mine = engineCrops();
-    if (mine.filter(function (k) { return k !== "rice"; }).length) {
-      var own = result.ranked.filter(function (s) {
-        return s.plots.length && s.plots.every(function (p) { return mine.indexOf(p.crop) >= 0; });
-      })[0];
-      if (own) return own;
+  // The farmer's own crops that have a water calculation, split into those that fit one
+  // irrigation cycle (LONG_CYCLE days or less) and the long ones (plantain, cassava...).
+  function myWaterCrops() {
+    var short = [], long = [];
+    (window.GT_LOCAL_CROPS || []).forEach(function (crop) {
+      var key = cropWaterKey(crop);
+      if (!key || state.myCrops.indexOf(crop.id) < 0 || short.indexOf(key) >= 0 || long.indexOf(key) >= 0) return;
+      if (key === "rice" && !state.riceAllowed) return;
+      if (key === "sesbania") return;
+      (waterCropDays(key) <= LONG_CYCLE ? short : long).push(key);
+    });
+    return { short: short, long: long };
+  }
+  // A plan made only of the farmer's crops, with the same fields as an engine plan so
+  // every screen can draw it. Water is the typical year, as in the engine.
+  function minePlan(variant, plots, budget) {
+    var c = D.constants, planted = 0, water = 0, waterDry = 0, nitrogen = 0;
+    plots = plots.filter(function (p) { return p.tareas > 0.005; }).map(function (p) {
+      var w = cropWater(p.crop);
+      planted += p.tareas; water += w[0] * p.tareas; waterDry += w[1] * p.tareas;
+      if (D.crops[p.crop]) nitrogen += D.crops[p.crop].nitrogen * p.tareas / c.tareas_per_hectare;
+      return { crop: p.crop, tareas: p.tareas, water_m3: w[0] * p.tareas };
+    });
+    var warnings = [];
+    if (state.area - planted > 0.005) warnings.push("idle_land");
+    if (waterDry > budget * 1.02) warnings.push("short_in_dry_year");
+    return {
+      key: "mine", variant: variant, alternative: null, plots: plots,
+      idle_tareas: Math.max(0, state.area - planted), water_m3: water, water_dry_m3: waterDry,
+      saved_m3: budget - water, saved_share: budget ? Math.max(0, 1 - water / budget) : 0,
+      nitrogen_kg: nitrogen, urea_sacks: nitrogen / c.urea_nitrogen / c.urea_sack_kg,
+      scores: { water: 0, soil: 0, income: 0, overall: 0 }, warnings: warnings, long: []
+    };
+  }
+  function farmerPlans() {
+    var mine = myWaterCrops(), A = state.area, budget = waterBudget();
+    var w = {};
+    mine.short.forEach(function (k) { w[k] = cropWater(k)[0]; });
+    function scaled(keys) {
+      var need = keys.reduce(function (sum, k) { return sum + w[k] * A / keys.length; }, 0);
+      var f = need > budget ? budget / need : 1;
+      return keys.map(function (k) { return { crop: k, tareas: f * A / keys.length }; });
     }
-    return result.ranked[0];
+    var plans = [];
+    if (mine.short.length) {
+      var byNeed = mine.short.slice().sort(function (a, b) { return w[a] - w[b]; });
+      var thrifty = byNeed[0], thirsty = byNeed[byNeed.length - 1];
+      // keep: the land split evenly between their crops, less land if the water is short
+      plans.push(minePlan("keep", scaled(mine.short), budget));
+      // own: all the land in their crop that asks for the least water
+      plans.push(minePlan("own", [{ crop: thrifty, tareas: Math.min(A, budget / w[thrifty]) }], budget));
+      // mix: the whole farm planted, with as much of their thirstiest crop as the water allows
+      if (thirsty !== thrifty && A * w[thrifty] <= budget) {
+        var x = Math.min(A, (budget - A * w[thrifty]) / (w[thirsty] - w[thrifty]));
+        plans.push(minePlan("mix", [{ crop: thirsty, tareas: x }, { crop: thrifty, tareas: A - x }], budget));
+      }
+    } else {
+      plans.push(minePlan("long", [], budget));
+    }
+    plans.forEach(function (p) { p.long = mine.long; });
+    return plans;
+  }
+  function plantedLand(s) { return state.area - s.idle_tareas; }
+  // Main plan: only crops the farmer grows. The engine's plans count when all their crops
+  // are the farmer's (they carry the rotation and nitrogen rules); otherwise, or when one
+  // of the farmer-only splits plants more land, that split. More land first, then more of
+  // their crops kept, then less water. Plans with other crops stay as secondary options.
+  function mainPlan(result) {
+    if (!state.myCrops.length) return result.ranked[0];
+    var short = myWaterCrops().short;
+    var plans = farmerPlans();
+    // the engine plans assume rice land (rice comes back in cycle 2), so only for rice farmers
+    var engine = growsRice() && result.ranked.filter(function (s) {
+      return s.plots.length && s.plots.every(function (p) { return short.indexOf(p.crop) >= 0; });
+    })[0];
+    // land within 5% of the farm counts as a tie, so a few tareas never drop one of their crops
+    var tie = 0.05 * state.area;
+    function landGap(a, b) { var d = plantedLand(b) - plantedLand(a); return Math.abs(d) <= tie ? 0 : d; }
+    plans.sort(function (a, b) {
+      return landGap(a, b) || b.plots.length - a.plots.length || plantedLand(b) - plantedLand(a) || a.water_m3 - b.water_m3;
+    });
+    var best = plans[0];
+    if (engine && plantedLand(engine) >= plantedLand(best) - 0.05) {
+      engine.long = best.long;
+      return engine;
+    }
+    return best;
   }
 
   // ------------------------------------------------------------------
@@ -384,23 +471,27 @@
   function waterCropDays(key) {
     return D.crops[key] ? D.crops[key].stages.reduce(function (a, b) { return a + b; }, 0) : D.other_crops[key].days;
   }
-  function cropWater(key) {
+  function cropWater(key, month) {
+    month = month || state.month;
     if (D.crops[key]) {
-      var n = D.needs[zone().name + "|" + state.soil + "|" + state.month][key];
+      var n = D.needs[zone().name + "|" + state.soil + "|" + month][key];
       return [n.typical_m3, n.dry_m3];
     }
-    var other = D.other_needs[zone().name + "|" + state.month];
+    var other = D.other_needs[zone().name + "|" + month];
     return other && other[key];
   }
   // The allocation is a share of the farm's usual need: rice for a rice farmer (as the
   // engine assumes); otherwise the average of the farmer's own crops, land split evenly.
-  function usualNeedPerTarea() {
-    if (growsRice()) return cropWater("rice")[0];
+  function usualNeedPerTarea(month) {
+    if (growsRice()) return cropWater("rice", month)[0];
     var keys = (window.GT_LOCAL_CROPS || []).filter(function (crop) {
       return state.myCrops.indexOf(crop.id) >= 0 && cropWaterKey(crop);
     }).map(cropWaterKey);
-    if (!keys.length) return cropWater("rice")[0];
-    return keys.reduce(function (sum, k) { return sum + cropWater(k)[0]; }, 0) / keys.length;
+    // long-cycle crops (plantain, cassava) keep their own land and are not part of one cycle
+    var short = keys.filter(function (k) { return waterCropDays(k) <= LONG_CYCLE; });
+    if (short.length) keys = short;
+    if (!keys.length) return cropWater("rice", month)[0];
+    return keys.reduce(function (sum, k) { return sum + cropWater(k, month)[0]; }, 0) / keys.length;
   }
   function waterBudget() {
     return state.allocation * usualNeedPerTarea() * state.area;
@@ -633,13 +724,20 @@
   }
 
   function drawHeadline(result, best) {
+    var longNote = best.long && best.long.length ? " " + esc(tr("mine_long", {
+      list: best.long.map(function (k) { return lower(cropName(k)); }).join(", "), n: LONG_CYCLE
+    })) : "";
+    if (best.key === "mine" && !best.plots.length) {
+      $("headline").innerHTML = esc(tr("headline_mine_none", { n: LONG_CYCLE })) + longNote;
+      return;
+    }
     if (!best.plots.length) {
       $("headline").innerHTML = tr("headline_none", { rain: Math.round(result.needs.rice.rain_share * 100) });
       return;
     }
-    $("headline").innerHTML = tr("headline", {
+    $("headline").innerHTML = tr(state.myCrops.length ? "headline_mine" : "headline", {
       alloc: Math.round(state.allocation * 100), name: esc(strategyName(best)), mix: esc(mixText(best))
-    });
+    }) + longNote;
   }
 
   function drawCard(s, result, isBest, isSelected) {
@@ -689,6 +787,7 @@
     var R = T[state.lang].risk;
     var risks = [];
     s.plots.forEach(function (p) {
+      if (!D.crops[p.crop]) return;
       result.fit[p.crop][1].forEach(function (code) {
         risks.push(fill(R[code], {
           crop: lower(cropName(p.crop)), tmax: num(result.needs[p.crop].tmax, 1),
@@ -701,7 +800,8 @@
     if (s.warnings.indexOf("idle_land") >= 0) risks.push(fill(R.idle_land, { n: tareasText(s.idle_tareas) }));
     if (s.warnings.indexOf("no_income") >= 0) risks.push(R.no_income);
     if (s.warnings.indexOf("short_in_dry_year") >= 0) risks.push(R.short_in_dry_year);
-    if (s.key === "current" && s.plots.length) risks.push(R.mono);
+    if ((s.key === "current" || (s.key === "mine" && s.plots.length === 1 && s.plots[0].crop === "rice")) && s.plots.length) risks.push(R.mono);
+    if (s.plots.some(function (p) { return !D.crops[p.crop]; })) risks.push(R.not_checked);
     risks.push(R.always);
     return risks;
   }
@@ -712,6 +812,7 @@
     var alt = s.alternative ? cropName(s.alternative) : "";
     var hasRice = s.plots.some(function (p) { return p.crop === "rice"; });
     var whyKey = s.key === "mixed" && !hasRice ? "mixed_banned" : s.key;
+    if (s.key === "mine" && !L.why_text.mine) whyKey = "current";
 
     var evidence = [tr("ev_rice", {
       m3: num(result.needs.rice.typical_m3), zone: zone().name, month: MONTHS[state.lang][state.month - 1]
@@ -722,13 +823,22 @@
         ratio: num(result.needs.rice.typical_m3 / result.needs[s.alternative].typical_m3, 1)
       }));
     }
+    if (s.key === "mine") s.plots.forEach(function (p) {
+      if (p.crop !== "rice") evidence.push(tr("ev_crop", { crop: cropName(p.crop), m3: num(cropWater(p.crop)[0]) }));
+    });
     evidence.push(tr("ev_rain", { rain: Math.round(result.needs.rice.rain_share * 100) }));
-    evidence.push(tr("ev_use", { used: num(s.water_m3), budget: num(result.budget_m3) }));
+    evidence.push(tr("ev_use", { used: num(s.water_m3), budget: num(s.key === "mine" ? waterBudget() : result.budget_m3) }));
     if (s.plots.length) evidence.push(tr("ev_dry", { dry: num(s.water_dry_m3) }));
 
     var benefits = [];
+    if (s.key === "mine" && s.plots.length) {
+      benefits.push(L.ben_own);
+      if (s.idle_tareas <= 0.005) benefits.push(L.ben_full);
+      if (s.saved_share > 0.01) benefits.push(tr("ben_saved", { saved: Math.round(s.saved_share * 100) }));
+      if (s.urea_sacks >= 0.5) benefits.push(tr("ben_nitrogen", { n: num(s.urea_sacks) }));
+    }
     if (hasRice && s.key === "current") { benefits.push(L.ben_market); benefits.push(L.ben_same); }
-    if (s.key !== "current" && s.plots.length) {
+    if (s.key !== "current" && s.key !== "mine" && s.plots.length) {
       if (s.idle_tareas <= 0.005) benefits.push(L.ben_full);
       if (s.saved_share > 0.01) benefits.push(tr("ben_saved", { saved: Math.round(s.saved_share * 100) }));
       if (s.urea_sacks >= 0.5) benefits.push(tr("ben_nitrogen", { n: num(s.urea_sacks) }));
@@ -1384,12 +1494,6 @@
         return "<button type=\"button\" class=\"g-option\" data-g-priority=\"" + key + "\"><i>" + PRIORITY_ICONS[key] + "</i><b>" +
           L.priorities[key] + "</b><span>" + esc(L.priority_help[key]) + "</span></button>";
       }).join("") + "</div>";
-    } else if (!growsRice()) {
-      // Not a rice farmer: the rice rotation plan does not apply; rank their own crops by water.
-      body = "<div class=\"stamp\" aria-hidden=\"true\"><span>" + L.stamp + "</span></div>" +
-        "<div class=\"g-mine\"><p class=\"lead\">" + esc(L.g_mine_intro) + "</p><div class=\"cw-rec\" id=\"g-mine-rec\"></div>" +
-        "<div class=\"actions\"><button type=\"button\" class=\"btn primary\" data-go=\"crops\">" + esc(L.g_mine_more) + "</button>" +
-        "<button type=\"button\" class=\"btn\" data-g-restart>" + L.g_restart + "</button></div></div>";
     } else {
       var cells = "";
       for (var i = 0; i < 100; i++) {
@@ -1454,16 +1558,12 @@
         : state.riceAllowed ? tr("g_fit", { n: tareasText(rice), area: tareasText(state.area) }) : L.g_fit_ban;
     } else if (kind === "priority") {
       mark("[data-g-priority]", "data-g-priority", state.priority);
-    } else if (!growsRice()) {
-      $("g-sub").textContent = L.g_mine_title;
-      $("g-mine-rec").innerHTML = recommendationsHtml();
     } else {
       $("g-sub").innerHTML = $("headline").innerHTML;
       paintCells($("g-parcel").children, best, true);
       $("g-mix").innerHTML = $("plan-mix").innerHTML;
       $("g-impact").innerHTML = $("impact").innerHTML;
-      var others = state.myCrops.filter(function (id) { return id !== "rice"; });
-      $("g-mine-extra").innerHTML = others.length ? "<p class=\"note\">" + esc(L.g_mine_rice_note) + "</p><div class=\"cw-rec\">" + recommendationsHtml() + "</div>" : "";
+      $("g-mine-extra").innerHTML = state.myCrops.length ? "<p class=\"note\">" + esc(L.g_mine_note) + "</p><div class=\"cw-rec\">" + recommendationsHtml() + "</div>" : "";
     }
   }
 
@@ -1813,10 +1913,26 @@
     var hasRice = s.plots.some(function (p) { return p.crop === "rice"; });
 
     // Each plot of cycle 1 and the crop it gets in cycle 2.
+    var mineStory = null;
     var lots = s.plots.map(function (p) {
       var next = p.crop === "rice" ? (s.key === "mixed" && s.alternative ? s.alternative : "rice") : "rice";
       return { tareas: p.tareas, first: p.crop, second: next };
     });
+    if (s.key === "mine") {
+      // Only the farmer's crops: after a cereal or vegetable, their legume that asks for the
+      // least water; after a legume, back to their own crop; with no legume, their crops trade places.
+      var own = myWaterCrops().short;
+      var legumes = own.filter(isLegume).sort(function (a, b) { return cropWater(a, month2)[0] - cropWater(b, month2)[0]; });
+      var others = own.filter(function (k) { return !isLegume(k); });
+      lots.forEach(function (lot, i) {
+        if (!isLegume(lot.first) && legumes.length) { lot.second = legumes[0]; mineStory = mineStory || "legume"; }
+        else if (isLegume(lot.first) && others.length) { lot.second = others[0]; mineStory = mineStory || "legume"; }
+        else if (own.length > 1) { lot.second = own[(own.indexOf(lot.first) + 1) % own.length]; mineStory = mineStory || "swap"; }
+        else lot.second = lot.first;
+      });
+      if (!mineStory) mineStory = "same";
+    }
+    function cropDays(crop, needs) { return needs[crop] ? needs[crop].days : waterCropDays(crop); }
     if (s.idle_tareas > 0.005) lots.push({ tareas: s.idle_tareas, first: null, second: null });
 
     function bar(crop, startDay, needs) {
@@ -1824,7 +1940,7 @@
         return "<div class=\"cal-bar idle\" style=\"left:" + (100 * startDay / 365) + "%;width:" + (100 * 120 / 365) + "%\">" + tr("idle") + "</div>";
       }
       return "<div class=\"cal-bar " + role(crop) + "\" style=\"left:" + (100 * startDay / 365) + "%;width:" +
-        (100 * needs[crop].days / 365) + "%\" title=\"" + esc(cropName(crop)) + " · " + needs[crop].days + " d\">" +
+        (100 * cropDays(crop, needs) / 365) + "%\" title=\"" + esc(cropName(crop)) + " · " + cropDays(crop, needs) + " d\">" +
         cropIcon(crop) + "<span>" + esc(cropName(crop)) + "</span></div>";
     }
     var months = "";
@@ -1835,11 +1951,18 @@
     }).join("");
 
     var water2 = 0;
-    lots.forEach(function (lot) { if (lot.second) water2 += lot.tareas * needs2[lot.second].typical_m3; });
-    var budget2 = state.allocation * needs2.rice.typical_m3 * state.area;
+    lots.forEach(function (lot) { if (lot.second) water2 += lot.tareas * cropWater(lot.second, month2)[0]; });
+    var budget2 = s.key === "mine" ? state.allocation * usualNeedPerTarea(month2) * state.area
+      : state.allocation * needs2.rice.typical_m3 * state.area;
     var alt = s.alternative ? lower(cropName(s.alternative)) : "";
     var story;
-    if (!s.plots.length) story = T[state.lang].say_none;
+    if (s.key === "mine" && !s.plots.length) story = tr("headline_mine_none", { n: LONG_CYCLE });
+    else if (!s.plots.length) story = T[state.lang].say_none;
+    else if (s.key === "mine") story = tr("rot_mine_" + mineStory, {
+      list: lots.filter(function (l) { return l.first; }).map(function (l) {
+        return lower(cropName(l.first)) + " → " + lower(cropName(l.second));
+      }).join(", ")
+    });
     else if (s.key === "current") story = L.rot_none;
     else if (s.key === "mixed" && hasRice) story = tr("rot_swap", { alt: alt, n: num(s.urea_sacks) });
     else story = s.urea_sacks >= 0.5 ? tr("rot_back_n", { alt: alt, n: num(s.urea_sacks) }) : tr("rot_back", { alt: alt });
@@ -1853,7 +1976,7 @@
       "<p class=\"cal-explainer\"><span class=\"cal-key\" aria-hidden=\"true\"></span>" + esc(L.rot_idle_explain) + "</p>" +
       "<p class=\"rot-story\">" + esc(story) + "</p>" +
       "<div class=\"impact rot-water\"><div><b>" + num(s.water_m3) + "</b><span>" +
-      esc(tr("rot_water", { c: 1, used: num(s.water_m3), budget: num(result.budget_m3) })) + "</span></div><div><b>" +
+      esc(tr("rot_water", { c: 1, used: num(s.water_m3), budget: num(s.key === "mine" ? waterBudget() : result.budget_m3) })) + "</span></div><div><b>" +
       num(water2) + "</b><span>" + esc(tr("rot_water", { c: 2, used: num(water2), budget: num(budget2) })) +
       (water2 > budget2 * 1.02 ? " " + esc(L.rot_over) : "") + "</span></div></div>" +
       "<p class=\"note\">" + esc(tr("rot_note", { alloc: Math.round(state.allocation * 100) })) + "</p>";
@@ -1884,7 +2007,7 @@
     function tile(value, text) { return "<div><b>" + value + "</b><span>" + esc(text) + "</span></div>"; }
     $("impact").innerHTML =
       tile(num(s.urea_sacks), L.impact_n) +
-      tile(num(Math.max(0, s.saved_m3)), L.impact_water) +
+      tile(num(Math.max(0, s.saved_m3)), s.key === "mine" ? L.impact_water_mine : L.impact_water) +
       tile(tareasText(state.area - s.idle_tareas) + " / " + tareasText(state.area), L.impact_land);
   }
 
@@ -2093,14 +2216,6 @@
       draw();
       setView("guide");
     };
-    $("start-easy").onclick = function () {
-      state.gstep = 0;
-      if (!state.myCrops.length) state.myCrops = ["rice"];
-      state.easyMode = true;
-      state.guideWithScene = false;
-      draw();
-      setView("guide");
-    };
     $("rice-banned").onchange = function () { state.riceAllowed = !this.checked; state.selected = null; draw(); };
     $("salty").onchange = function () { state.salty = this.checked; draw(); };
     $("cards").onclick = function (event) {
@@ -2196,12 +2311,16 @@
   }
   function setView(view, keepScroll, returning) {
     if (VIEWS.indexOf(view) < 0) view = "home";
+    // In the world version, Map shows the chosen country with the same layers as the Dominican map.
+    if (WORLD_VIEWS.indexOf(view) >= 0) worldMode = true;
+    else if (["home", "guide", "zone"].indexOf(view) >= 0) worldMode = false;
+    if (view === "map" && worldMode) view = "wmap";
     if (ready && !returning && view !== state.view) remember();
     var changed = ready && view !== state.view;
     state.view = view;
     if (view === "crops") drawCropDirectory();
     document.querySelectorAll("[data-mode]").forEach(function (b) {
-      var world = ["world", "country", "region", "wquiz", "wplan", "wrot"].indexOf(view) >= 0;
+      var world = WORLD_VIEWS.indexOf(view) >= 0;
       b.classList.toggle("on", (b.getAttribute("data-mode") === "world") === world);
       b.setAttribute("aria-pressed", String((b.getAttribute("data-mode") === "world") === world));
     });
@@ -2212,7 +2331,7 @@
       if (el !== document.body) el.hidden = el.getAttribute("data-view").split(" ").indexOf(view) < 0;
     });
     document.querySelectorAll("[data-go]").forEach(function (b) {
-      b.classList.toggle("on", b.getAttribute("data-go") === view);
+      b.classList.toggle("on", b.getAttribute("data-go") === view || (view === "wmap" && b.getAttribute("data-go") === "map"));
     });
     if (changed) playEntrance();
     try { history.replaceState(history.state || { step: 0 }, "", "#" + view); } catch (e) { /* not allowed on some file:// pages */ }
