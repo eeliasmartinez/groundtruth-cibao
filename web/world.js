@@ -18,7 +18,9 @@
   var st = {
     country: null, provinces: null, provinceStatus: "", province: null,
     climate: null, climateStatus: "", month: (new Date().getMonth() + 1) % 12 + 1, soil: "loam",
-    lon0: -40, lat0: 12, hover: null, picked: null
+    lon0: -40, lat0: 12, hover: null, picked: null,
+    // the farmer's questionnaire (same five questions as the Dominican walkthrough)
+    quizMode: false, qstep: 0, current: null, area: 1, pct: 0.6, priority: "water"
   };
   var cache = { provinces: {}, climate: {} };
 
@@ -332,7 +334,8 @@
     $("wc-title").textContent = countryName(c);
     $("wc-sub").textContent = c.year ? tr("w_country_sub", { year: c.year }) : Lx.w_country_nodata;
     $("wc-status").textContent = st.provinceStatus === "loading" ? Lx.w_loading_prov
-      : st.provinceStatus === "failed" ? Lx.w_failed_prov : tr("w_prov_count", { n: st.provinces ? st.provinces.length : 0 });
+      : st.provinceStatus === "failed" ? Lx.w_failed_prov
+      : (st.quizMode ? Lx.wq_pick_province + " " : "") + tr("w_prov_count", { n: st.provinces ? st.provinces.length : 0 });
     var width = 800, height = 560, outline = st.provinces ? [].concat.apply([], st.provinces.map(function (p) { return p.rings; })) : c.rings;
     var f = fitter(outline, width, height);
     var svg = "<svg viewBox=\"0 0 " + width + " " + height + "\" role=\"img\" aria-label=\"" + esc(countryName(c)) + "\">" + nasaImage(f, width, height);
@@ -365,8 +368,9 @@
     var key = center[0].toFixed(2) + "," + center[1].toFixed(2);
     st.climate = cache.climate[key] || null;
     st.climateStatus = st.climate ? "" : "loading";
-    if (window.GTApp) window.GTApp.go("region");
-    renderRegion();
+    if (st.quizMode) { st.qstep = 0; st.current = defaultCrop(); }
+    if (window.GTApp) window.GTApp.go(st.quizMode ? "wquiz" : "region");
+    renderRegion(); renderQuiz();
     if (st.climate) return;
     fetch("https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M_MAX,T2M_MIN,PRECTOTCORR,ALLSKY_SFC_SW_DWN,RH2M,WS2M" +
       "&community=AG&longitude=" + center[0].toFixed(3) + "&latitude=" + center[1].toFixed(3) + "&format=JSON")
@@ -381,9 +385,9 @@
         climate.et0 = monthlyEt0(climate);
         climate.usable = usableRain(climate.rain);
         cache.climate[key] = climate;
-        if (st.province === p) { st.climate = climate; st.climateStatus = ""; renderRegion(); }
+        if (st.province === p) { st.climate = climate; st.climateStatus = ""; renderRegion(); renderQuiz(); }
       })
-      .catch(function () { if (st.province === p) { st.climateStatus = "failed"; renderRegion(); } });
+      .catch(function () { if (st.province === p) { st.climateStatus = "failed"; renderRegion(); renderQuiz(); } });
   }
   // FAO-56 Penman-Monteith with monthly means: the same formulas as water.py (daily there).
   function monthlyEt0(c) {
@@ -496,6 +500,156 @@
     $("wr-rec").innerHTML = html;
   }
 
+
+  // ------------------------------------------------------------------ the farmer's questionnaire
+  // Water only, average year: the allocation is a share of what the farmer's usual crop
+  // needs here (as the Dominican tool uses rice). Three plans are compared: keep the usual
+  // crop on the land the water covers, switch it all, or mix both so all land is planted.
+  var LEGUMES_ALL = ["beans", "pigeon_pea", "cowpea", "green_bean", "peanut", "soybean", "lentil", "peas_dry", "broad_bean"];
+  function countryKeys() {
+    var keys = [];
+    (st.country ? st.country.crops : []).forEach(function (cr) {
+      var k = W.items[cr[0]].w;
+      if (k && profile(k) && keys.indexOf(k) < 0) keys.push(k);
+    });
+    return keys;
+  }
+  function defaultCrop() {
+    var short = countryKeys().filter(function (k) { return seasonDays(k) <= LONG_CYCLE; });
+    return short[0] || "maize";
+  }
+  function quizPlans() {
+    var cl = st.climate, need = {};
+    allProfiles().forEach(function (k) { need[k] = cropNeedMm(k, cl) * 10; }); // m3 per hectare
+    var cur = st.current, area = st.area, budget = st.pct * need[cur] * area;
+    var known = countryKeys();
+    var pool = allProfiles().filter(function (k) {
+      return k !== cur && k !== "sesbania" && seasonDays(k) <= LONG_CYCLE;
+    });
+    function rank(k) {
+      var group = st.priority === "soil" ? (LEGUMES_ALL.indexOf(k) >= 0 ? 0 : 1)
+        : st.priority === "known" ? (known.indexOf(k) >= 0 ? 0 : 1) : 0;
+      return group * 1e9 + need[k];
+    }
+    pool.sort(function (a, b) { return rank(a) - rank(b); });
+    var alt = pool[0];
+    function plan(kind, parts) {
+      var used = 0, planted = 0;
+      parts.forEach(function (p) { used += p.ha * need[p.key]; planted += p.ha; });
+      return { kind: kind, parts: parts.filter(function (p) { return p.ha > 0.005; }), used: used, planted: planted };
+    }
+    var keep = plan("keep", [{ key: cur, ha: need[cur] > 0 ? Math.min(area, budget / need[cur]) : area }]);
+    var swap = plan("swap", [{ key: alt, ha: need[alt] > 0 ? Math.min(area, budget / need[alt]) : area }]);
+    var mixCur = 0;
+    if (need[cur] > need[alt]) mixCur = Math.max(0, Math.min(area, (budget - area * need[alt]) / (need[cur] - need[alt])));
+    var mixAlt = need[alt] > 0 ? Math.min(area - mixCur, Math.max(0, (budget - mixCur * need[cur]) / need[alt])) : area - mixCur;
+    var mix = plan("mix", [{ key: cur, ha: mixCur }, { key: alt, ha: mixAlt }]);
+    // A mix with one crop is just "switch" or "keep": show each different plan once.
+    var plans = [keep, swap, mix].filter(function (p, i, all) {
+      return all.slice(0, i).every(function (q) { return partsText(q) !== partsText(p); });
+    });
+    function legumeHa(p) { return p.parts.reduce(function (a, x) { return a + (LEGUMES_ALL.indexOf(x.key) >= 0 ? x.ha : 0); }, 0); }
+    function knownHa(p) { return p.parts.reduce(function (a, x) { return a + (x.key === cur || known.indexOf(x.key) >= 0 ? x.ha : 0); }, 0); }
+    var best = plans.slice().sort(function (a, b) {
+      var land = Math.round(b.planted * 10) - Math.round(a.planted * 10);
+      if (land) return land;
+      if (st.priority === "soil") return legumeHa(b) - legumeHa(a) || a.used - b.used;
+      if (st.priority === "known") return knownHa(b) - knownHa(a) || a.used - b.used;
+      return a.used - b.used;
+    })[0];
+    return { plans: plans, best: best, budget: budget, need: need, alt: alt };
+  }
+  function partsText(p) {
+    if (!p.parts.length) return L().wq_nothing;
+    return p.parts.map(function (x) { return tr("wq_part", { ha: num(x.ha, x.ha < 10 ? 1 : 0), crop: profileName(x.key).toLowerCase() }); }).join(" + ");
+  }
+  function renderQuiz() {
+    if (!$("wq-stage") || !st.province || !st.country) return;
+    var Lx = L(), MONTHS = window.GTApp ? window.GTApp.months() : [], step = st.qstep;
+    $("wq-where").textContent = st.province.name + " · " + countryName(st.country);
+    $("wq-count").textContent = step < 5 ? tr("wq_count", { n: step + 1 }) : Lx.wq_result_label;
+    $("wq-bar").style.width = (100 * Math.min(step + 1, 5) / 5) + "%";
+    var back = document.querySelector("[data-wq-back]"), next = document.querySelector("[data-wq-next]");
+    back.textContent = Lx.g_back; next.textContent = step === 4 ? Lx.g_see : Lx.g_next; next.hidden = step >= 5;
+    var html = "";
+    if (step === 0) {
+      var known = countryKeys(), others = allProfiles().filter(function (k) { return known.indexOf(k) < 0 && k !== "sesbania"; });
+      function chip(k) {
+        return "<button type=\"button\" class=\"cw-chip" + (k === st.current ? " on" : "") + "\" data-wq-crop=\"" + k + "\" aria-pressed=\"" + (k === st.current) + "\">" + esc(profileName(k)) + "</button>";
+      }
+      html = "<h2>" + esc(Lx.wq_q_crop) + "</h2><p class=\"help\">" + esc(tr("wq_crop_help", { country: countryName(st.country) })) + "</p>" +
+        (known.length ? "<p class=\"g-label\">" + esc(tr("wq_crop_country", { country: countryName(st.country) })) + "</p><div class=\"wq-chips\">" + known.map(chip).join("") + "</div>" : "") +
+        "<p class=\"g-label\">" + esc(Lx.wq_crop_other) + "</p><div class=\"wq-chips\">" + others.map(chip).join("") + "</div>";
+    } else if (step === 1) {
+      html = "<h2>" + esc(Lx.g_q[1]) + "</h2><p class=\"g-label\">" + esc(Lx.cw_month) + "</p><div class=\"wq-chips\">" + MONTHS.map(function (m, i) {
+        return "<button type=\"button\" class=\"cw-chip" + (i + 1 === st.month ? " on" : "") + "\" data-wq-month=\"" + (i + 1) + "\">" + esc(m) + "</button>";
+      }).join("") + "</div><p class=\"g-label\">" + esc(Lx.wq_area) + "</p><div class=\"wq-area\"><button type=\"button\" data-wq-area=\"-1\" aria-label=\"-1\">−</button>" +
+        "<input id=\"wq-area\" type=\"number\" min=\"0.1\" max=\"100000\" step=\"0.1\" inputmode=\"decimal\" value=\"" + st.area + "\"><button type=\"button\" data-wq-area=\"1\" aria-label=\"+1\">+</button></div>" +
+        "<p class=\"help\">" + esc(Lx.wq_area_help) + "</p>";
+    } else if (step === 2) {
+      html = "<h2>" + esc(Lx.g_q[2]) + "</h2><div class=\"wq-chips\">" + ["clay", "loam", "sandy"].map(function (s) {
+        return "<button type=\"button\" class=\"cw-chip big" + (s === st.soil ? " on" : "") + "\" data-wq-soil=\"" + s + "\">" + esc(Lx.soils[s]) + "</button>";
+      }).join("") + "</div><p class=\"help\">" + esc(Lx.soil_help[st.soil]) + "</p><p class=\"help\">" + esc(Lx.wq_soil_note) + "</p>";
+    } else if (step === 3) {
+      html = "<h2>" + esc(Lx.wq_q_water) + "</h2><p class=\"help\">" + esc(tr("wq_water_help", { crop: profileName(st.current).toLowerCase() })) + "</p>" +
+        "<div class=\"wq-chips\">" + [[1, "wq_w_normal"], [0.6, "wq_w_cut"], [0.3, "wq_w_severe"]].map(function (o) {
+          return "<button type=\"button\" class=\"cw-chip big" + (Math.abs(st.pct - o[0]) < 0.001 ? " on" : "") + "\" data-wq-pct=\"" + o[0] + "\">" + esc(Lx[o[1]]) + "</button>";
+        }).join("") + "</div><div class=\"cw-range wq-range\"><input id=\"wq-pct\" type=\"range\" min=\"0\" max=\"100\" step=\"5\" value=\"" + Math.round(st.pct * 100) +
+        "\" aria-label=\"" + esc(Lx.wq_q_water) + "\"><output id=\"wq-pct-out\">" + Math.round(st.pct * 100) + "%</output></div>";
+    } else if (step === 4) {
+      html = "<h2>" + esc(Lx.g_q[4]) + "</h2><div class=\"wq-chips col\">" + ["water", "soil", "known"].map(function (k) {
+        return "<button type=\"button\" class=\"cw-chip big" + (k === st.priority ? " on" : "") + "\" data-wq-prio=\"" + k + "\"><b>" + esc(Lx["wq_p_" + k]) + "</b><span>" + esc(Lx["wq_p_" + k + "_help"]) + "</span></button>";
+      }).join("") + "</div>";
+    } else if (!st.climate) {
+      html = "<h2>" + esc(Lx.g_result) + "</h2><p class=\"w-status\">" + esc(st.climateStatus === "failed" ? Lx.w_failed_climate : Lx.w_loading_climate) + "</p>";
+    } else {
+      var r = quizPlans(), best = r.best;
+      html = "<div class=\"wq-result\"><p class=\"wq-stamp\">PLAN B</p><h2>" + esc(Lx.g_result) + "</h2><p class=\"lead\">" + esc(tr("wq_lead", {
+        pct: Math.round(st.pct * 100), crop: profileName(st.current).toLowerCase(), plan: partsText(best) })) + "</p>" +
+        "<p class=\"wq-budget\">" + esc(tr("wq_budget", { m3: num(r.budget), ha: num(st.area, st.area < 10 ? 1 : 0) })) + "</p><ol class=\"wq-plans\">" +
+        r.plans.map(function (p) {
+          var free = Math.max(0, st.area - p.planted);
+          return "<li class=\"" + (p === best ? "best" : "") + "\"><b>" + esc(Lx["wq_plan_" + p.kind]) + (p === best ? " · " + esc(Lx.wq_recommended) : "") + "</b>" +
+            "<span class=\"wq-what\">" + esc(partsText(p)) + "</span><span>" + esc(tr("wq_plan_use", { used: num(p.used), budget: num(r.budget) })) +
+            (free > 0.05 ? " · " + esc(tr("wq_free", { ha: num(free, free < 10 ? 1 : 0) })) : " · " + esc(Lx.wq_all_planted)) + "</span></li>";
+        }).join("") + "</ol><p class=\"note\">" + esc(Lx.wq_note) + "</p>" +
+        "<div class=\"wq-actions\"><button type=\"button\" class=\"btn primary\" data-wq-sheet=\"1\">" + esc(Lx.wq_see_sheet) + "</button>" +
+        "<button type=\"button\" class=\"btn\" data-wq-restart=\"1\">" + esc(Lx.g_restart) + "</button></div></div>";
+    }
+    $("wq-stage").innerHTML = html;
+  }
+  function listenQuiz() {
+    $("wq-section").onclick = function (event) {
+      var t = event.target, el;
+      if ((el = t.closest("[data-wq-crop]"))) { st.current = el.getAttribute("data-wq-crop"); renderQuiz(); return; }
+      if ((el = t.closest("[data-wq-month]"))) { st.month = +el.getAttribute("data-wq-month"); renderQuiz(); return; }
+      if ((el = t.closest("[data-wq-area]"))) { st.area = Math.max(0.1, Math.round((st.area + +el.getAttribute("data-wq-area")) * 10) / 10); renderQuiz(); return; }
+      if ((el = t.closest("[data-wq-soil]"))) { st.soil = el.getAttribute("data-wq-soil"); renderQuiz(); return; }
+      if ((el = t.closest("[data-wq-pct]"))) { st.pct = +el.getAttribute("data-wq-pct"); renderQuiz(); return; }
+      if ((el = t.closest("[data-wq-prio]"))) { st.priority = el.getAttribute("data-wq-prio"); renderQuiz(); return; }
+      if (t.closest("[data-wq-next]")) { st.qstep = Math.min(5, st.qstep + 1); renderQuiz(); window.scrollTo(0, 0); return; }
+      if (t.closest("[data-wq-back]")) {
+        if (st.qstep > 0) { st.qstep -= 1; renderQuiz(); } else if (window.GTApp) window.GTApp.go("country");
+        return;
+      }
+      if (t.closest("[data-wq-sheet]")) { if (window.GTApp) window.GTApp.go("region"); return; }
+      if (t.closest("[data-wq-restart]")) { st.qstep = 0; renderQuiz(); window.scrollTo(0, 0); }
+    };
+    $("wq-section").oninput = function (event) {
+      if (event.target.id === "wq-area") { var v = parseFloat(event.target.value); if (v > 0) st.area = Math.min(v, 100000); }
+      if (event.target.id === "wq-pct") { st.pct = event.target.value / 100; $("wq-pct-out").textContent = event.target.value + "%";
+        document.querySelectorAll("[data-wq-pct]").forEach(function (b) { b.classList.toggle("on", Math.abs(+b.getAttribute("data-wq-pct") - st.pct) < 0.001); }); }
+    };
+    document.querySelectorAll("[data-wq-start]").forEach(function (b) {
+      b.onclick = function () {
+        st.quizMode = true;
+        if (st.country && b.hasAttribute("data-wq-here") && st.province) { st.qstep = 0; st.current = defaultCrop(); window.GTApp.go("wquiz"); renderQuiz(); return; }
+        $("w-hover").textContent = L().wq_pick_country;
+        $("w-globe").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+      };
+    });
+  }
+
   // ------------------------------------------------------------------ wiring
   function listenPages() {
     $("wc-map").onclick = $("wc-list").onclick = function (event) {
@@ -525,7 +679,8 @@
   var wired = false;
   window.GTWorld = {
     show: function (view) {
-      if (!wired && $("w-globe")) { listenGlobe(); listenPages(); wired = true; }
+      if (!wired && $("w-globe")) { listenGlobe(); listenPages(); listenQuiz(); wired = true; }
+      if (view === "home") st.quizMode = false;
       if (view === "world") {
         fillCountrySelect();
         $("w-hover").textContent = L().w_hover_hint;
@@ -533,11 +688,13 @@
       } else stopGlobe();
       if (view === "country") renderCountry();
       if (view === "region") renderRegion();
+      if (view === "wquiz") renderQuiz();
     },
     render: function (view) {
       if (view === "world") { fillCountrySelect(); if (!st.hover) $("w-hover").textContent = L().w_hover_hint; }
       if (view === "country") renderCountry();
       if (view === "region") renderRegion();
+      if (view === "wquiz") renderQuiz();
     },
     // for checks: the monthly water calculation for a set of monthly climate values
     _need: function (key, climate, month, soil) {

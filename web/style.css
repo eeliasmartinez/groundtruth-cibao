@@ -798,3 +798,38 @@ details.more .soil-table { margin-top: 8px; }
   .wc-layout, .wr-layout { grid-template-columns: 1fr; }
   .wr-controls { grid-template-columns: 1fr 1fr; }
 }
+
+/* ---------- World questionnaire ---------- */
+.wq-start { display: grid; justify-items: start; gap: 8px; }
+.wq-start .help { margin: 0; max-width: 70ch; }
+.wq-top { display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; align-items: end; }
+.wq-where { margin: 0; color: var(--red); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; font-size: 13px; }
+.wq-count { color: var(--ink-2); font-size: 13px; font-weight: 700; }
+.wq-top .g-progress { grid-column: 1 / -1; }
+.wq-stage { display: grid; gap: 14px; min-height: 340px; }
+.wq-stage h2 { margin: 0; font-family: var(--display); font-size: clamp(32px, 4.6vw, 58px); line-height: .98; text-transform: uppercase; }
+.wq-stage .help { margin: 0; max-width: 70ch; }
+.wq-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.wq-chips.col { flex-direction: column; align-items: stretch; max-width: 640px; }
+.cw-chip.big { min-height: 52px; padding: 10px 18px; font-size: 16px; font-weight: 700; }
+.wq-chips.col .cw-chip { display: grid; gap: 4px; text-align: left; }
+.wq-chips.col .cw-chip span { font-weight: 400; font-size: 14px; opacity: .85; }
+.wq-area { display: flex; align-items: stretch; gap: 0; max-width: 300px; }
+.wq-area button { width: 52px; border: 2px solid var(--ink); background: #fff; font: inherit; font-size: 22px; cursor: pointer; }
+.wq-area input { flex: 1; min-width: 0; border: 2px solid var(--ink); border-left: 0; border-right: 0; padding: 8px; font: inherit; font-size: 22px; text-align: center; }
+.wq-range { max-width: 520px; }
+.wq-nav { display: flex; justify-content: space-between; gap: 12px; padding-top: 12px; border-top: 2px solid var(--ink); }
+.wq-result { position: relative; display: grid; gap: 14px; }
+.wq-stamp { position: absolute; right: 0; top: 0; margin: 0; padding: 6px 14px; border: 4px solid var(--red); color: var(--red); font-family: var(--display); font-size: 30px; font-weight: 800; transform: rotate(-8deg); animation: wq-stamp .5s cubic-bezier(.2,.7,.2,1) .2s both; }
+@keyframes wq-stamp { from { opacity: 0; transform: rotate(-8deg) scale(1.5); } to { opacity: 1; transform: rotate(-8deg) scale(1); } }
+.wq-result .lead { max-width: 60ch; margin: 0; font-size: 20px; font-weight: 700; padding-right: 120px; }
+.wq-budget { margin: 0; padding: 10px 12px; border-left: 4px solid var(--blue); background: var(--blue-tint); font-weight: 700; }
+.wq-plans { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.wq-plans li { display: grid; gap: 4px; padding: 14px 16px; border: 2px solid var(--ink); background: #fff; }
+.wq-plans li.best { border-color: var(--red); box-shadow: 6px 6px 0 var(--red); }
+.wq-plans li b { font-family: var(--display); font-size: 20px; text-transform: uppercase; }
+.wq-plans li.best b { color: var(--red); }
+.wq-what { font-size: 17px; font-weight: 700; }
+.wq-plans li span:last-child { color: var(--ink-2); font-size: 14px; }
+.wq-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 760px) { .wq-result .lead { padding-right: 0; padding-top: 44px; } }

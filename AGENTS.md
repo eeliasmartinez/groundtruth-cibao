@@ -103,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v23`).
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v24`).
 - **Datos del relieve:** el resumen del clima, suelo, agua y área está cerrado inicialmente
   dentro de “Datos del mapa”; se abre solo si el usuario lo elige.
 - **Continuar desde una zona:** “Continuar con esta finca” coloca la marca ilustrativa y
@@ -203,6 +203,11 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   perfil (olivo, café, cacao, palma, uva…) se muestran "sin cálculo de agua".
 - Es un prototipo: tablas FAO-56 de otros climas, sin validación agronómica por país, sin
   suelo, calor ni mercado. Decirlo así en el pitch.
+- **Cuestionario mundial** (vista `wquiz` en `web/world.js`): "Empezar con mi finca" en el
+  modo mundo → país → provincia → 5 preguntas (cultivo habitual, mes y hectáreas, suelo,
+  agua como % de la que usa su cultivo, prioridad: agua / suelo / lo que ya se siembra en
+  el país). Compara tres planes (seguir, cambiar todo, mezcla) y recomienda el que siembra
+  más tierra; en empate decide la prioridad. Solo agua, año promedio, en hectáreas.
 
 ## Mis cultivos y dos recomendaciones (15-nov)
 - En "Agua y cultivos" el agricultor marca qué cultivos tiene (los 48 del directorio; los

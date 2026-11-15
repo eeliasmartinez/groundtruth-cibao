@@ -151,6 +151,10 @@
       <canvas id="w-globe" data-t-label="w_globe_label"></canvas>
       <p class="w-hover" id="w-hover" aria-live="polite"></p>
     </div>
+    <div class="wq-start">
+      <button type="button" class="btn primary big" data-wq-start data-t="wq_start"></button>
+      <p class="help" data-t="wq_start_help"></p>
+    </div>
     <div class="crop-controls w-controls">
       <label><span data-t="w_pick"></span><select id="w-country"></select></label>
     </div>
@@ -188,7 +192,22 @@
       <label><span data-t="cw_month"></span><select id="wr-month"></select></label>
       <label><span data-t="cw_soil"></span><select id="wr-soil"></select></label>
     </div>
+    <div class="wq-start">
+      <button type="button" class="btn primary" data-wq-start data-wq-here data-t="wq_here"></button>
+    </div>
     <div class="cw-rec" id="wr-rec" aria-live="polite"></div>
+  </section>
+  <section class="page world-page wq" id="wq-section" data-view="wquiz">
+    <div class="wq-top">
+      <p class="wq-where" id="wq-where"></p>
+      <span class="wq-count" id="wq-count"></span>
+      <div class="g-progress"><i id="wq-bar"></i></div>
+    </div>
+    <div class="wq-stage" id="wq-stage" aria-live="polite"></div>
+    <div class="wq-nav">
+      <button type="button" class="btn" data-wq-back></button>
+      <button type="button" class="btn primary" data-wq-next></button>
+    </div>
   </section>
 
   <!-- ===================== GUIDED WALKTHROUGH ===================== -->
