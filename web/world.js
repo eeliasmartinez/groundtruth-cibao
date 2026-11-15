@@ -20,7 +20,8 @@
     climate: null, climateStatus: "", month: (new Date().getMonth() + 1) % 12 + 1, soil: "loam",
     lon0: -40, lat0: 12, hover: null, picked: null,
     // the farmer's questionnaire (same five questions as the Dominican walkthrough)
-    quizMode: false, qstep: 0, mine: [], pct: 0.6, priority: "water"
+    quizMode: false, qstep: 0, mine: [], pct: 0.6, priority: "water",
+    unit: "ha", totalHa: 1, split: false, wqTab: "plans"
   };
   var cache = { provinces: {}, climate: {} };
 
@@ -373,7 +374,7 @@
     renderRegion(); renderQuiz();
     buildRelief(p);
     if (st.climate) return;
-    fetch("https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M,T2M_RANGE,PRECTOTCORR,ALLSKY_SFC_SW_DWN,RH2M,WS2M" +
+    fetch("https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M,T2M_RANGE,PRECTOTCORR,ALLSKY_SFC_SW_DWN,RH2M,WS2M,GWETROOT" +
       "&community=AG&longitude=" + center[0].toFixed(3) + "&latitude=" + center[1].toFixed(3) + "&format=JSON")
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (json) {
@@ -386,7 +387,7 @@
         var climate = { tmax: mean.map(function (t, m) { return t === null || range[m] === null ? null : t + range[m] / 2; }),
           tmin: mean.map(function (t, m) { return t === null || range[m] === null ? null : t - range[m] / 2; }),
           rain: series("PRECTOTCORR"), solar: series("ALLSKY_SFC_SW_DWN"),
-          rh: series("RH2M"), wind: series("WS2M"), elev: json.geometry.coordinates[2] || 0, lat: center[1],
+          rh: series("RH2M"), wind: series("WS2M"), soil: P.GWETROOT ? series("GWETROOT") : null, elev: json.geometry.coordinates[2] || 0, lat: center[1],
           range: (json.header && json.header.range) || "" };
         if (climate.tmax.concat(climate.rain, climate.solar, climate.rh, climate.wind).some(function (v) { return v === null; })) throw new Error("missing");
         climate.et0 = monthlyEt0(climate);
@@ -479,6 +480,8 @@
       $("wr-month").setAttribute("data-lang", lang());
     }
     $("wr-month").value = st.month; $("wr-soil").value = st.soil;
+    $("wr-unit-slot").innerHTML = unitToggle();
+    drawMapData();
     var cl = st.climate;
     if (!cl) { $("wr-climate").innerHTML = ""; $("wr-rec").innerHTML = ""; return; }
     // Climate: monthly rain against the water the field loses (ET0), both in mm per month.
@@ -496,8 +499,8 @@
     allProfiles().forEach(function (key) { needs[key] = cropNeedMm(key, cl); });
     function line(key, label, best, hectares) {
       var mm = needs[key], days = seasonDays(key);
-      var text = days > LONG_CYCLE ? tr("w_rec_long", { n: days, m3: num(mm * 10) })
-        : mm < 1 ? Lx.w_rec_rain : tr("w_rec_need", { m3: num(mm * 10), mm: num(mm), n: days });
+      var text = days > LONG_CYCLE ? tr("w_rec_long", { n: days, m3: num(perUnit(mm * 10)), u: unitShort() })
+        : mm < 1 ? Lx.w_rec_rain : tr("w_rec_need", { m3: num(perUnit(mm * 10)), mm: num(mm), n: days, unit: unitWord() });
       var frost = frostMonths(key, cl);
       return "<li" + (best ? " class=\"best\"" : "") + "><b>" + esc(label) + "</b>" + (hectares ? "<em>" + num(hectares) + " ha</em>" : "") +
         "<span>" + esc(text) + "</span>" + (frost.length ? "<span class=\"w-frost\">" + esc(frostText(frost)) + "</span>" : "") + "</li>";
@@ -732,11 +735,20 @@
   }
 
   // ------------------------------------------------------------------ the farmer's questionnaire
-  // Water only, average year. The farmer marks one or more crops with their hectares; the
-  // water allocation is a share of what those crops need here (the Dominican tool uses
-  // rice for this). Plans compared: keep the same crops on less land, put all land in the
-  // farmer's least thirsty crop, switch to another crop, or mix so all land is planted.
+  // Water only, average year. The farmer marks one or more crops and the total land (split
+  // evenly unless they spread it by crop). The water allocation is a share of what those
+  // crops need here (the Dominican tool uses rice for this). Plans compared: keep the same
+  // crops on less land, put all land in the farmer's least thirsty crop, switch to another
+  // crop, or mix so all land is planted. Areas are kept in hectares and shown in the
+  // unit the farmer picks (1 tarea = 628.86 m2, as in water.py).
   var LEGUMES_ALL = ["beans", "pigeon_pea", "cowpea", "green_bean", "peanut", "soybean", "lentil", "peas_dry", "broad_bean"];
+  var TAREAS_PER_HA = 10000 / 628.86;
+  function toUnit(ha) { return st.unit === "tareas" ? ha * TAREAS_PER_HA : ha; }
+  function fromUnit(v) { return st.unit === "tareas" ? v / TAREAS_PER_HA : v; }
+  function areaText(ha) { var v = toUnit(ha); return num(v, v < 10 ? 1 : 0) + " " + L()[st.unit === "tareas" ? "w_u_tareas" : "w_u_ha"]; }
+  function perUnit(m3PerHa) { return st.unit === "tareas" ? m3PerHa / TAREAS_PER_HA : m3PerHa; }
+  function unitWord() { return L()[st.unit === "tareas" ? "w_per_tarea" : "w_per_ha"]; }
+  function unitShort() { return L()[st.unit === "tareas" ? "w_u_tarea1" : "w_u_ha"]; }
   function countryKeys() {
     var keys = [];
     (st.country ? st.country.crops : []).forEach(function (cr) {
@@ -754,13 +766,18 @@
     for (var i = 0; i < st.mine.length; i++) if (st.mine[i].key === k) return i;
     return -1;
   }
-  function mineArea() { return st.mine.reduce(function (a, m) { return a + m.ha; }, 0); }
+  // hectares of each crop: even split of the total, or what the farmer spread by crop
+  function mineHa() {
+    return st.mine.map(function (m) { return { key: m.key, ha: st.split ? m.ha : st.totalHa / st.mine.length }; });
+  }
+  function mineArea() { return st.split ? st.mine.reduce(function (a, m) { return a + m.ha; }, 0) : st.totalHa; }
   function mineNames() { return st.mine.map(function (m) { return profileName(m.key).toLowerCase(); }).join(", "); }
+  function withMonth(month, fn) { var keep = st.month; st.month = month; try { return fn(); } finally { st.month = keep; } }
   function quizPlans() {
-    var cl = st.climate, need = {};
+    var cl = st.climate, need = {}, mine = mineHa();
     allProfiles().forEach(function (k) { need[k] = cropNeedMm(k, cl) * 10; }); // m3 per hectare
-    var area = mineArea(), base = st.mine.reduce(function (a, m) { return a + m.ha * need[m.key]; }, 0);
-    var budget = st.pct * base, known = countryKeys(), mineKeys = st.mine.map(function (m) { return m.key; });
+    var area = mineArea(), base = mine.reduce(function (a, m) { return a + m.ha * need[m.key]; }, 0);
+    var budget = st.pct * base, known = countryKeys(), mineKeys = mine.map(function (m) { return m.key; });
     var pool = allProfiles().filter(function (k) { return quizCrop(k) && mineKeys.indexOf(k) < 0; });
     function frosty(k) { return frostMonths(k, cl).length ? 1 : 0; }
     function rank(k) {
@@ -777,8 +794,8 @@
     }
     function fill(key) { return need[key] > 0 ? Math.min(area, budget / need[key]) : area; }
     var share = base > 0 ? Math.min(1, budget / base) : 1;
-    var list = [plan("keep", st.mine.map(function (m) { return { key: m.key, ha: m.ha * share }; }))];
-    if (st.mine.length > 1) {
+    var list = [plan("keep", mine.map(function (m) { return { key: m.key, ha: m.ha * share }; }))];
+    if (mine.length > 1) {
       var thrifty = mineKeys.slice().sort(function (x, y) { return need[x] - need[y]; })[0];
       list.push(plan("own", [{ key: thrifty, ha: fill(thrifty) }]));
     }
@@ -786,7 +803,7 @@
     if (area > 0 && base / area > need[alt]) { // keep part of the farmer's crops, the rest in the thriftier crop
       var x = Math.max(0, Math.min(1, (budget - area * need[alt]) / (base - area * need[alt])));
       var altHa = need[alt] > 0 ? Math.min(area * (1 - x), Math.max(0, (budget - x * base) / need[alt])) : area * (1 - x);
-      list.push(plan("mix", st.mine.map(function (m) { return { key: m.key, ha: m.ha * x }; }).concat([{ key: alt, ha: altHa }])));
+      list.push(plan("mix", mine.map(function (m) { return { key: m.key, ha: m.ha * x }; }).concat([{ key: alt, ha: altHa }])));
     }
     var plans = list.filter(function (p, i, all) { // show each different plan once
       return all.slice(0, i).every(function (q) { return partsText(q) !== partsText(p); });
@@ -803,11 +820,56 @@
       if (st.priority === "known") return knownHa(q) - knownHa(p) || p.used - q.used;
       return p.used - q.used;
     })[0];
-    return { plans: plans, best: best, budget: budget, area: area };
+    return { plans: plans, best: best, budget: budget, area: area, need: need };
   }
   function partsText(p) {
     if (!p.parts.length) return L().wq_nothing;
-    return p.parts.map(function (q) { return tr("wq_part", { ha: num(q.ha, q.ha < 10 ? 1 : 0), crop: profileName(q.key).toLowerCase() }); }).join(" + ");
+    return p.parts.map(function (q) { return tr("wq_part", { area: areaText(q.ha), crop: profileName(q.key).toLowerCase() }); }).join(" + ");
+  }
+  function frostLines(p, climate) {
+    return p.parts.map(function (q) {
+      var f = frostMonths(q.key, climate);
+      return f.length ? "<span class=\"w-frost\">" + esc(profileName(q.key) + ": " + frostText(f)) + "</span>" : "";
+    }).join("");
+  }
+  // The planting month with the least irrigation and no average frost, for one crop.
+  function bestMonth(key) {
+    var out = null;
+    for (var m = 1; m <= 12; m++) {
+      var r = withMonth(m, function () { return { need: cropNeedMm(key, st.climate) * 10, frost: frostMonths(key, st.climate).length }; });
+      if (r.frost) continue;
+      if (!out || r.need < out.need) out = { month: m, need: r.need };
+    }
+    return out;
+  }
+  function climateTable(highlight) {
+    var Lx = L(), cl = st.climate, MONTHS = window.GTApp ? window.GTApp.months() : [];
+    return "<div class=\"wq-table\"><table><thead><tr>" + Lx.wq_clim_head.map(function (h) { return "<th>" + esc(h) + "</th>"; }).join("") +
+      "</tr></thead><tbody>" + MONTHS.map(function (name, m) {
+        var cells = [name, num(cl.rain[m] * DAYS[m]), num(cl.et0[m] * DAYS[m]), num(cl.tmax[m], 1), num(cl.tmin[m], 1), num(cl.rh[m]),
+          cl.soil && cl.soil[m] != null ? num(cl.soil[m] * 100) : "—"];
+        return "<tr class=\"" + (highlight.indexOf(m + 1) >= 0 ? "on" : "") + (cl.tmin[m] < 0 ? " cold" : "") + (cl.et0[m] > cl.rain[m] ? " short" : "") + "\">" +
+          cells.map(function (c) { return "<td>" + esc(c) + "</td>"; }).join("") + "</tr>";
+      }).join("") + "</tbody></table></div><p class=\"note\">" + esc(Lx.wq_clim_note) + "</p>";
+  }
+  // Short climate summary for the relief's "Map data" fold.
+  function mapData() {
+    var Lx = L(), cl = st.climate, m = st.month - 1, MONTHS = window.GTApp ? window.GTApp.months() : [];
+    if (!cl) return "<p>" + esc(st.climateStatus === "failed" ? Lx.w_failed_climate : Lx.w_loading_climate) + "</p>";
+    var rows = [[Lx.md_month, MONTHS[m]], [Lx.md_rain, num(cl.rain[m] * DAYS[m]) + " mm"], [Lx.md_et, num(cl.et0[m] * DAYS[m]) + " mm"],
+      [Lx.md_tmax, num(cl.tmax[m], 1) + " °C"], [Lx.md_tmin, num(cl.tmin[m], 1) + " °C"], [Lx.md_rh, num(cl.rh[m]) + "%"],
+      [Lx.md_soil, cl.soil && cl.soil[m] != null ? num(cl.soil[m] * 100) + "%" : "—"], [Lx.md_elev, num(cl.elev) + " m"]];
+    if (st.quizMode && st.mine.length) rows.push([Lx.md_area, areaText(mineArea())], [Lx.md_water, Math.round(st.pct * 100) + "%"], [Lx.md_soiltype, Lx.soils[st.soil]]);
+    return "<dl>" + rows.map(function (r) { return "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>"; }).join("") + "</dl><p class=\"note\">" + esc(Lx.md_note) + "</p>";
+  }
+  function drawMapData() {
+    document.querySelectorAll(".wr-mapdata-body").forEach(function (el) { el.innerHTML = mapData(); });
+  }
+  function unitToggle() {
+    var Lx = L();
+    return "<div class=\"wq-units\" role=\"group\" aria-label=\"" + esc(Lx.w_unit_label) + "\">" + ["ha", "tareas"].map(function (u) {
+      return "<button type=\"button\" data-wq-unit=\"" + u + "\" class=\"" + (st.unit === u ? "on" : "") + "\" aria-pressed=\"" + (st.unit === u) + "\">" + esc(Lx["w_unit_" + u]) + "</button>";
+    }).join("") + "</div>";
   }
   function renderQuiz() {
     if (!$("wq-stage") || !st.province || !st.country) return;
@@ -815,9 +877,11 @@
     $("wq-where").textContent = st.province.name + " · " + countryName(st.country);
     $("wq-count").textContent = step < 5 ? tr("wq_count", { n: step + 1 }) : Lx.wq_result_label;
     $("wq-bar").style.width = (100 * Math.min(step + 1, 5) / 5) + "%";
+    $("wq-unit-slot").innerHTML = unitToggle();
     var back = document.querySelector("[data-wq-back]"), next = document.querySelector("[data-wq-next]");
     back.textContent = Lx.g_back; next.textContent = step === 4 ? Lx.g_see : Lx.g_next; next.hidden = step >= 5;
     next.disabled = step === 0 && !st.mine.length;
+    drawMapData();
     var html = "";
     if (step === 0) {
       var known = countryKeys().filter(quizCrop), others = allProfiles().filter(function (k) { return quizCrop(k) && known.indexOf(k) < 0; });
@@ -831,13 +895,21 @@
         "<p class=\"wq-picked\">" + esc(st.mine.length ? tr("wq_picked", { n: st.mine.length, list: mineNames() }) : Lx.wq_pick_one) + "</p>" +
         "<p class=\"help\">" + esc(Lx.wq_crop_long) + "</p>";
     } else if (step === 1) {
+      var step1 = st.unit === "tareas" ? 10 : 1;
       html = "<h2>" + esc(Lx.g_q[2]) + "</h2><p class=\"g-label\">" + esc(Lx.cw_month) + "</p><div class=\"wq-chips\">" + MONTHS.map(function (m, i) {
         return "<button type=\"button\" class=\"cw-chip" + (i + 1 === st.month ? " on" : "") + "\" data-wq-month=\"" + (i + 1) + "\">" + esc(m) + "</button>";
-      }).join("") + "</div><p class=\"g-label\">" + esc(Lx.wq_area) + "</p><div class=\"wq-rows\">" + st.mine.map(function (m) {
-        return "<div class=\"wq-row\"><span>" + esc(profileName(m.key)) + "</span><div class=\"wq-area\"><button type=\"button\" data-wq-ha=\"" + m.key + "\" data-step=\"-1\" aria-label=\"-1\">−</button>" +
-          "<input type=\"number\" min=\"0.1\" max=\"100000\" step=\"0.1\" inputmode=\"decimal\" data-wq-ha-input=\"" + m.key + "\" value=\"" + m.ha + "\" aria-label=\"" + esc(profileName(m.key)) + "\">" +
-          "<button type=\"button\" data-wq-ha=\"" + m.key + "\" data-step=\"1\" aria-label=\"+1\">+</button></div></div>";
-      }).join("") + "</div><p class=\"help\" id=\"wq-total\">" + esc(tr("wq_total", { ha: num(mineArea(), 1) })) + " " + esc(Lx.wq_area_help) + "</p>";
+      }).join("") + "</div><p class=\"g-label\">" + esc(tr("wq_area", { u: L()[st.unit === "tareas" ? "w_unit_tareas" : "w_unit_ha"].toLowerCase() })) + "</p>" +
+        (st.split ? "" : "<div class=\"wq-area\"><button type=\"button\" data-wq-total=\"-" + step1 + "\" aria-label=\"-\">−</button>" +
+          "<input type=\"number\" min=\"0.1\" max=\"1000000\" step=\"0.1\" inputmode=\"decimal\" id=\"wq-total-input\" value=\"" + Math.round(toUnit(st.totalHa) * 10) / 10 + "\">" +
+          "<button type=\"button\" data-wq-total=\"" + step1 + "\" aria-label=\"+\">+</button></div>") +
+        "<p class=\"help\">" + esc(Lx.wq_area_help) + "</p>" +
+        (st.mine.length > 1 ? "<details class=\"more wq-split\"" + (st.split ? " open" : "") + "><summary data-wq-split=\"1\">" + esc(Lx.wq_split) + "</summary>" +
+          "<p class=\"help\">" + esc(Lx.wq_split_help) + "</p><div class=\"wq-rows\">" + st.mine.map(function (m) {
+            var v = Math.round(toUnit(st.split ? m.ha : st.totalHa / st.mine.length) * 10) / 10;
+            return "<div class=\"wq-row\"><span>" + esc(profileName(m.key)) + "</span><div class=\"wq-area\">" +
+              "<input type=\"number\" min=\"0\" max=\"1000000\" step=\"0.1\" inputmode=\"decimal\" data-wq-ha-input=\"" + m.key + "\" value=\"" + v + "\" aria-label=\"" + esc(profileName(m.key)) + "\"></div></div>";
+          }).join("") + "</div></details>" : "") +
+        "<p class=\"wq-picked\" id=\"wq-total\">" + esc(tr("wq_total", { area: areaText(mineArea()) })) + "</p>";
     } else if (step === 2) {
       html = "<h2>" + esc(Lx.g_q[3]) + "</h2><div class=\"wq-chips\">" + ["clay", "loam", "sandy"].map(function (s) {
         return "<button type=\"button\" class=\"cw-chip big" + (s === st.soil ? " on" : "") + "\" data-wq-soil=\"" + s + "\">" + esc(Lx.soils[s]) + "</button>";
@@ -856,19 +928,40 @@
       html = "<h2>" + esc(Lx.g_result) + "</h2><p class=\"w-status\">" + esc(st.climateStatus === "failed" ? Lx.w_failed_climate : Lx.w_loading_climate) + "</p>";
     } else {
       var r = quizPlans(), best = r.best;
+      var month2 = (st.month + 5) % 12 + 1;
+      var r2 = withMonth(month2, quizPlans);
+      var keys = [];
+      mineHa().concat(best.parts, r2.best.parts).forEach(function (q) { if (keys.indexOf(q.key) < 0) keys.push(q.key); });
       html = "<div class=\"wq-result\"><p class=\"wq-stamp\">PLAN B</p><h2>" + esc(Lx.g_result) + "</h2><p class=\"lead\">" + esc(tr("wq_lead", {
         pct: Math.round(st.pct * 100), crop: mineNames(), plan: partsText(best) })) + "</p>" +
-        "<p class=\"wq-budget\">" + esc(tr("wq_budget", { m3: num(r.budget), ha: num(r.area, r.area < 10 ? 1 : 0) })) + "</p><ol class=\"wq-plans\">" +
-        r.plans.map(function (p) {
+        "<p class=\"wq-budget\">" + esc(tr("wq_budget", { m3: num(r.budget), area: areaText(r.area) })) + "</p>" +
+        "<div class=\"wq-tabs\" role=\"tablist\">" + ["plans", "cycles", "months", "climate"].map(function (t) {
+          return "<button type=\"button\" role=\"tab\" data-wq-tab=\"" + t + "\" class=\"" + (st.wqTab === t ? "on" : "") + "\" aria-selected=\"" + (st.wqTab === t) + "\">" + esc(Lx["wq_tab_" + t]) + "</button>";
+        }).join("") + "</div><div class=\"wq-tab-body\">";
+      if (st.wqTab === "cycles") {
+        html += "<ol class=\"wq-plans\">" + [[1, st.month, r], [2, month2, r2]].map(function (c) {
+          var p = c[2].best;
+          return "<li class=\"" + (c[0] === 1 ? "best" : "") + "\"><b>" + esc(tr("wq_cycle", { n: c[0], month: MONTHS[c[1] - 1] })) + "</b><span class=\"wq-what\">" + esc(partsText(p)) +
+            "</span><span>" + esc(tr("wq_plan_use", { used: num(p.used), budget: num(c[2].budget) })) + "</span>" +
+            withMonth(c[1], function () { return frostLines(p, st.climate); }) + "</li>";
+        }).join("") + "</ol><p class=\"note\">" + esc(Lx.wq_cycles_note) + "</p>";
+      } else if (st.wqTab === "months") {
+        html += "<p class=\"help\">" + esc(Lx.wq_best_month_help) + "</p><ol class=\"wq-plans\">" + keys.map(function (k) {
+          var bm = bestMonth(k), now = r.need[k];
+          return "<li><b>" + esc(profileName(k)) + "</b><span>" + esc(bm ? tr("wq_best_month", { best: MONTHS[bm.month - 1], m3: num(perUnit(bm.need)), u: unitShort(),
+            month: MONTHS[st.month - 1], now: num(perUnit(now)) }) : Lx.wq_best_month_frost) + "</span></li>";
+        }).join("") + "</ol>";
+      } else if (st.wqTab === "climate") {
+        html += climateTable([st.month, month2]);
+      } else {
+        html += "<ol class=\"wq-plans\">" + r.plans.map(function (p) {
           var free = Math.max(0, r.area - p.planted);
           return "<li class=\"" + (p === best ? "best" : "") + "\"><b>" + esc(Lx["wq_plan_" + p.kind]) + (p === best ? " · " + esc(Lx.wq_recommended) : "") + "</b>" +
             "<span class=\"wq-what\">" + esc(partsText(p)) + "</span><span>" + esc(tr("wq_plan_use", { used: num(p.used), budget: num(r.budget) })) +
-            (free > 0.05 ? " · " + esc(tr("wq_free", { ha: num(free, free < 10 ? 1 : 0) })) : " · " + esc(Lx.wq_all_planted)) + "</span>" +
-            p.parts.map(function (q) {
-              var f = frostMonths(q.key, st.climate);
-              return f.length ? "<span class=\"w-frost\">" + esc(profileName(q.key) + ": " + frostText(f)) + "</span>" : "";
-            }).join("") + "</li>";
-        }).join("") + "</ol><p class=\"note\">" + esc(Lx.wq_note) + "</p>" +
+            (free > 0.005 ? " · " + esc(tr("wq_free", { area: areaText(free) })) : " · " + esc(Lx.wq_all_planted)) + "</span>" + frostLines(p, st.climate) + "</li>";
+        }).join("") + "</ol>";
+      }
+      html += "</div><p class=\"note\">" + esc(Lx.wq_note) + "</p>" +
         "<div class=\"wq-actions\"><button type=\"button\" class=\"btn primary\" data-wq-sheet=\"1\">" + esc(Lx.wq_see_sheet) + "</button>" +
         "<button type=\"button\" class=\"btn\" data-wq-restart=\"1\">" + esc(Lx.g_restart) + "</button></div></div>";
     }
@@ -877,23 +970,31 @@
   function listenQuiz() {
     $("wq-section").onclick = function (event) {
       var t = event.target, el;
+      if ((el = t.closest("[data-wq-unit]"))) { st.unit = el.getAttribute("data-wq-unit"); renderQuiz(); renderRegion(); return; }
+      if ((el = t.closest("[data-wq-tab]"))) { st.wqTab = el.getAttribute("data-wq-tab"); renderQuiz(); return; }
       if ((el = t.closest("[data-wq-crop]"))) {
         var k = el.getAttribute("data-wq-crop"), at = mineIndex(k);
-        if (at >= 0) st.mine.splice(at, 1); else st.mine.push({ key: k, ha: 1 });
+        if (at >= 0) st.mine.splice(at, 1); else st.mine.push({ key: k, ha: st.split ? 1 : st.totalHa / Math.max(1, st.mine.length) });
         renderQuiz(); return;
       }
       if ((el = t.closest("[data-wq-month]"))) { st.month = +el.getAttribute("data-wq-month"); renderQuiz(); return; }
-      if ((el = t.closest("[data-wq-ha]"))) {
-        var m = st.mine[mineIndex(el.getAttribute("data-wq-ha"))];
-        if (m) m.ha = Math.max(0.1, Math.round((m.ha + +el.getAttribute("data-step")) * 10) / 10);
+      if ((el = t.closest("[data-wq-total]"))) {
+        st.totalHa = Math.max(fromUnit(0.1), fromUnit(Math.round((toUnit(st.totalHa) + +el.getAttribute("data-wq-total")) * 10) / 10));
         renderQuiz(); return;
+      }
+      if ((el = t.closest("[data-wq-split]"))) { // opening the fold switches to "by crop"; closing it goes back to even
+        event.preventDefault();
+        if (!st.split) st.mine.forEach(function (m) { m.ha = st.totalHa / st.mine.length; });
+        else st.totalHa = mineArea();
+        st.split = !st.split; renderQuiz(); return;
       }
       if ((el = t.closest("[data-wq-soil]"))) { st.soil = el.getAttribute("data-wq-soil"); renderQuiz(); return; }
       if ((el = t.closest("[data-wq-pct]"))) { st.pct = +el.getAttribute("data-wq-pct"); renderQuiz(); return; }
       if ((el = t.closest("[data-wq-prio]"))) { st.priority = el.getAttribute("data-wq-prio"); renderQuiz(); return; }
       if (t.closest("[data-wq-next]")) {
         if (st.qstep === 0 && !st.mine.length) return;
-        st.qstep = Math.min(5, st.qstep + 1); renderQuiz(); window.scrollTo(0, 0); return;
+        st.qstep = Math.min(5, st.qstep + 1); if (st.qstep === 5) st.wqTab = "plans";
+        renderQuiz(); window.scrollTo(0, 0); return;
       }
       if (t.closest("[data-wq-back]")) {
         if (st.qstep > 0) { st.qstep -= 1; renderQuiz(); } else if (window.GTApp) window.GTApp.go("country");
@@ -903,11 +1004,10 @@
       if (t.closest("[data-wq-restart]")) { st.qstep = 0; renderQuiz(); window.scrollTo(0, 0); }
     };
     $("wq-section").oninput = function (event) {
-      var key = event.target.getAttribute("data-wq-ha-input");
-      if (key) {
-        var v = parseFloat(event.target.value), m = st.mine[mineIndex(key)];
-        if (m && v > 0) { m.ha = Math.min(v, 100000); $("wq-total").textContent = tr("wq_total", { ha: num(mineArea(), 1) }) + " " + L().wq_area_help; }
-      }
+      var key = event.target.getAttribute("data-wq-ha-input"), v = parseFloat(event.target.value);
+      if (key) { var m = st.mine[mineIndex(key)]; if (m && v >= 0) m.ha = fromUnit(Math.min(v, 1000000)); }
+      if (event.target.id === "wq-total-input" && v > 0) st.totalHa = fromUnit(Math.min(v, 1000000));
+      if (key || event.target.id === "wq-total-input") { $("wq-total").textContent = tr("wq_total", { area: areaText(mineArea()) }); drawMapData(); }
       if (event.target.id === "wq-pct") { st.pct = event.target.value / 100; $("wq-pct-out").textContent = event.target.value + "%";
         document.querySelectorAll("[data-wq-pct]").forEach(function (b) { b.classList.toggle("on", Math.abs(+b.getAttribute("data-wq-pct") - st.pct) < 0.001); }); }
     };
@@ -934,6 +1034,10 @@
       if (el && st.provinces) { event.preventDefault(); openProvince(st.provinces[+el.getAttribute("data-w-prov")]); }
     };
     $("wr-month").onchange = function () { st.month = +this.value; renderRegion(); };
+    $("wr-unit-slot").onclick = function (event) {
+      var el = event.target.closest("[data-wq-unit]");
+      if (el) { st.unit = el.getAttribute("data-wq-unit"); renderRegion(); renderQuiz(); }
+    };
     $("wr-soil").onchange = function () { st.soil = this.value; renderRegion(); };
   }
   function fillCountrySelect() {

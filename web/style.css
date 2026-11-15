@@ -861,3 +861,31 @@ details.more .soil-table { margin-top: 8px; }
 .wr-relief-note { margin: 0; color: #dfe6ff; font-size: 12px; line-height: 1.4; }
 .wr-photo { margin-top: 4px; }
 @media (max-width: 860px) { .wq-layout { grid-template-columns: 1fr; } .wr-relief { position: static; } }
+
+/* World plan: unit switch, tabs, climate table, map data */
+.wq-top { grid-template-columns: 1fr auto auto; }
+.wq-units { display: inline-flex; border: 2px solid var(--ink); }
+.wq-units button { min-height: 32px; padding: 4px 10px; border: 0; background: #fff; color: var(--ink); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+.wq-units button.on { background: var(--ink); color: #fff; }
+.wq-split summary { cursor: pointer; font-weight: 800; }
+.wq-tabs { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 2px solid var(--ink); }
+.wq-tabs button { min-height: 42px; padding: 8px 16px; border: 2px solid var(--ink); border-bottom: 0; margin-right: -2px; background: #fff; color: var(--ink); font: inherit; font-weight: 800; cursor: pointer; }
+.wq-tabs button.on { background: var(--blue); border-color: var(--blue); color: #fff; }
+.wq-tab-body { display: grid; gap: 10px; }
+.wq-table { overflow-x: auto; }
+.wq-table table { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; }
+.wq-table th, .wq-table td { padding: 6px 8px; border-bottom: 1px solid var(--hair); text-align: right; white-space: nowrap; }
+.wq-table th:first-child, .wq-table td:first-child { text-align: left; }
+.wq-table th { font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--ink-2); white-space: normal; }
+.wq-table tr.on td { background: var(--blue-tint); font-weight: 800; }
+.wq-table tr.short td:nth-child(2) { color: var(--red); }
+.wq-table tr.cold td:nth-child(5) { color: var(--red); font-weight: 800; }
+.wr-mapdata { background: rgba(255,255,255,.95); border: 2px solid var(--ink); }
+.wr-mapdata summary { padding: 8px 10px; cursor: pointer; font-weight: 800; color: var(--blue); }
+.wr-mapdata-body { padding: 0 10px 10px; }
+.wr-mapdata dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; font-size: 14px; }
+.wr-mapdata dt { color: var(--ink-2); }
+.wr-mapdata dd { margin: 0; font-weight: 800; text-align: right; }
+.wr-mapdata .note { margin: 8px 0 0; font-size: 12px; }
+.wr-controls { grid-template-columns: repeat(3, minmax(0, 260px)); align-items: end; }
+@media (max-width: 760px) { .wq-top { grid-template-columns: 1fr auto; } .wq-unit-slot { grid-column: 1 / -1; } .wr-controls { grid-template-columns: 1fr 1fr; } }
