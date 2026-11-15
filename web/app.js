@@ -54,7 +54,7 @@
   // placed by hand from general geographic knowledge: good for orientation, not surveyed.
   var MAP = { w: 760, h: 546, lon0: -72.1, lat0: 20.05, k: 206, cos: 0.947 };
   var NAV_VIEWS = ["home", "plan", "rotation", "options", "map", "data", "help"];
-  var VIEWS = NAV_VIEWS.concat(["guide", "zone", "crops", "world", "country", "region", "wquiz"]); // crops opens from Home, outside the main farm-planning tabs
+  var VIEWS = NAV_VIEWS.concat(["guide", "zone", "crops", "world", "country", "region", "wquiz", "wplan", "wrot"]); // crops opens from Home, outside the main farm-planning tabs
   var selectedLocalCrop = "cacao";
   // Small drawings for the soil question: water stays on clay, sinks through sand.
   var SOIL_ART = {
@@ -2088,7 +2088,9 @@
   window.GTApp = {
     go: function (view) { setView(view); },
     lang: function () { return state.lang; },
-    months: function () { return MONTHS[state.lang]; }
+    months: function () { return MONTHS[state.lang]; },
+    monthsShort: function () { return MONTHS_SHORT[state.lang]; },
+    icon: function (crop) { return ICONS[crop] ? cropIcon(crop) : null; }
   };
 
   window.onbeforeprint = function () { document.body.classList.add("sheet-mode"); };
@@ -2132,7 +2134,7 @@
     state.view = view;
     if (view === "crops") drawCropDirectory();
     document.querySelectorAll("[data-mode]").forEach(function (b) {
-      var world = ["world", "country", "region", "wquiz"].indexOf(view) >= 0;
+      var world = ["world", "country", "region", "wquiz", "wplan", "wrot"].indexOf(view) >= 0;
       b.classList.toggle("on", (b.getAttribute("data-mode") === "world") === world);
       b.setAttribute("aria-pressed", String((b.getAttribute("data-mode") === "world") === world));
     });

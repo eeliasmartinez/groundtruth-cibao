@@ -904,3 +904,15 @@ details.more .soil-table { margin-top: 8px; }
 .wq-fold { background: #fff; border: 2px solid var(--ink); padding: 10px 14px; }
 .wq-fold summary { cursor: pointer; font-weight: 800; color: var(--blue); }
 .wq-fold[open] summary { margin-bottom: 10px; }
+
+/* World result and plan pages reuse the Dominican plan pieces */
+.wq-stage { position: relative; }
+.wq-stage .g-sub b { color: var(--blue); }
+.wq-best-all { margin: 0; padding: 10px 12px; border-left: 4px solid var(--red); background: #fff; font-weight: 700; }
+.wq-units-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.wq-units-row > span { font-weight: 800; color: var(--ink-2); }
+.world-page .cards { margin-top: 0; }
+.world-page .card { cursor: default; }
+.world-page .headline b { color: var(--blue); }
+.wq-stage .g-q, .wq-stage .g-sub { padding-right: 165px; }
+@media (max-width: 760px) { .wq-stage .g-q, .wq-stage .g-sub { padding-right: 0; } .wq-stage .g-q { padding-right: 110px; } }

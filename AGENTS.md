@@ -103,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v30`). Desde el
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v31`). Desde el
   15-nov el service worker pide **primero la red** (la página y el código siempre
   completos) y usa la copia guardada solo sin conexión o si la red tarda más de 4 s; al
   activarse una versión nueva, la página se recarga una vez sola.
@@ -231,6 +231,13 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   (lluvia, ET₀, máxima, mínima, humedad del aire y del suelo `GWETROOT` de NASA POWER).
 - La ficha de la provincia solo muestra relieve, clima y el botón del cuestionario. El
   relieve tiene su plegable "Datos del mapa".
+- **El plan mundial usa la interfaz de RD como estándar** (15-nov): el resultado tiene el
+  sello Plan B, la frase principal (según lo que siembra el agricultor), la finca de 100
+  cuadros, la leyenda, tres cifras grandes y los botones "Ver mi plan completo" (vista
+  `wplan`: tarjetas de cada plan con medidor de agua, lo mejor en total, mejor mes y clima)
+  y "Ver la rotación" (vista `wrot`: calendario por lotes en dos ciclos; tras un cereal u
+  hortaliza va la leguminosa que menos agua pide, tras una leguminosa vuelve su cultivo).
+  Se reutilizan las clases `.plot`, `.mix`, `.impact`, `.card`, `.cal` de la versión RD.
 
 ## Cuestionario de RD: "¿Qué siembras ahora?" (15-nov)
 - El recorrido tiene 6 preguntas: zona, **cultivos que siembra (varios)**, mes y tareas,
