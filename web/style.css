@@ -956,3 +956,18 @@ details.more .soil-table { margin-top: 8px; }
   .cw-chip, .wq-units button, .wc-list button, .mode-switch button { transition: background-color 150ms ease, color 150ms ease, transform 120ms var(--ease-out); }
   .wc-list button:active, .wq-units button:active { transform: scale(.96); }
 }
+
+/* ---------- Bold screen change: a blue print plate with a red edge sweeps away ---------- */
+#wipe { position: fixed; inset: 0; z-index: 900; pointer-events: none; background: var(--blue); transform: translateX(101%); }
+#wipe::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 18px; background: var(--red); }
+#wipe::before { content: "PLAN B"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-8deg); padding: 6px 18px;
+  border: 5px solid #fff; color: #fff; font-family: var(--display); font-size: clamp(36px, 6vw, 72px); font-weight: 900; letter-spacing: .03em; }
+@media (prefers-reduced-motion: no-preference) {
+  #wipe.run { animation: wipe-off 520ms cubic-bezier(.76, 0, .24, 1) both; }
+  @keyframes wipe-off { 0% { transform: translateX(0); } 18% { transform: translateX(0); } 100% { transform: translateX(101%); } }
+  /* buttons: a red accent slides under the label */
+  .btn { background-image: linear-gradient(var(--red), var(--red)); background-repeat: no-repeat; background-position: 0 100%; background-size: 0 3px;
+    transition: background-color 150ms ease, color 150ms ease, transform 140ms var(--ease-out), background-size 220ms var(--ease-out); }
+  .btn:hover { background-image: linear-gradient(var(--red), var(--red)); background-size: 100% 3px; }
+}
+@media (prefers-reduced-motion: reduce) { #wipe { display: none; } }

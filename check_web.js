@@ -38,7 +38,7 @@ function same(a, b, where) {
 cases.compare.forEach((item, index) => {
   const s = item.scenario;
   const result = engine.compare(
-    data, data.needs[s.key], s.soil, s.area, s.allocation, s.priority, s.rice_allowed, s.salty
+    data, data.needs[s.key], s.soil, s.area, s.allocation, s.priority, s.rice_allowed, s.salty, s.prefer
   );
   same(result.budget_m3, item.budget_m3, `case ${index} budget`);
   same(result.ranked, item.strategies, `case ${index} (${s.key})`);

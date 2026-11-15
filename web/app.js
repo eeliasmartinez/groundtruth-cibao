@@ -12,7 +12,7 @@
   // ------------------------------------------------------------------
   var nextMonth = (new Date().getMonth() + 1) % 12 + 1;
   var state = {
-    lang: "es",
+    lang: "en", // the global judging is in English; the ES button switches to Spanish
     zone: 1, // Valverde (Mao - Esperanza)
     soil: "clay",
     month: nextMonth,
@@ -225,7 +225,27 @@
   function calculate() {
     var needs = D.needs[zone().name + "|" + state.soil + "|" + state.month];
     return E.compare(D, needs, state.soil, state.area, state.allocation, state.priority,
-      state.riceAllowed, state.salty);
+      state.riceAllowed, state.salty, engineCrops());
+  }
+  // The farmer's marked crops that the rotation engine knows (red, black and white beans are one profile).
+  function engineCrops() {
+    var keys = [];
+    (window.GT_LOCAL_CROPS || []).forEach(function (crop) {
+      if (crop.modelKey && state.myCrops.indexOf(crop.id) >= 0 && keys.indexOf(crop.modelKey) < 0) keys.push(crop.modelKey);
+    });
+    return keys;
+  }
+  // Main plan: when the farmer grows more than rice, the best plan made only of their crops
+  // (any plan if none is). With rice alone, the engine's Plan B, which brings in a legume.
+  function mainPlan(result) {
+    var mine = engineCrops();
+    if (mine.filter(function (k) { return k !== "rice"; }).length) {
+      var own = result.ranked.filter(function (s) {
+        return s.plots.length && s.plots.every(function (p) { return mine.indexOf(p.crop) >= 0; });
+      })[0];
+      if (own) return own;
+    }
+    return result.ranked[0];
   }
 
   // ------------------------------------------------------------------
@@ -553,7 +573,7 @@
 
   function draw() {
     var result = calculate();
-    var best = result.ranked[0];
+    var best = mainPlan(result);
     var byKey = {};
     result.strategies.forEach(function (s) { byKey[s.key] = s; });
     var selected = byKey[state.selected] || best;
@@ -1386,6 +1406,7 @@
     stage.innerHTML = "<h2 class=\"g-q\">" + (step < RESULT_STEP ? questions[step] : L.g_result) + "</h2><p class=\"g-sub\" id=\"g-sub\">" +
       (step < RESULT_STEP ? esc(explanations[step]) : "") + "</p><div class=\"g-body\">" + body + "</div>";
     stage.setAttribute("data-step", tag);
+    if (step === RESULT_STEP) setTimeout(function () { countUp(stage); }, 0);
     $("guide").setAttribute("data-step", step);
   }
 
@@ -1681,8 +1702,11 @@
       if (pole) { ctx.beginPath(); ctx.moveTo(q[0], q[1]); ctx.lineTo(q[0], q[1] - pole); ctx.lineWidth = 2.5 * ratio; ctx.strokeStyle = "#10131a"; ctx.stroke(); }
       ctx.beginPath(); ctx.arc(q[0], q[1] - pole, r, 0, 2 * Math.PI);
       ctx.fillStyle = "#e2231a"; ctx.fill(); ctx.lineWidth = 2 * ratio; ctx.strokeStyle = spot.mine ? "#10131a" : "#fff"; ctx.stroke();
-      label(spot.name, q[0] + r + 5 * ratio, q[1] - pole + 4 * ratio, spot.mine);
-      if (spot.mine && (state.farmPlaced || (state.view === "guide" && state.guideWithScene))) {
+      var farmHere = spot.mine && (state.farmPlaced || (state.view === "guide" && state.guideWithScene));
+      // With the farm drawn on the pin, the name moves past the field (22 px each side) so nothing covers it.
+      var nameX = q[0] + (farmHere ? 27 * ratio : r + 5 * ratio);
+      if (!farmHere) label(spot.name, nameX, q[1] - pole + 4 * ratio, spot.mine);
+      if (farmHere) {
         var rise = Math.min(1, Math.max(0, (now - scene.start) / 420));
         var pop = 1 - Math.pow(1 - rise, 3), fx = q[0], fy = q[1] - pole - 8 * ratio * pop;
         ctx.save(); ctx.globalAlpha = pop; ctx.translate(fx, fy); ctx.scale(pop, pop);
@@ -1702,6 +1726,7 @@
         ctx.restore();
         // Above the roof, so it never sits on top of the zone's name (drawn to the right of the pin).
         ctx.save(); ctx.textAlign = "center"; label(state.lang === "es" ? "FINCA" : "FARM", fx, fy - 29 * ratio, true); ctx.restore();
+        label(spot.name, nameX, q[1] - pole + 4 * ratio, true); // drawn last, on top of the farm
       }
     });
 
@@ -2121,13 +2146,39 @@
   // The sections of a new screen rise in, their lists one after another (CSS: .view-in).
   // The class is taken off afterwards so later redraws (typing, sliders) do not replay it.
   var entranceTimer = 0;
+  // Big numbers count up from zero when they first appear (plain numbers only, like 31,558).
+  function countUp(root) {
+    if (reduceMotion || !root) return;
+    root.querySelectorAll(".impact b").forEach(function (el) {
+      var text = el.textContent.trim();
+      if (!/^[\d.,]+$/.test(text)) return;
+      var target = parseFloat(text.replace(/,/g, "")), decimals = (text.split(".")[1] || "").length;
+      if (!(target > 0)) return;
+      var start = performance.now(), fmt = new Intl.NumberFormat(state.lang === "es" ? "es-DO" : "en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+      (function step(now) {
+        var t = Math.min(1, (now - start) / 700), e = 1 - Math.pow(1 - t, 3);
+        el.textContent = fmt.format(target * e);
+        if (t < 1) requestAnimationFrame(step); else el.textContent = text;
+      })(start);
+    });
+  }
+  window.GTCountUp = countUp;
+  // A blue band with a red edge sweeps off the screen and uncovers the new one, like a print plate.
+  function wipe() {
+    if (reduceMotion) return;
+    var band = $("wipe");
+    if (!band) { band = document.createElement("div"); band.id = "wipe"; band.setAttribute("aria-hidden", "true"); document.body.appendChild(band); }
+    band.classList.remove("run"); void band.offsetWidth; band.classList.add("run");
+  }
   function playEntrance() {
     if (reduceMotion) return;
+    wipe();
     // only the outermost visible blocks of the screen, so nothing moves twice
     var shown = [].filter.call(document.querySelectorAll("[data-view]:not(body)"), function (el) {
       return !el.hidden && !(el.parentElement && el.parentElement.closest("[data-view]:not(body)"));
     });
     shown.forEach(function (el) { el.classList.remove("view-in"); void el.offsetWidth; el.classList.add("view-in"); });
+    shown.forEach(countUp);
     clearTimeout(entranceTimer);
     entranceTimer = setTimeout(function () { shown.forEach(function (el) { el.classList.remove("view-in"); }); }, 1100);
   }

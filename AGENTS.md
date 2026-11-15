@@ -103,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v32`). Desde el
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v33`). Desde el
   15-nov el service worker pide **primero la red** (la página y el código siempre
   completos) y usa la copia guardada solo sin conexión o si la red tarda más de 4 s; al
   activarse una versión nueva, la página se recarga una vez sola.
@@ -285,6 +285,20 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   resultado entran en ola como en RD.
 - Solo se animan opacidad y transformación, con `--ease-out` y menos de medio segundo; todo
   está dentro de `@media (prefers-reduced-motion: no-preference)`.
+
+## Inglés primero, plan con los cultivos del agricultor, cortina y optimización (15-nov)
+- La página abre en **inglés** (evaluación global); el botón ES cambia a español.
+- `compare` en `rotation.py` y `web/engine.js` acepta `prefer` (cultivos que el agricultor ya
+  siembra): la leguminosa y el cultivo de venta salen de esos si los hay y caben en el suelo.
+  `check_web.js` prueba ahora 609 casos (200 con `prefer`). En RD, si marca más que arroz,
+  el plan principal es el mejor hecho solo con sus cultivos (`mainPlan` en `web/app.js`);
+  con solo arroz se muestra el Plan B del motor (arroz + leguminosa).
+- Cambio de pantalla con una "cortina" azul de borde rojo (`#wipe`) y cifras que cuentan
+  (`countUp`). Todo se apaga con "reducir movimiento".
+- Optimización: `earth.jpg` se pide al abrir el modo mundo; `world_rivers.js` ya no se guarda
+  en la descarga inicial; las tipografías se precargan; conexión anticipada a NASA POWER,
+  geoBoundaries y los tiles de elevación.
+- En el relieve de RD, el nombre de la zona se corre a la derecha de la casita de la finca.
 
 ## Botón Atrás general
 - El botón "← Atrás" (barra superior; en celular flota sobre la barra de pestañas)

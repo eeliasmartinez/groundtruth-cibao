@@ -93,7 +93,8 @@
       globe.texW = c.width; globe.texH = c.height;
     } catch (e) { globe.tex = null; } // file:// pages may not read image pixels: vector globe instead
   };
-  earth.src = "earth.jpg";
+  // The picture is fetched only when the world mode is first opened, not with the page.
+  function loadEarth() { if (!earth.src) earth.src = "earth.jpg"; }
 
   function setupGlobe() {
     var canvas = $("w-globe");
@@ -924,6 +925,7 @@
       $("wq-stage").classList.remove("wq-step-in"); void $("wq-stage").offsetWidth; $("wq-stage").classList.add("wq-step-in");
       clearTimeout(renderQuiz.timer);
       renderQuiz.timer = setTimeout(function () { $("wq-stage").classList.remove("wq-step-in"); }, 900);
+      if (kind === "result" && window.GTCountUp) window.GTCountUp($("wq-stage"));
     }
     $("wq-stage").setAttribute("data-step", stepTag);
   }
@@ -1144,6 +1146,7 @@
       if ((view === "wquiz" || view === "region") && st.province) { buildRelief(st.province); startRelief(); } else stopRelief();
       if (view === "home") st.quizMode = false;
       if (view === "world") {
+        loadEarth();
         fillCountrySelect();
         $("w-hover").textContent = L().w_hover_hint;
         startGlobe();

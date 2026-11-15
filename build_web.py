@@ -142,6 +142,26 @@ def main():
         )
         cases.append({"scenario": scenario, "strategies": result["strategies"],
                       "budget_m3": result["budget_m3"]})
+    # 200 more with crops the farmer already grows ("prefer"), from their own random stream
+    rng = random.Random(15)
+    for _ in range(200):
+        key = rng.choice(list(all_needs))
+        soil = key.split("|")[1]
+        scenario = {
+            "key": key, "soil": soil,
+            "area": rng.choice([5, 37.5, 100, 480]),
+            "allocation": rng.choice([0, 0.1, 0.3, 0.45, 0.6, 0.8, 1.0]),
+            "priority": rng.choice(["water", "soil", "income"]),
+            "rice_allowed": rng.random() > 0.3,
+            "salty": rng.random() > 0.7,
+            "prefer": rng.sample(sorted(CROPS), rng.randint(1, 4)),
+        }
+        result = rotation.compare_needs(
+            all_needs[key], soil, scenario["area"], scenario["allocation"],
+            scenario["priority"], scenario["rice_allowed"], scenario["salty"], scenario["prefer"],
+        )
+        cases.append({"scenario": scenario, "strategies": result["strategies"],
+                      "budget_m3": result["budget_m3"]})
     basin_cases = [
         {"basin": basin, "rice": 900.0, "other": 200.0, "share": share,
          "expected": rotation.basin_savings(basin, 900.0, 200.0, share)}

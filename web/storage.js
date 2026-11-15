@@ -24,7 +24,7 @@
     if (!isFinite(allocation) || allocation < 0 || allocation > 1) return null;
     if (!isFinite(basinShare) || basinShare < 0 || basinShare > 1) basinShare = 0.25;
     return {
-      lang: validChoice(plan.lang, LANGUAGES, "es"),
+      lang: validChoice(plan.lang, LANGUAGES, "en"),
       zone: zone,
       zoneName: zoneNames[zone],
       soil: validChoice(plan.soil, SOILS, "clay"),

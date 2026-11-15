@@ -3,8 +3,9 @@
 // answers from the saved copy only when there is no connection or the network
 // takes more than a few seconds, as on a weak Wi-Fi.
 // Code written with the assistance of Claude Code (Anthropic) and OpenAI Codex.
-var CACHE = "plan-b-v32";
-var FILES = ["./", "index.html", "style.css", "app.js", "copy.js", "crops_local.js", "world_data.js", "world.js", "world_rivers.js", "earth.jpg", "peaks.js", "storage.js", "engine.js", "data.js", "geo.js", "provinces.js", "relief.js", "sat.jpg",
+var CACHE = "plan-b-v33";
+// world_rivers.js (2 MB) is not saved up front: it is cached the first time the world mode uses it.
+var FILES = ["./", "index.html", "style.css", "app.js", "copy.js", "crops_local.js", "world_data.js", "world.js", "earth.jpg", "peaks.js", "storage.js", "engine.js", "data.js", "geo.js", "provinces.js", "relief.js", "sat.jpg",
   "manifest.webmanifest", "icon.svg", "dam.svg", "icon-192.png", "icon-512.png",
   "fonts/big-shoulders.woff2", "fonts/archivo.woff2"];
 

@@ -104,7 +104,8 @@
   }
 
   // needs: water needs of every crop for one zone, soil and planting month.
-  function compare(data, needs, soil, area, allocation, priority, riceAllowed, salty) {
+  // prefer: crops the farmer already grows (optional), as in rotation.compare_needs.
+  function compare(data, needs, soil, area, allocation, priority, riceAllowed, salty, prefer) {
     var c = data.constants;
     var fit = {};
     Object.keys(data.crops).forEach(function (key) {
@@ -118,8 +119,12 @@
       return Math.min(tareas, money / needs[crop].typical_m3);
     }
 
-    var legume = bestCrop(data, data.legumes, needs, fit, priority);
-    var cash = bestCrop(data, data.cash_crops, needs, fit, priority);
+    function own(group) {
+      var mine = group.filter(function (crop) { return prefer && prefer.indexOf(crop) >= 0 && fit[crop][0] > 0; });
+      return mine.length ? mine : group;
+    }
+    var legume = bestCrop(data, own(data.legumes), needs, fit, priority);
+    var cash = bestCrop(data, own(data.cash_crops), needs, fit, priority);
     function build(key, plots, alternative) {
       return strategy(data, key, plots, area, needs, fit, baseline, budget, priority, alternative);
     }

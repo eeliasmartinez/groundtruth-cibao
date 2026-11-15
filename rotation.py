@@ -164,9 +164,11 @@ def compare(daily, zone, soil, planting_month, area, allocation, priority,
     return compare_needs(needs, soil, area, allocation, priority, rice_allowed, salty)
 
 
-def compare_needs(needs, soil, area, allocation, priority, rice_allowed=True, salty=False):
+def compare_needs(needs, soil, area, allocation, priority, rice_allowed=True, salty=False, prefer=None):
     """Same as compare(), starting from water needs that were already computed.
-    The web page repeats exactly this calculation in the browser."""
+    The web page repeats exactly this calculation in the browser.
+    prefer: crops the farmer already grows; when it holds a legume (or a cash crop),
+    the mixed (or rotation) plan uses the best of those instead of any legume (or cash crop)."""
     fit = {key: suitability(key, needs[key], soil, salty) for key in CROPS}
 
     rice_need = needs["rice"]["typical_m3"]
@@ -177,8 +179,12 @@ def compare_needs(needs, soil, area, allocation, priority, rice_allowed=True, sa
         """Largest area of a crop (up to 'tareas') the budget can irrigate."""
         return min(tareas, budget / needs[crop]["typical_m3"])
 
-    legume = best_crop(LEGUMES, needs, fit, priority)
-    cash = best_crop(CASH_CROPS, needs, fit, priority)
+    def own(group):
+        mine = [c for c in group if prefer and c in prefer and fit[c][0] > 0]
+        return tuple(mine) if mine else group
+
+    legume = best_crop(own(LEGUMES), needs, fit, priority)
+    cash = best_crop(own(CASH_CROPS), needs, fit, priority)
 
     # current: rice only
     rice_only = affordable("rice", area, budget_m3) if rice_allowed else 0
