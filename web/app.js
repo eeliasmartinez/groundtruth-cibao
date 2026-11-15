@@ -1937,7 +1937,11 @@
   function remember() {
     trail.push({ view: state.view, gstep: state.gstep });
     ahead = [];
-    try { history.pushState({ step: trail.length }, ""); browserSteps += 1; } catch (e) { /* not allowed on some file:// pages */ }
+    try {
+      // A #link typed in the address bar already made its own browser step: label it instead of adding one.
+      if (typedLink) history.replaceState({ step: trail.length }, ""); else history.pushState({ step: trail.length }, "");
+      browserSteps += 1;
+    } catch (e) { /* not allowed on some file:// pages */ }
     $("back").hidden = false;
   }
   // Return to the screen that was open before the last click.
@@ -1974,7 +1978,7 @@
     document.querySelectorAll("[data-go]").forEach(function (b) {
       b.classList.toggle("on", b.getAttribute("data-go") === view);
     });
-    try { history.replaceState(history.state, "", "#" + view); } catch (e) { /* not allowed on some file:// pages */ }
+    try { history.replaceState(history.state || { step: 0 }, "", "#" + view); } catch (e) { /* not allowed on some file:// pages */ }
     if (!keepScroll) window.scrollTo(0, 0);
     if (sceneVisible()) startScene(); else stopScene();
   }
@@ -1982,7 +1986,12 @@
     var go = event.target.closest("[data-go]");
     if (go) { event.preventDefault(); setView(go.getAttribute("data-go")); }
   });
-  window.addEventListener("hashchange", function () { setView(location.hash.slice(1), true); });
+  var typedLink = false;
+  window.addEventListener("hashchange", function () {
+    typedLink = !history.state;
+    setView(location.hash.slice(1), true);
+    typedLink = false;
+  });
   window.addEventListener("resize", function () { if (sceneVisible()) startScene(); });
   document.addEventListener("visibilitychange", function () {
     if (document.hidden) stopScene();
@@ -1994,7 +2003,9 @@
   };
   // Each saved browser step carries its position, so Back and Forward can be told apart.
   window.addEventListener("popstate", function (event) {
-    var step = event.state && typeof event.state.step === "number" ? event.state.step : 0;
+    // A #link typed in the address bar has no step: the hashchange listener opens it.
+    if (!event.state || typeof event.state.step !== "number") return;
+    var step = event.state.step;
     while (step < trail.length) { browserSteps = Math.max(0, browserSteps - 1); goBack(); }
     while (step > trail.length && ahead.length) { browserSteps += 1; goForward(); }
   });
