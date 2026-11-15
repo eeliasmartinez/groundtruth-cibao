@@ -54,7 +54,7 @@
   // placed by hand from general geographic knowledge: good for orientation, not surveyed.
   var MAP = { w: 760, h: 546, lon0: -72.1, lat0: 20.05, k: 206, cos: 0.947 };
   var NAV_VIEWS = ["home", "plan", "rotation", "options", "map", "data", "help"];
-  var VIEWS = NAV_VIEWS.concat(["guide", "zone", "crops"]); // crops opens from Home, outside the main farm-planning tabs
+  var VIEWS = NAV_VIEWS.concat(["guide", "zone", "crops", "world", "country", "region"]); // crops opens from Home, outside the main farm-planning tabs
   var selectedLocalCrop = "cacao";
   // Small drawings for the soil question: water stays on clay, sinks through sand.
   var SOIL_ART = {
@@ -141,6 +141,11 @@
     ["Province boundaries: geoBoundaries ADM1, Dominican Republic, represented 2022 (public domain)", "https://www.geoboundaries.org/api/current/gbOpen/DOM/ADM1/"],
     ["FAO Irrigation and Drainage Paper 56: Crop evapotranspiration (Allen et al., 1998)", "https://www.fao.org/4/x0490e/x0490e00.htm"],
     ["FAO-56 chapter 6, Tables 11 and 12: crop stage lengths and Kc used by the water calculator", "https://www.fao.org/4/x0490e/x0490e0b.htm"],
+    ["World prototype globe: NASA Blue Marble shaded relief and bathymetry, via NASA GIBS", "https://gibs.earthdata.nasa.gov"],
+    ["World prototype climate: NASA POWER climatology API, monthly 2001-2025", "https://power.larc.nasa.gov/docs/services/api/temporal/climatology/"],
+    ["World prototype countries: Natural Earth 1:110m (public domain)", "https://www.naturalearthdata.com/"],
+    ["World prototype provinces: geoBoundaries ADM1 (open licences)", "https://www.geoboundaries.org/"],
+    ["World prototype crops: FAOSTAT Crops and livestock products, area harvested (CC BY 4.0)", "https://www.fao.org/faostat/en/#data/QCL"],
     ["FAO Irrigation Water Management Training Manual No. 3: Irrigation water needs (1986)", "https://www.fao.org/4/s2022e/s2022e00.htm"],
     ["FAO Irrigation and Drainage Paper 29: Water quality for agriculture (Ayers & Westcot, 1985)", "https://www.fao.org/4/t0234e/t0234e00.htm"],
     ["elDinero, 25 Mar 2026: La región Norte concentra el 91.5% de la producción nacional de arroz", "https://eldinero.com.do/359496/la-region-norte-concentra-el-91-5-de-la-produccion-nacional-de-arroz/"],
@@ -228,6 +233,9 @@
     document.documentElement.lang = state.lang;
     document.querySelectorAll("[data-t]").forEach(function (el) {
       el.textContent = tr(el.getAttribute("data-t"));
+    });
+    document.querySelectorAll("[data-t-label]").forEach(function (el) {
+      el.setAttribute("aria-label", tr(el.getAttribute("data-t-label")));
     });
     document.querySelectorAll("[data-t-placeholder]").forEach(function (el) {
       el.setAttribute("placeholder", tr(el.getAttribute("data-t-placeholder")));
@@ -575,6 +583,7 @@
     drawLimits();
     drawStorageStatus();
     if (state.view === "crops") drawCropDirectory();
+    if (window.GTWorld) window.GTWorld.render(state.view);
   }
 
   function drawStorageStatus() {
@@ -2016,6 +2025,14 @@
     };
   }
 
+  // What the world prototype (world.js) needs from this page: open a screen through the
+  // same history as everything else, and the current language and month names.
+  window.GTApp = {
+    go: function (view) { setView(view); },
+    lang: function () { return state.lang; },
+    months: function () { return MONTHS[state.lang]; }
+  };
+
   window.onbeforeprint = function () { document.body.classList.add("sheet-mode"); };
   window.onafterprint = function () { document.body.classList.remove("sheet-mode"); };
 
@@ -2056,6 +2073,11 @@
     if (ready && !returning && view !== state.view) remember();
     state.view = view;
     if (view === "crops") drawCropDirectory();
+    document.querySelectorAll("[data-mode]").forEach(function (b) {
+      var world = ["world", "country", "region"].indexOf(view) >= 0;
+      b.classList.toggle("on", (b.getAttribute("data-mode") === "world") === world);
+      b.setAttribute("aria-pressed", String((b.getAttribute("data-mode") === "world") === world));
+    });
     document.body.setAttribute("data-view", view);
     var farmSettings = $("farm-settings");
     if (farmSettings) farmSettings.open = view === "plan";
@@ -2068,6 +2090,7 @@
     try { history.replaceState(history.state || { step: 0 }, "", "#" + view); } catch (e) { /* not allowed on some file:// pages */ }
     if (!keepScroll) window.scrollTo(0, 0);
     if (sceneVisible()) startScene(); else stopScene();
+    if (window.GTWorld) window.GTWorld.show(view);
   }
   document.addEventListener("click", function (event) {
     var go = event.target.closest("[data-go]");

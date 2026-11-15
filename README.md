@@ -39,6 +39,8 @@ and soil wetness. From it the engine computes:
 | `nasa_power.py` | Downloads NASA POWER data and keeps a saved copy in `data/` |
 | `water.py` | Crop water needs (FAO-56) |
 | `crops.py` | Crop table with its sources |
+| `build_world.py` | Builds `web/world_data.js` (Natural Earth countries + FAOSTAT harvested area) and `web/earth.jpg` (NASA Blue Marble via GIBS) for the world prototype |
+| `web/world.js` | World prototype: turning globe, provinces (geoBoundaries, online), NASA POWER monthly climate (online) and FAO-56 water per crop |
 | `crops_fao.py` | 23 more crops for the water calculator (FAO-56 Tables 11 and 12, row chosen for each) |
 | `rotation.py` | Builds and scores the rotation strategies |
 | `build_web.py` | Runs the engine and writes the data the page uses |

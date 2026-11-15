@@ -15,7 +15,7 @@ import nasa_power
 import rotation
 import water
 from crops import CASH_CROPS, CROPS, LEGUMES
-from crops_fao import FAO_CROPS
+from crops_fao import FAO_CROPS, WORLD_CROPS
 
 WEB = Path(__file__).parent / "web"
 SOILS = ("clay", "loam", "sandy")
@@ -94,8 +94,13 @@ def main():
         "needs": all_needs,
         # Extra crops for the water calculator: {zone|month: {crop: [typical, dry]}} in m3 per tarea
         "other_needs": other_needs,
-        "other_crops": {k: {"es": v["es"], "en": v["en"], "days": sum(v["stages"]), "row": v["row"]}
+        "other_crops": {k: {"es": v["es"], "en": v["en"], "days": sum(v["stages"]), "row": v["row"],
+                            "stages": v["stages"], "kc": v["kc"]}
                         for k, v in FAO_CROPS.items()},
+        # Only for the world prototype: same FAO-56 tables, crops that the DR pages do not use.
+        "world_crops": {k: {"es": v["es"], "en": v["en"], "days": sum(v["stages"]), "row": v["row"],
+                            "stages": v["stages"], "kc": v["kc"]}
+                        for k, v in WORLD_CROPS.items()},
         "crops": CROPS,
         "legumes": LEGUMES,
         "cash_crops": CASH_CROPS,

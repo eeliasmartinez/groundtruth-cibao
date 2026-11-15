@@ -103,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v22`).
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v23`).
 - **Datos del relieve:** el resumen del clima, suelo, agua y área está cerrado inicialmente
   dentro de “Datos del mapa”; se abre solo si el usuario lo elige.
 - **Continuar desde una zona:** “Continuar con esta finca” coloca la marca ilustrativa y
@@ -184,6 +184,25 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   la suma de sus cultivos y no se pudieron cotejar con el boletín de la ONE.
 - Sin cifra todavía: cacao, café, aguacate y mango tienen Kc en la tabla 12, pero la
   tabla 11 no da sus etapas; por eso no tienen cálculo.
+
+## Versión mundial (prototipo, 15-nov)
+- En Inicio hay un interruptor **República Dominicana / Todo el mundo · prototipo**. La
+  versión de RD no cambió.
+- `web/world.js`: globo que gira (foto NASA Blue Marble con relieve sombreado, de GIBS, en
+  `web/earth.jpg`), fronteras de Natural Earth 1:110m y los 12 cultivos de más superficie
+  de cada país (FAOSTAT 2024, en `web/world_data.js`; lo genera `build_world.py`).
+- Al abrir un país, las provincias se piden a geoBoundaries; al abrir una provincia, el
+  clima mensual 2001–2025 se pide a NASA POWER (API de climatología) en su punto central.
+  **Necesita internet**; si falla, la página lo dice. El globo y los cultivos sí funcionan
+  sin internet (en `file://` el globo se dibuja sin foto, solo con fronteras).
+- Agua: FAO-56 con promedios mensuales (mismas fórmulas que `water.py`, que usa datos
+  diarios). Solo da año promedio, no año seco. Comprobado en Santiago (Navarrete): entre
+  0 y 11% de diferencia con el motor diario para arroz, habichuela y maíz.
+- 8 perfiles más de FAO-56 solo para el mundo (`WORLD_CROPS` en `crops_fao.py`: trigo,
+  mijo, algodón, girasol, remolacha, lenteja, arveja, haba). Cultivos de FAOSTAT sin
+  perfil (olivo, café, cacao, palma, uva…) se muestran "sin cálculo de agua".
+- Es un prototipo: tablas FAO-56 de otros climas, sin validación agronómica por país, sin
+  suelo, calor ni mercado. Decirlo así en el pitch.
 
 ## Mis cultivos y dos recomendaciones (15-nov)
 - En "Agua y cultivos" el agricultor marca qué cultivos tiene (los 48 del directorio; los

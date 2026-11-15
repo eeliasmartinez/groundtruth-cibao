@@ -35,6 +35,10 @@
   <section class="hero" data-view="home">
     <div class="hero-in">
       <div class="hero-copy">
+        <div class="mode-switch" role="group" data-t-label="w_mode_label">
+          <button type="button" data-mode="local" data-go="home" data-t="w_mode_local"></button>
+          <button type="button" data-mode="world" data-go="world" data-t="w_mode_world"></button>
+        </div>
         <h1 data-t="hero_title"></h1>
         <p class="lead" data-t="hero_lead"></p>
         <div class="hero-actions">
@@ -131,6 +135,60 @@
       <aside class="crop-profile" id="crop-profile" aria-live="polite"></aside>
     </div>
     <p class="note crop-source" data-t="crop_source_note"></p>
+  </section>
+
+  <!-- ============ WORLD PROTOTYPE (world.js) ============ -->
+  <section class="page world-page" data-view="world">
+    <div class="mode-switch" role="group">
+      <button type="button" data-mode="local" data-go="home" data-t="w_mode_local"></button>
+      <button type="button" data-mode="world" data-go="world" data-t="w_mode_world"></button>
+    </div>
+    <div class="world-head">
+      <h2 data-t="w_title"></h2>
+      <p class="sub" data-t="w_intro"></p>
+    </div>
+    <div class="world-stage">
+      <canvas id="w-globe" data-t-label="w_globe_label"></canvas>
+      <p class="w-hover" id="w-hover" aria-live="polite"></p>
+    </div>
+    <div class="crop-controls w-controls">
+      <label><span data-t="w_pick"></span><select id="w-country"></select></label>
+    </div>
+    <p class="note" data-t="w_note"></p>
+  </section>
+  <section class="page world-page" data-view="country">
+    <div class="world-head">
+      <h2 id="wc-title"></h2>
+      <p class="sub" id="wc-sub"></p>
+      <p class="w-status" id="wc-status" aria-live="polite"></p>
+    </div>
+    <div class="wc-layout">
+      <div class="wc-map" id="wc-map"></div>
+      <aside class="wc-side">
+        <h3 data-t="w_crops_country"></h3>
+        <ol class="wc-crops" id="wc-crops"></ol>
+        <p class="note" id="wc-crops-note"></p>
+      </aside>
+    </div>
+    <h3 data-t="w_provinces"></h3>
+    <div class="wc-list" id="wc-list"></div>
+    <p class="note" data-t="w_country_note"></p>
+  </section>
+  <section class="page world-page" data-view="region">
+    <div class="world-head">
+      <h2 id="wr-title"></h2>
+      <p class="sub" id="wr-sub"></p>
+      <p class="w-status" id="wr-status" aria-live="polite"></p>
+    </div>
+    <div class="wr-layout">
+      <div class="wc-map" id="wr-map"></div>
+      <div class="wr-climate" id="wr-climate"></div>
+    </div>
+    <div class="crop-controls wr-controls">
+      <label><span data-t="cw_month"></span><select id="wr-month"></select></label>
+      <label><span data-t="cw_soil"></span><select id="wr-soil"></select></label>
+    </div>
+    <div class="cw-rec" id="wr-rec" aria-live="polite"></div>
   </section>
 
   <!-- ===================== GUIDED WALKTHROUGH ===================== -->
@@ -390,9 +448,11 @@
   <script src="relief.js"></script>
   <script src="peaks.js"></script>
   <script src="crops_local.js"></script>
+  <script src="world_data.js"></script>
   <script src="copy.js"></script>
   <script src="storage.js"></script>
   <script src="engine.js"></script>
+  <script src="world.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

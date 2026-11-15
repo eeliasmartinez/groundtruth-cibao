@@ -86,5 +86,33 @@ FAO_CROPS = {
                "row": "T11 Citrus, Jan, Mediterranean; T12 no ground cover, 50% canopy"},
 }
 
-for _crop in FAO_CROPS.values():
+# Crops used only by the world prototype (web/world.js), not by the Dominican pages.
+WORLD_CROPS = {
+    "wheat": {"es": "Trigo, cebada, avena", "en": "Wheat, barley, oats",
+              "stages": (15, 25, 50, 30), "kc": (0.30, 1.15, 0.25),
+              "row": "T11 Barley/Oats/Wheat, November, Central India; T12 Barley/Oats Kc end 0.25"},
+    "millet": {"es": "Mijo", "en": "Millet",
+               "stages": (15, 25, 40, 25), "kc": (0.30, 1.00, 0.30),
+               "row": "T11 Millet, June, Pakistan"},
+    "cotton": {"es": "Algodón", "en": "Cotton",
+               "stages": (30, 50, 60, 55), "kc": (0.35, 1.175, 0.60),
+               "row": "T11 Cotton, Mar-May, Egypt; Pakistan; Calif.; T12 mid 1.15-1.20 and end 0.70-0.50 (middles)"},
+    "sunflower": {"es": "Girasol", "en": "Sunflower",
+                  "stages": (25, 35, 45, 25), "kc": (0.35, 1.075, 0.35),
+                  "row": "T11 Sunflower, April/May, Medit.; California; T12 mid 1.0-1.15 (middle)"},
+    "sugar_beet": {"es": "Remolacha azucarera", "en": "Sugar beet",
+                   "stages": (25, 35, 50, 50), "kc": (0.35, 1.20, 0.70),
+                   "row": "T11 Sugarbeet, May, Mediterranean"},
+    "lentil": {"es": "Lenteja", "en": "Lentil",
+               "stages": (20, 30, 60, 40), "kc": (0.40, 1.10, 0.30),
+               "row": "T11 Lentil, April, Europe"},
+    "peas_dry": {"es": "Arveja seca", "en": "Dry peas",
+                 "stages": (15, 25, 35, 15), "kc": (0.40, 1.15, 0.30),
+                 "row": "T11 Peas, May, Europe; T12 Peas dry/seed"},
+    "broad_bean": {"es": "Haba", "en": "Broad bean",
+                   "stages": (15, 25, 35, 15), "kc": (0.50, 1.15, 0.30),
+                   "row": "T11 Faba bean, May, Europe; T12 Faba bean dry/seed"},
+}
+
+for _crop in list(FAO_CROPS.values()) + list(WORLD_CROPS.values()):
     _crop["flooded"] = False

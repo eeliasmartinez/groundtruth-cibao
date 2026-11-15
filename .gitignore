@@ -6,3 +6,4 @@ web/test_cases.json
 # internal team notes with unverified figures: kept local, not published
 docs/vision_ojo_de_dios.md
 docs/hoja_de_ruta_claude.md
+data/world_cache/
