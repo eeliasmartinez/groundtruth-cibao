@@ -538,7 +538,7 @@
     var all = [].concat.apply([], p.rings);
     var b = [Infinity, Infinity, -Infinity, -Infinity];
     all.forEach(function (q) { b[0] = Math.min(b[0], q[0]); b[1] = Math.min(b[1], q[1]); b[2] = Math.max(b[2], q[0]); b[3] = Math.max(b[3], q[1]); });
-    if (b[2] - b[0] > 300) { relief.status = "failed"; drawRelief(); return; } // crosses the 180th meridian
+    if (b[2] - b[0] > 300) { relief.status = "wrap"; drawRelief(); return; } // crosses the 180th meridian
     var span = Math.max(b[2] - b[0], (b[3] - b[1]) / Math.cos((b[1] + b[3]) / 2 * Math.PI / 180), 0.25);
     var lon0 = (b[0] + b[2]) / 2, lat0 = (b[1] + b[3]) / 2, k = Math.cos(lat0 * Math.PI / 180);
     var halfLon = span * 0.56, halfLat = Math.min(80 - Math.abs(lat0), span * 0.42 * k);
@@ -633,7 +633,8 @@
     var ctx = canvas.getContext("2d"), m = relief.model;
     ctx.clearRect(0, 0, W, H);
     var note = canvas.parentNode.querySelector(".wr-relief-status");
-    if (note) note.textContent = relief.status === "loading" ? L().w_relief_loading : relief.status === "failed" ? L().w_relief_failed : "";
+    if (note) note.textContent = relief.status === "loading" ? L().w_relief_loading : relief.status === "failed" ? L().w_relief_failed
+      : relief.status === "wrap" ? L().w_relief_wrap : "";
     if (!m) return;
     var seconds = ((now || performance.now()) - relief.start) / 1000;
     var grow = reduceMotion ? 1 : 1 - Math.pow(1 - Math.min(1, seconds / 1.4), 3);
@@ -918,6 +919,13 @@
         frostLines(p, st.climate) + "<p class=\"note\">" + esc(Lx.wq_note) + "</p>";
     }
     $("wq-stage").innerHTML = html;
+    var stepTag = step + "|" + total;
+    if (!reduceMotion && $("wq-stage").getAttribute("data-step") !== stepTag) {
+      $("wq-stage").classList.remove("wq-step-in"); void $("wq-stage").offsetWidth; $("wq-stage").classList.add("wq-step-in");
+      clearTimeout(renderQuiz.timer);
+      renderQuiz.timer = setTimeout(function () { $("wq-stage").classList.remove("wq-step-in"); }, 900);
+    }
+    $("wq-stage").setAttribute("data-step", stepTag);
   }
   function listenQuiz() {
     $("wq-section").onclick = function (event) {
@@ -977,13 +985,16 @@
   var LEAF = '<path d="M5 19c0-8 6-14 14-14 0 8-6 14-14 14z"/><path d="M5 19l8-8"/>';
   function roleOf(k) { return k === "rice" ? "rice" : k === "sesbania" ? "green" : LEGUMES_ALL.indexOf(k) >= 0 ? "legume" : "cash"; }
   function iconOf(k) { return (window.GTApp && window.GTApp.icon(k)) || '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">' + LEAF + "</svg>"; }
-  function cellsHtml(p, area, icons) {
+  function delay(n) { return icons ? " style=\"animation-delay:" + ((Math.floor(n / 10) + n % 10) * 22 + (n * 7) % 5 * 9) + "ms\"" : ""; }
+  var icons = false;
+  function cellsHtml(p, area, withIcons) {
+    icons = withIcons;
     var out = "", n = 0;
     p.parts.forEach(function (q) {
       var count = Math.round(100 * q.ha / Math.max(area, 1e-9));
-      for (var i = 0; i < count && n < 100; i++, n++) out += "<span class=\"" + roleOf(q.key) + "\">" + (icons ? iconOf(q.key) : "") + "</span>";
+      for (var i = 0; i < count && n < 100; i++, n++) out += "<span class=\"" + roleOf(q.key) + "\"" + delay(n) + ">" + (icons ? iconOf(q.key) : "") + "</span>";
     });
-    while (n < 100) { out += "<span class=\"idle\"></span>"; n++; }
+    while (n < 100) { out += "<span class=\"idle\"" + delay(n) + "></span>"; n++; }
     return out;
   }
   function mixHtml(p, area) {

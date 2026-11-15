@@ -916,3 +916,43 @@ details.more .soil-table { margin-top: 8px; }
 .world-page .headline b { color: var(--blue); }
 .wq-stage .g-q, .wq-stage .g-sub { padding-right: 165px; }
 @media (max-width: 760px) { .wq-stage .g-q, .wq-stage .g-sub { padding-right: 0; } .wq-stage .g-q { padding-right: 110px; } }
+
+/* ---------- Transitions between screens and lists (15-nov) ----------
+   Screens rise in; lists follow one after another; bars fill; maps zoom in slightly.
+   Only opacity and transform move, ease-out, under half a second, and nothing plays
+   for people who ask their device to reduce motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .view-in { animation: view-in 340ms var(--ease-out) both; }
+  @keyframes view-in { from { opacity: 0; transform: translateY(10px); } }
+  .view-in :is(.cards > .card, .wq-plans > li, .wq-top > li, .cw-rec-box, .impact > div, .crop-overview > div, .cal-row, .wc-crops > li, .wq-sec, .facts > li, .cw-row) {
+    animation: rise-in 420ms var(--ease-out) both;
+  }
+  .view-in :is(.cards > .card, .wq-plans > li, .wq-top > li, .cw-rec-box, .impact > div, .crop-overview > div, .cal-row, .wc-crops > li, .wq-sec, .facts > li, .cw-row):nth-child(2) { animation-delay: 50ms; }
+  .view-in :is(.cards > .card, .wq-plans > li, .wq-top > li, .cw-rec-box, .impact > div, .crop-overview > div, .cal-row, .wc-crops > li, .wq-sec, .facts > li, .cw-row):nth-child(3) { animation-delay: 100ms; }
+  .view-in :is(.cards > .card, .wq-plans > li, .wq-top > li, .cw-rec-box, .impact > div, .crop-overview > div, .cal-row, .wc-crops > li, .wq-sec, .facts > li, .cw-row):nth-child(4) { animation-delay: 150ms; }
+  .view-in :is(.cards > .card, .wq-plans > li, .wq-top > li, .cw-rec-box, .impact > div, .crop-overview > div, .cal-row, .wc-crops > li, .wq-sec, .facts > li, .cw-row):nth-child(n+5) { animation-delay: 200ms; }
+  @keyframes rise-in { from { opacity: 0; transform: translateY(12px); } }
+  .view-in .meter .fill, .view-in .wc-crops li i { transform-origin: left center; animation: fill-in 700ms var(--ease-out) 180ms both; }
+  .view-in .cal-bar { transform-origin: left center; animation: fill-in 560ms var(--ease-out) 160ms both; }
+  @keyframes fill-in { from { transform: scaleX(0); } }
+  .view-in .wc-map svg { animation: zoom-in 560ms var(--ease-out) both; }
+  @keyframes zoom-in { from { opacity: 0; transform: scale(.94); } }
+  .view-in .wr-relief canvas, .view-in .world-stage canvas { animation: fade-in 600ms var(--ease-out) both; }
+  @keyframes fade-in { from { opacity: 0; } }
+
+  /* each question of the world questionnaire, like the Dominican walkthrough */
+  .wq-step-in > * { animation: g-in 340ms var(--ease-out) both; }
+  .wq-step-in > *:nth-child(2) { animation-delay: 40ms; }
+  .wq-step-in > *:nth-child(3) { animation-delay: 80ms; }
+  .wq-step-in > *:nth-child(n+4) { animation-delay: 120ms; }
+
+  /* folds open softly */
+  details[open] > :not(summary) { animation: fold-in 260ms var(--ease-out) both; }
+  @keyframes fold-in { from { opacity: 0; transform: translateY(-4px); } }
+
+  /* small responses under the pointer */
+  .wq-plans > li, .cw-rec-box, .world-page .card { transition: transform 180ms var(--ease-out), box-shadow 180ms var(--ease-out); }
+  .wq-plans > li:hover, .world-page .card:hover { transform: translateY(-2px); }
+  .cw-chip, .wq-units button, .wc-list button, .mode-switch button { transition: background-color 150ms ease, color 150ms ease, transform 120ms var(--ease-out); }
+  .wc-list button:active, .wq-units button:active { transform: scale(.96); }
+}

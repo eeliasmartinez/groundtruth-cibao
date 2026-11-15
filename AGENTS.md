@@ -103,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v31`). Desde el
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v32`). Desde el
   15-nov el service worker pide **primero la red** (la página y el código siempre
   completos) y usa la copia guardada solo sin conexión o si la red tarda más de 4 s; al
   activarse una versión nueva, la página se recarga una vez sola.
@@ -275,6 +275,16 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
 - El plan guardado recuerda la zona por su nombre y no reescribe el guardado si no cambió.
 - El botón Adelante del navegador ya avanza (lista `ahead` en `web/app.js`).
 - La etiqueta FINCA/FARM del relieve va encima de la casa, lejos del nombre de la zona.
+
+## Animaciones y transiciones (15-nov)
+- Al cambiar de pantalla, `playEntrance()` en `web/app.js` pone la clase `.view-in` a los
+  bloques visibles y la quita al terminar (así escribir o mover un control no la repite).
+  En CSS: la pantalla sube y aparece; listas, tarjetas, cifras y filas del calendario
+  entran escalonadas; medidores y barras se llenan; el mapa del país entra con un leve
+  acercamiento. El cuestionario mundial usa `.wq-step-in` por pregunta y los cuadros del
+  resultado entran en ola como en RD.
+- Solo se animan opacidad y transformación, con `--ease-out` y menos de medio segundo; todo
+  está dentro de `@media (prefers-reduced-motion: no-preference)`.
 
 ## Botón Atrás general
 - El botón "← Atrás" (barra superior; en celular flota sobre la barra de pestañas)

@@ -11,8 +11,10 @@ Página: https://eeliasmartinez.github.io/groundtruth-cibao/
 
 ## Antes de entrar (lista de control)
 
-- [ ] Abrir la página en la computadora del pitch **y recargarla una vez** (así toma la
-      versión nueva y queda guardada aunque falle el Wi-Fi).
+- [ ] Abrir la página en la computadora del pitch **y recargarla una vez** (Cmd + Shift + R
+      en Mac). Así toma la versión nueva; desde ahí se actualiza sola y queda guardada
+      aunque falle el Wi-Fi.
+- [ ] Probar una vez el modo mundo con internet (globo → México → Sinaloa → preguntas).
 - [ ] Probar que el relieve 3D se mueve y que el globo gira en esa computadora.
 - [ ] Dejar la página en **Inicio**, en español, con el zoom del navegador al 100%.
 - [ ] Tener abierta una segunda pestaña con la página por si la primera se traba.
@@ -29,9 +31,10 @@ Página: https://eeliasmartinez.github.io/groundtruth-cibao/
 | 0:00–0:30 | Persona 1 | Gancho |
 | 0:30–1:30 | Persona 2 | El problema |
 | 1:30–2:10 | Persona 3 | La idea y los datos de NASA |
-| 2:10–4:10 | Persona 4 maneja, Persona 3 narra | Demo |
-| 4:10–4:50 | Persona 5 | Por qué confiar (y qué falta) |
-| 4:50–5:40 | Persona 6 | Impacto y siguiente paso (globo) |
+| 2:10–3:50 | Persona 4 maneja, Persona 3 narra | Demo de RD |
+| 3:50–4:30 | Persona 4 maneja, Persona 6 narra | Demo del mundo |
+| 4:30–5:10 | Persona 5 | Por qué confiar (y qué falta) |
+| 5:10–5:40 | Persona 6 | Impacto y siguiente paso |
 | 5:40–6:00 | Persona 1 | Cierre |
 
 ---
@@ -75,7 +78,7 @@ Página: https://eeliasmartinez.github.io/groundtruth-cibao/
 > Y comparamos cuatro planes: seguir con arroz, arroz con leguminosa, rotar con un
 > cultivo que gaste poca agua, o abono verde."
 
-### 2:10 — Demo (Persona 4 maneja, Persona 3 narra)
+### 2:10 — Demo de RD (Persona 4 maneja, Persona 3 narra)
 
 Ruta fija. No improvisar: hay más pantallas de las que caben en 2 minutos.
 
@@ -91,11 +94,21 @@ Ruta fija. No improvisar: hay más pantallas de las que caben en 2 minutos.
    pantalla (las cifras cambian con el mes; ensayen con la computadora del pitch).
    > "Con el 60% del agua, en vez de dejar tierra sin sembrar, le proponemos..."
 4. **"Ver la rotación"** → el calendario de dos ciclos.
-5. Abrir **Inicio → "Agua y cultivos"**, bajar a la tabla:
-   > "Y si quiere otro cultivo, aquí está cuánta agua pide cada uno de 31 cultivos en
-   > su zona, y cuántas tareas le alcanzan con su agua."
+   > "Y no es solo para arroceros: si marca tomate o cebolla, el plan sale con sus
+   > propios cultivos y cuánta tierra le alcanza el agua."
 
-### 4:10 — Por qué confiar (y qué falta) (Persona 5)
+### 3:50 — Demo del mundo (Persona 4 maneja, Persona 6 narra)
+
+1. **Inicio → "Todo el mundo · prototipo"** → el globo de NASA gira.
+   > "El mismo método sirve en cualquier país, porque NASA POWER cubre todo el planeta."
+2. Elegir **México** en la lista → tocar **Sinaloa** → aparece el **relieve 3D con sus
+   ríos** al lado de las mismas preguntas.
+3. Pasar rápido las preguntas (maíz, 60% de agua) → sale el **mismo Plan B** que en RD,
+   con la finca de 100 cuadros, "Ver mi plan completo" y "Ver la rotación".
+   > "Es un prototipo: clima mensual de NASA, tablas de la FAO y cultivos de cada país
+   > según la FAO. El siguiente paso es validarlo con agrónomos de cada lugar."
+
+### 4:30 — Por qué confiar (y qué falta) (Persona 5)
 
 > "Lo comprobamos: el cálculo de la página y el del motor en Python coinciden en
 > **63,548 comprobaciones**, sin una sola diferencia.
@@ -105,16 +118,14 @@ Ruta fija. No improvisar: hay más pantallas de las que caben en 2 minutos.
 > **todavía los tiene que validar un agrónomo dominicano**. Y no usamos precios: no
 > prometemos ganancias. Es una herramienta de apoyo, no reemplaza al técnico."
 
-### 4:50 — Impacto y siguiente paso (Persona 6)
+### 5:10 — Impacto y siguiente paso (Persona 6)
 
 > "Hoy funciona para las **14 zonas arroceras** del país, en español e inglés, en el
-> celular y sin internet.
+> celular y sin internet, y como prototipo en cualquier país.
 >
-> Y el método sirve para cualquier lugar, porque los datos de NASA y de la FAO cubren
-> todo el planeta. *(Persona 4 toca "Todo el mundo · prototipo": el globo de NASA gira.)*
-> Este es nuestro prototipo mundial: eliges un país, una provincia, y con el clima de
-> NASA te dice cuánta agua pide cada cultivo que se siembra allí. Es un prototipo:
-> el siguiente paso es validarlo con agrónomos de cada país."
+> Lo siguiente: validar los cultivos con un agrónomo, probarlo con una junta de regantes
+> antes de una sequía y, más adelante, sumar pronósticos de temporada de NASA para
+> avisar antes de que llegue un año seco."
 
 ### 5:40 — Cierre (Persona 1)
 
@@ -155,6 +166,33 @@ mercado. Para decidir, el plan principal sí considera suelo y calor."
 pero con promedios por mes, sin año seco y sin validación por país. En Santiago da
 entre 0 y 11% de diferencia con nuestro motor diario."
 
+**"NASA POWER son promedios históricos. ¿Y si este año hay una sequía por El Niño?"**
+"Los 25 años de NASA dan la base: cuánta agua pide cada cultivo en esa zona y en ese
+mes, en un año normal y en uno seco. La anomalía de este año la pone el productor: él
+nos dice cuánta agua le anunció el INDRHI o su junta (Normal, Tandeo o Veda, o el
+porcentaje exacto). En la hoja de ruta está sumar pronósticos de temporada de NASA
+(por ejemplo GEOS-S2S) para ajustar esa base." *(No decir que el semáforo es "oficial
+del INDRHI": es nuestro.)*
+
+**"Los cuadros de NASA POWER son de ~50 km. ¿Y los microclimas?"**
+"Es cierto: el clima de NASA POWER viene en cuadros de 0.5° × 0.625°, unos 50 km, y
+zonas vecinas como Valverde y Montecristi comparten datos. Por eso es una herramienta de
+apoyo, no un controlador automático: combinamos el clima regional de NASA con lo que el
+productor sabe de su finca (suelo, agua, tierra) y lo dejamos claro en la página."
+
+**"Los arrozales son suelo pesado y encharcado. La habichuela se pudre ahí."**
+"Es el riesgo más importante y no lo escondemos. El motor ya baja la nota de los cultivos
+que no toleran suelo pesado, pregunta el suelo y avisa del encharcamiento en la ficha del
+cultivo. Cómo sembrarlos ahí (surcos, camellones, drenaje) es justo lo que queremos
+validar con un agrónomo antes de recomendarlo en el campo." *(No afirmar tipos de suelo
+ni prácticas del IDIAF sin fuente.)*
+
+**"¿Cuánto dinero gana Don Pedro si cambia a caupí o maíz?"**
+"No mostramos ganancias a propósito: no encontramos precios y costos recientes y
+confiables del Cibao, y no queremos inventar cifras. Lo que sí medimos es el agua que
+ahorra, la tierra que queda sembrada y una nota de qué tan segura es la venta de cada
+cultivo, para no dejar al productor con una cosecha difícil de vender."
+
 **¿Qué hizo la IA y qué hicieron ustedes?**
 "Usamos IA (Claude Code y OpenAI Codex) para programar y redactar, y lo declaramos en
 la página. Nosotros definimos el problema, elegimos la solución, revisamos las fuentes
@@ -166,5 +204,8 @@ y decidimos qué no prometer."
 
 - Costos por tarea, ahorro en pesos o ganancias.
 - "15–25 sacos de urea", "esterilidad del arroz a 32 °C", "40% de pérdidas en canales".
-- Que el semáforo es "oficial del INDRHI".
+- Que el semáforo es "oficial del INDRHI" o que refleja "las asignaciones reales de los
+  canales": el productor pone el agua que le anunciaron.
+- "Cuadros de 0.5° × 0.5°": son 0.5° × 0.625° (unos 50 km).
+- "Vertisoles", "piso de arado" o prácticas del IDIAF: no tenemos fuente verificada.
 - Cifras de producción del catálogo de la ONE (no se pudieron cotejar).

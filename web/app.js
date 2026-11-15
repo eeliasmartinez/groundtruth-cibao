@@ -2118,6 +2118,20 @@
     draw();
     setView(previous.view, false, true);
   }
+  // The sections of a new screen rise in, their lists one after another (CSS: .view-in).
+  // The class is taken off afterwards so later redraws (typing, sliders) do not replay it.
+  var entranceTimer = 0;
+  function playEntrance() {
+    if (reduceMotion) return;
+    // only the outermost visible blocks of the screen, so nothing moves twice
+    var shown = [].filter.call(document.querySelectorAll("[data-view]:not(body)"), function (el) {
+      return !el.hidden && !(el.parentElement && el.parentElement.closest("[data-view]:not(body)"));
+    });
+    shown.forEach(function (el) { el.classList.remove("view-in"); void el.offsetWidth; el.classList.add("view-in"); });
+    clearTimeout(entranceTimer);
+    entranceTimer = setTimeout(function () { shown.forEach(function (el) { el.classList.remove("view-in"); }); }, 1100);
+  }
+
   // Open again the screen that was left with Back (browser or phone Forward button).
   function goForward() {
     var next = ahead.pop();
@@ -2131,6 +2145,7 @@
   function setView(view, keepScroll, returning) {
     if (VIEWS.indexOf(view) < 0) view = "home";
     if (ready && !returning && view !== state.view) remember();
+    var changed = ready && view !== state.view;
     state.view = view;
     if (view === "crops") drawCropDirectory();
     document.querySelectorAll("[data-mode]").forEach(function (b) {
@@ -2147,6 +2162,7 @@
     document.querySelectorAll("[data-go]").forEach(function (b) {
       b.classList.toggle("on", b.getAttribute("data-go") === view);
     });
+    if (changed) playEntrance();
     try { history.replaceState(history.state || { step: 0 }, "", "#" + view); } catch (e) { /* not allowed on some file:// pages */ }
     if (!keepScroll) window.scrollTo(0, 0);
     if (sceneVisible()) startScene(); else stopScene();
