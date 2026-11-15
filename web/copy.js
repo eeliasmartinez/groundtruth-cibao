@@ -8,9 +8,9 @@ window.GT_COPY = { T: {
       stamp: "Plan B",
       hero_lead: "Cuando el agua de riego no alcanza, al productor le dicen que no siembre arroz. Esta herramienta le muestra qué sí puede sembrar con el agua que le toca, usando 25 años de datos de la NASA (2001–2025).",
       facts: [
-        ["91.5%", "del arroz dominicano se produce en el Cibao, casi todo bajo riego.", 4],
-        ["96%", "del agua del río Yaque del Norte ya está comprometida.", 5],
-        ["2019", "el INDRHI prohibió la siembra de arroz de invierno por sequía. En 2026 volvió el riego por turnos.", [6, 8]]
+        ["91.5%", "del arroz dominicano se produce en el Cibao, casi todo bajo riego.", 14],
+        ["96%", "del agua del río Yaque del Norte ya está comprometida.", 15],
+        ["2019", "el INDRHI prohibió la siembra de arroz de invierno por sequía. En 2026 volvió el riego por turnos.", [16, 18]]
       ],
       source: "fuente",
       farm: "Tu finca en 3 pasos",
@@ -608,9 +608,9 @@ window.GT_COPY = { T: {
       stamp: "Plan B",
       hero_lead: "When irrigation water runs short, rice farmers are told not to plant. This tool shows what they can still grow with the water they are given, using 25 years of NASA data (2001–2025).",
       facts: [
-        ["91.5%", "of Dominican rice is grown in the Cibao valley, almost all of it irrigated.", 4],
-        ["96%", "of the Yaque del Norte river's water is already committed.", 5],
-        ["2019", "the water authority banned winter rice planting because of drought. In 2026 irrigation by turns came back.", [6, 8]]
+        ["91.5%", "of Dominican rice is grown in the Cibao valley, almost all of it irrigated.", 14],
+        ["96%", "of the Yaque del Norte river's water is already committed.", 15],
+        ["2019", "the water authority banned winter rice planting because of drought. In 2026 irrigation by turns came back.", [16, 18]]
       ],
       source: "source",
       farm: "Your farm in 3 steps",
