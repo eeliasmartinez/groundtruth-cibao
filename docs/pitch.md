@@ -82,10 +82,11 @@ Ruta fija. No improvisar: hay más pantallas de las que caben en 2 minutos.
 1. **Inicio** → tocar **Santiago (Navarrete)** en el mapa → aparece el **relieve 3D**
    real de la zona (elevación SRTM de NASA) con ríos y presas.
    > "Este es el terreno real de la zona, con datos de elevación de NASA."
-2. **"Continuar con esta finca"** → las 5 preguntas, rápido:
-   mes y tareas → suelo → **agua: poner 60%** → prioridad.
-   > "Son las cinco cosas que el productor ya sabe: cuándo siembra, cuánta tierra
-   > tiene, qué suelo, cuánta agua le dieron y qué le importa más."
+2. **"Continuar con esta finca"** → las preguntas, rápido:
+   qué siembra (dejar **arroz** y marcar **habichuela**) → mes y tareas → suelo →
+   **agua: poner 60%** → prioridad.
+   > "Son cosas que el productor ya sabe: qué siembra, cuándo, cuánta tierra tiene, qué
+   > suelo, cuánta agua le dieron y qué le importa más."
 3. **Sale el plan con el sello "Plan B"**. Leer la frase de arriba tal como sale en
    pantalla (las cifras cambian con el mes; ensayen con la computadora del pitch).
    > "Con el 60% del agua, en vez de dejar tierra sin sembrar, le proponemos..."
