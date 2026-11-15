@@ -912,11 +912,11 @@ details.more .soil-table { margin-top: 8px; }
 .wq-sec { display: grid; gap: 10px; padding-top: 6px; }
 .wq-sec h3 { margin: 0; font-family: var(--display); font-size: 26px; text-transform: uppercase; }
 .wq-sec .help { margin: 0; }
-.wq-top { margin: 0; padding: 0 0 0 22px; display: grid; gap: 8px; }
-.wq-top li b { font-size: 17px; }
-.wq-top li em { margin-left: 8px; color: var(--blue); font-size: 12px; font-style: normal; font-weight: 800; }
-.wq-top li span { display: block; color: var(--ink-2); font-size: 14px; }
-.wq-top li.best b { color: var(--red); }
+.wq-toplist { margin: 0; padding: 0 0 0 22px; display: grid; gap: 8px; } /* not .wq-top: that is the quiz header bar */
+.wq-toplist li b { font-size: 17px; }
+.wq-toplist li em { margin-left: 8px; color: var(--blue); font-size: 12px; font-style: normal; font-weight: 800; }
+.wq-toplist li span { display: block; color: var(--ink-2); font-size: 14px; }
+.wq-toplist li.best b { color: var(--red); }
 .wq-fold { background: #fff; border: 2px solid var(--ink); padding: 10px 14px; }
 .wq-fold summary { cursor: pointer; font-weight: 800; color: var(--blue); }
 .wq-fold[open] summary { margin-bottom: 10px; }
@@ -940,13 +940,13 @@ details.more .soil-table { margin-top: 8px; }
 @media (prefers-reduced-motion: no-preference) {
   .view-in { animation: view-in 340ms var(--ease-out) both; }
   @keyframes view-in { from { opacity: 0; transform: translateY(10px); } }
-  .view-in :is(.cards > .card, .wq-plans > li, .wq-top > li, .cw-rec-box, .impact > div, .crop-overview > div, .cal-row, .wc-crops > li, .wq-sec, .facts > li, .cw-row) {
+  .view-in :is(.cards > .card, .wq-plans > li, .wq-toplist > li, .cw-rec-box, .impact > div, .crop-overview > div, .cal-row, .wc-crops > li, .wq-sec, .facts > li, .cw-row) {
     animation: rise-in 420ms var(--ease-out) both;
   }
-  .view-in :is(.cards > .card, .wq-plans > li, .wq-top > li, .cw-rec-box, .impact > div, .crop-overview > div, .cal-row, .wc-crops > li, .wq-sec, .facts > li, .cw-row):nth-child(2) { animation-delay: 50ms; }
-  .view-in :is(.cards > .card, .wq-plans > li, .wq-top > li, .cw-rec-box, .impact > div, .crop-overview > div, .cal-row, .wc-crops > li, .wq-sec, .facts > li, .cw-row):nth-child(3) { animation-delay: 100ms; }
-  .view-in :is(.cards > .card, .wq-plans > li, .wq-top > li, .cw-rec-box, .impact > div, .crop-overview > div, .cal-row, .wc-crops > li, .wq-sec, .facts > li, .cw-row):nth-child(4) { animation-delay: 150ms; }
-  .view-in :is(.cards > .card, .wq-plans > li, .wq-top > li, .cw-rec-box, .impact > div, .crop-overview > div, .cal-row, .wc-crops > li, .wq-sec, .facts > li, .cw-row):nth-child(n+5) { animation-delay: 200ms; }
+  .view-in :is(.cards > .card, .wq-plans > li, .wq-toplist > li, .cw-rec-box, .impact > div, .crop-overview > div, .cal-row, .wc-crops > li, .wq-sec, .facts > li, .cw-row):nth-child(2) { animation-delay: 50ms; }
+  .view-in :is(.cards > .card, .wq-plans > li, .wq-toplist > li, .cw-rec-box, .impact > div, .crop-overview > div, .cal-row, .wc-crops > li, .wq-sec, .facts > li, .cw-row):nth-child(3) { animation-delay: 100ms; }
+  .view-in :is(.cards > .card, .wq-plans > li, .wq-toplist > li, .cw-rec-box, .impact > div, .crop-overview > div, .cal-row, .wc-crops > li, .wq-sec, .facts > li, .cw-row):nth-child(4) { animation-delay: 150ms; }
+  .view-in :is(.cards > .card, .wq-plans > li, .wq-toplist > li, .cw-rec-box, .impact > div, .crop-overview > div, .cal-row, .wc-crops > li, .wq-sec, .facts > li, .cw-row):nth-child(n+5) { animation-delay: 200ms; }
   @keyframes rise-in { from { opacity: 0; transform: translateY(12px); } }
   .view-in .meter .fill, .view-in .wc-crops li i { transform-origin: left center; animation: fill-in 700ms var(--ease-out) 180ms both; }
   .view-in .cal-bar { transform-origin: left center; animation: fill-in 560ms var(--ease-out) 160ms both; }

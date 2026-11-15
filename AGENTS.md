@@ -103,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v40`). Desde el
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v41`). Desde el
   15-nov el service worker pide **primero la red** (la página y el código siempre
   completos) y usa la copia guardada solo sin conexión o si la red tarda más de 4 s; al
   activarse una versión nueva, la página se recarga una vez sola.

@@ -1057,7 +1057,7 @@
       "<section class=\"wq-sec\"><h3>" + esc(Lx.wp_cards) + "</h3><div class=\"cards\">" +
       r.plans.map(function (p) { return planCard(p, r, p === r.mineBest); }).join("") + "</div>" +
       "<p class=\"note\">" + esc(tr("wq_budget", { m3: num(r.budget), area: areaText(r.area) })) + "</p></section>" +
-      "<section class=\"wq-sec\"><h3>" + esc(Lx.wq_sec_all) + "</h3><p class=\"help\">" + esc(tr("wq_sec_all_help", { n: r.poolSize })) + "</p><ol class=\"wq-top\">" +
+      "<section class=\"wq-sec\"><h3>" + esc(Lx.wq_sec_all) + "</h3><p class=\"help\">" + esc(tr("wq_sec_all_help", { n: r.poolSize })) + "</p><ol class=\"wq-toplist\">" +
       r.top.map(function (t, i) {
         return "<li class=\"" + (i === 0 ? "best" : "") + "\"><b>" + esc(profileName(t.key)) + "</b>" + (LEGUMES_ALL.indexOf(t.key) >= 0 ? "<em>" + esc(Lx.rec_legume) + "</em>" : "") +
           "<span>" + esc(tr("wq_top_line", { m3: num(perUnit(t.need)), u: unitShort(), area: areaText(t.cover) })) + "</span>" +
