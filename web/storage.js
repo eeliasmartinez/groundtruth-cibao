@@ -36,7 +36,11 @@
       salty: plan.salty === true,
       selected: plan.selected === null || strategies.indexOf(plan.selected) >= 0 ? plan.selected : null,
       basinShare: basinShare,
-      easyMode: plan.easyMode === true
+      easyMode: plan.easyMode === true,
+      // Directory ids only (letters and dashes), at most 60.
+      myCrops: Array.isArray(plan.myCrops) ? plan.myCrops.filter(function (id) {
+        return typeof id === "string" && /^[a-z-]{1,24}$/.test(id);
+      }).slice(0, 60) : []
     };
   }
 
@@ -61,7 +65,7 @@
       try {
         var safePlan = normalize({ zoneName: zoneNames[plan.zone], lang: plan.lang, soil: plan.soil, month: plan.month,
           area: plan.area, priority: plan.priority, allocation: plan.allocation, riceAllowed: plan.riceAllowed,
-          salty: plan.salty, selected: plan.selected, basinShare: plan.basinShare, easyMode: plan.easyMode }, zoneNames, strategies);
+          salty: plan.salty, selected: plan.selected, basinShare: plan.basinShare, easyMode: plan.easyMode, myCrops: plan.myCrops }, zoneNames, strategies);
         if (!safePlan) return false;
         var text = JSON.stringify({ version: 1, plan: safePlan });
         if (text === lastWritten) return true;

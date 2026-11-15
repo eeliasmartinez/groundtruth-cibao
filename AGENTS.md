@@ -103,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v19`).
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v22`).
 - **Datos del relieve:** el resumen del clima, suelo, agua y área está cerrado inicialmente
   dentro de “Datos del mapa”; se abre solo si el usuario lo elige.
 - **Continuar desde una zona:** “Continuar con esta finca” coloca la marca ilustrativa y
@@ -184,6 +184,18 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   la suma de sus cultivos y no se pudieron cotejar con el boletín de la ONE.
 - Sin cifra todavía: cacao, café, aguacate y mango tienen Kc en la tabla 12, pero la
   tabla 11 no da sus etapas; por eso no tienen cálculo.
+
+## Mis cultivos y dos recomendaciones (15-nov)
+- En "Agua y cultivos" el agricultor marca qué cultivos tiene (los 48 del directorio; los
+  de borde punteado no tienen cálculo). Se guardan con el plan (`myCrops` en `storage.js`).
+- **De todos:** los 3 cultivos que mejor caben en su agua. **De los suyos:** el orden de los
+  que marcó y, si otro de fuera de su lista rinde más el agua, se lo dice.
+- La regla es solo agua, la única medida que comparten los 31 cultivos: primero las tareas
+  que cubre el agua asignada en un año seco, luego menos m³ por tarea. Quedan fuera del
+  orden la sesbania (abono verde, no se cosecha) y los ciclos de más de 180 días (plátano,
+  caña, cítricos, yuca), porque el agua se asigna por ciclo de riego. La página avisa que
+  no revisa suelo, calor ni mercado. Funciones `waterFit`, `drawMyCrops`,
+  `drawRecommendations` en `web/app.js`.
 
 ## Correcciones de la revisión (15-nov)
 - El mapa solo se redibuja cuando cambia la zona, la capa o el idioma (antes se rehacían

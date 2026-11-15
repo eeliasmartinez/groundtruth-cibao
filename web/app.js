@@ -30,6 +30,7 @@
     farmPlaced: false,
     guideWithScene: false,
     easyMode: false,
+    myCrops: [], // directory ids the farmer says they grow or have
     savedOnDevice: false,
     storageError: false,
     journeyBeat: 1
@@ -363,9 +364,88 @@
   function waterBudget() {
     return state.allocation * cropWater("rice")[0] * state.area;
   }
+  // ---------------- "My crops" and the two recommendations ----------------
+  // Both rank crops by water only, the one measure every crop here shares: first the land
+  // the allocated water covers in a dry year, then the lower need per tarea. Crops whose
+  // cycle is longer than LONG_CYCLE days are left out of the ranking, because the
+  // allocation is announced for one irrigation cycle. Sesbania is a green manure that is
+  // not harvested, so it is not offered as "the best crop to plant".
+  var LONG_CYCLE = 180;
+  function waterFit(key) {
+    var w = cropWater(key), budget = waterBudget();
+    var cover = w[1] > 0 ? Math.min(state.area, budget / w[1]) : state.area;
+    return { key: key, typical: w[0], dry: w[1], cover: cover, days: waterCropDays(key),
+      spare: Math.max(0, budget - w[1] * state.area) };
+  }
+  function byWater(a, b) { return b.cover - a.cover || a.dry - b.dry; }
+  function rankable(key) { return key !== "sesbania" && waterCropDays(key) <= LONG_CYCLE; }
+  function isLegume(key) {
+    return D.legumes.indexOf(key) >= 0 || ["green_bean", "peanut", "soybean"].indexOf(key) >= 0;
+  }
+  function fitLine(f) {
+    if (f.days > LONG_CYCLE) return tr("rec_long", { n: f.days });
+    return f.cover >= state.area
+      ? tr("rec_whole", { m3: num(f.dry), spare: num(f.spare) })
+      : tr("rec_part", { n: tareasText(Math.floor(f.cover * 10) / 10), area: tareasText(state.area), m3: num(f.dry) });
+  }
+  function drawMyCrops() {
+    var L = T[state.lang], rows = window.GT_LOCAL_CROPS || [];
+    var groups = Object.keys(L.crop_groups).filter(function (g) { return g !== "all"; });
+    $("cw-chips").innerHTML = groups.map(function (g) {
+      var inGroup = rows.filter(function (crop) { return crop.group === g; });
+      if (!inGroup.length) return "";
+      return "<div class=\"cw-chip-group\"><span>" + esc(L.crop_groups[g]) + "</span>" + inGroup.map(function (crop) {
+        var on = state.myCrops.indexOf(crop.id) >= 0;
+        return "<button type=\"button\" class=\"cw-chip" + (on ? " on" : "") + (cropWaterKey(crop) ? "" : " nocalc") +
+          "\" data-my-crop=\"" + crop.id + "\" aria-pressed=\"" + on + "\">" + esc(crop[state.lang] || crop.es) + "</button>";
+      }).join("") + "</div>";
+    }).join("");
+  }
+  function recItem(f, label, best) {
+    return "<li" + (best ? " class=\"best\"" : "") + "><b>" + esc(label) + "</b>" +
+      (isLegume(f.key) ? "<em>" + esc(T[state.lang].rec_legume) + "</em>" : "") + "<span>" + esc(fitLine(f)) + "</span></li>";
+  }
+  function drawRecommendations() {
+    var L = T[state.lang], rows = window.GT_LOCAL_CROPS || [];
+    var all = waterCropKeys().filter(rankable).map(waterFit).sort(byWater);
+    var top = all.slice(0, 3);
+    var globalHtml = "<div class=\"cw-rec-box\"><h4>" + esc(L.rec_all_title) + "</h4><p class=\"help\">" +
+      esc(tr("rec_all_help", { n: all.length })) + "</p><ol>" + top.map(function (f, i) {
+        return recItem(f, waterCropName(f.key), i === 0);
+      }).join("") + "</ol></div>";
+    var mine = rows.filter(function (crop) { return state.myCrops.indexOf(crop.id) >= 0; });
+    var mineHtml = "<div class=\"cw-rec-box mine\"><h4>" + esc(L.rec_mine_title) + "</h4>";
+    if (!mine.length) {
+      mineHtml += "<p class=\"help\">" + esc(L.rec_mine_empty) + "</p>";
+    } else {
+      var fits = [], noCalc = [];
+      mine.forEach(function (crop) {
+        var key = cropWaterKey(crop);
+        if (!key) { noCalc.push(crop[state.lang] || crop.es); return; }
+        var f = waterFit(key); f.label = crop[state.lang] || crop.es; fits.push(f);
+      });
+      var ranked = fits.filter(function (f) { return rankable(f.key); }).sort(byWater);
+      var long = fits.filter(function (f) { return !rankable(f.key); });
+      var best = ranked[0];
+      mineHtml += best ? "<p class=\"cw-rec-lead\">" + esc(tr("rec_mine_best", { crop: best.label })) + "</p>" : "";
+      mineHtml += "<ol>" + ranked.concat(long).map(function (f) { return recItem(f, f.label, f === best); }).join("") + "</ol>";
+      if (noCalc.length) mineHtml += "<p class=\"help\">" + esc(tr("rec_nocalc", { list: noCalc.join(", ") })) + "</p>";
+      var g = all[0];
+      if (best && g && g.key !== best.key && (g.cover > best.cover || g.dry < best.dry)) {
+        mineHtml += "<p class=\"cw-rec-compare\">" + esc(g.cover > best.cover
+          ? tr("rec_compare_cover", { other: waterCropName(g.key), n: tareasText(Math.floor(g.cover)), crop: best.label, m: tareasText(Math.floor(best.cover)) })
+          : tr("rec_compare_less", { other: waterCropName(g.key), pct: Math.round(100 * (1 - g.dry / best.dry)), crop: best.label })) + "</p>";
+      }
+    }
+    mineHtml += "</div>";
+    $("cw-rec").innerHTML = globalHtml + mineHtml + "<p class=\"note cw-rec-note\">" + esc(L.rec_note) + "</p>";
+  }
+
   function drawCropWater() {
     var L = T[state.lang];
     if (!$("cw-zone")) return;
+    drawMyCrops();
+    drawRecommendations();
     if (!$("cw-zone").options.length || $("cw-zone").getAttribute("data-lang") !== state.lang) {
       $("cw-zone").innerHTML = D.zones.map(function (z, i) { return "<option value=\"" + i + "\">" + esc(z.name) + "</option>"; }).join("");
       $("cw-month").innerHTML = MONTHS[state.lang].map(function (m, i) { return "<option value=\"" + (i + 1) + "\">" + esc(m) + "</option>"; }).join("");
@@ -1757,6 +1837,13 @@
     $("cw-soil").onchange = function () { state.soil = this.value; draw(); };
     $("cw-area").oninput = function () { var v = parseFloat(this.value); if (v > 0) { state.area = Math.min(v, 20000); draw(); } };
     $("cw-alloc").oninput = function () { state.allocation = this.value / 100; draw(); };
+    $("cw-chips").onclick = function (event) {
+      var chip = event.target.closest("[data-my-crop]");
+      if (!chip) return;
+      var id = chip.getAttribute("data-my-crop"), at = state.myCrops.indexOf(id);
+      if (at >= 0) state.myCrops.splice(at, 1); else state.myCrops.push(id);
+      draw();
+    };
     $("cw-table").onclick = function (event) {
       var row = event.target.closest("[data-crop-id]");
       if (!row) return;
