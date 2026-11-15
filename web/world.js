@@ -1274,7 +1274,11 @@
         f.path(p.rings) + "\" tabindex=\"0\" role=\"button\"" + fill + "><title>" + tip + "</title></path>";
     }).join("");
     if (!units.length) svg += "<path class=\"w-prov solo\" d=\"" + f.path(c.rings) + "\"/>";
-    if (layer === "basins") svg += riverPaths(f);
+    // rivers only inside the country: the country's own shape clips them at the border
+    if (layer === "basins") {
+      var shape = units.length ? units.map(function (p) { return f.path(p.rings); }).join("") : f.path(c.rings);
+      svg += "<defs><clipPath id=\"wm-clip\"><path d=\"" + shape + "\"/></clipPath></defs><g clip-path=\"url(#wm-clip)\">" + riverPaths(f) + "</g>";
+    }
     // small numbers on each province big enough to hold them; every value is also in the list below
     if (data) svg += units.map(function (p, i) {
       if (values[i] === null) return "";
