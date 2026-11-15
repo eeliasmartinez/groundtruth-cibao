@@ -26,7 +26,7 @@
     layer: "basins", // what the map shows: basins, balance, soil or heat
     whyTab: "why", // which explanation of the plan is open
     view: "home", // which section of the app is on screen
-    gstep: 0, // question of the guided walkthrough (5 = the result)
+    gstep: 0, // question of the guided walkthrough (GUIDE_STEPS.length = the result)
     farmPlaced: false,
     guideWithScene: false,
     easyMode: false,
@@ -369,8 +369,18 @@
     var other = D.other_needs[zone().name + "|" + state.month];
     return other && other[key];
   }
+  // The allocation is a share of the farm's usual need: rice for a rice farmer (as the
+  // engine assumes); otherwise the average of the farmer's own crops, land split evenly.
+  function usualNeedPerTarea() {
+    if (growsRice()) return cropWater("rice")[0];
+    var keys = (window.GT_LOCAL_CROPS || []).filter(function (crop) {
+      return state.myCrops.indexOf(crop.id) >= 0 && cropWaterKey(crop);
+    }).map(cropWaterKey);
+    if (!keys.length) return cropWater("rice")[0];
+    return keys.reduce(function (sum, k) { return sum + cropWater(k)[0]; }, 0) / keys.length;
+  }
   function waterBudget() {
-    return state.allocation * cropWater("rice")[0] * state.area;
+    return state.allocation * usualNeedPerTarea() * state.area;
   }
   // ---------------- "My crops" and the two recommendations ----------------
   // Both rank crops by water only, the one measure every crop here shares: first the land
@@ -413,7 +423,8 @@
     return "<li" + (best ? " class=\"best\"" : "") + "><b>" + esc(label) + "</b>" +
       (isLegume(f.key) ? "<em>" + esc(T[state.lang].rec_legume) + "</em>" : "") + "<span>" + esc(fitLine(f)) + "</span></li>";
   }
-  function drawRecommendations() {
+  function drawRecommendations() { $("cw-rec").innerHTML = recommendationsHtml(); }
+  function recommendationsHtml() {
     var L = T[state.lang], rows = window.GT_LOCAL_CROPS || [];
     var all = waterCropKeys().filter(rankable).map(waterFit).sort(byWater);
     var top = all.slice(0, 3);
@@ -441,12 +452,12 @@
       var g = all[0];
       if (best && g && g.key !== best.key && (g.cover > best.cover || g.dry < best.dry)) {
         mineHtml += "<p class=\"cw-rec-compare\">" + esc(g.cover > best.cover
-          ? tr("rec_compare_cover", { other: waterCropName(g.key), n: tareasText(Math.floor(g.cover)), crop: best.label, m: tareasText(Math.floor(best.cover)) })
+          ? tr("rec_compare_cover", { other: waterCropName(g.key), n: tareasText(Math.floor(g.cover * 10) / 10), crop: best.label, m: tareasText(Math.floor(best.cover * 10) / 10) })
           : tr("rec_compare_less", { other: waterCropName(g.key), pct: Math.round(100 * (1 - g.dry / best.dry)), crop: best.label })) + "</p>";
       }
     }
     mineHtml += "</div>";
-    $("cw-rec").innerHTML = globalHtml + mineHtml + "<p class=\"note cw-rec-note\">" + esc(L.rec_note) + "</p>";
+    return mineHtml + globalHtml + "<p class=\"note cw-rec-note\">" + esc(L.rec_note) + "</p>";
   }
 
   function drawCropWater() {
@@ -465,7 +476,7 @@
     $("cw-alloc").value = Math.round(state.allocation * 100);
     $("cw-alloc-out").textContent = Math.round(state.allocation * 100) + "%";
     var budget = waterBudget();
-    $("cw-budget").textContent = tr("cw_budget", { m3: num(budget), pct: Math.round(state.allocation * 100), area: tareasText(state.area) });
+    $("cw-budget").textContent = tr(growsRice() ? "cw_budget" : "cw_budget_mine", { m3: num(budget), pct: Math.round(state.allocation * 100), area: tareasText(state.area) });
     var rows = waterCropKeys().map(function (key) {
       var w = cropWater(key);
       return { key: key, typical: w[0], dry: w[1], fits: w[1] > 0 ? budget / w[1] : Infinity };
@@ -1292,13 +1303,20 @@
   // Guided walkthrough: one question per screen, then the plan
   // ------------------------------------------------------------------
 
+  // The walkthrough's questions, in order; the step after the last one is the result.
+  var GUIDE_STEPS = ["zone", "crops", "month", "soil", "water", "priority"];
+  var RESULT_STEP = GUIDE_STEPS.length;
+  function stepKind(step) { return step < RESULT_STEP ? GUIDE_STEPS[step] : "result"; }
+  function growsRice() { return !state.myCrops.length || state.myCrops.indexOf("rice") >= 0; }
+
   // Builds the screen of the current question (only when the question changes,
   // so its entrance animation plays once and typing is never interrupted).
   function prepareGuide() {
     var L = T[state.lang], step = state.gstep, stage = $("g-stage");
     var questions = state.easyMode ? L.easy_g_q : L.g_q;
     var explanations = state.easyMode ? L.easy_g_sub : L.g_sub;
-    var tag = step + "|" + state.lang + "|" + (state.easyMode ? "easy" : "full");
+    var kind = stepKind(step);
+    var tag = step + "|" + state.lang + "|" + (state.easyMode ? "easy" : "full") + "|" + (kind === "result" ? growsRice() : "");
     // Once a province/zone is chosen, keep its relief beside every guide step.
     // At step 0 the map remains available on the question panel while the 3D
     // relief appears alongside it.
@@ -1307,32 +1325,48 @@
     $("guide").classList.toggle("with-scene", showZoneScene);
     if (stage.getAttribute("data-step") === tag) return;
     var body;
-    if (step === 0) {
+    if (kind === "zone") {
       body = "<div id=\"g-map\" class=\"g-map\"></div><p class=\"g-pick\">" + L.g_zone + " <b id=\"g-zone\"></b></p>" +
         "<p class=\"note g-pick-note\" id=\"g-pick-note\" aria-live=\"polite\" hidden></p>";
-    } else if (step === 1) {
+    } else if (kind === "crops") {
+      var groups = Object.keys(L.crop_groups).filter(function (g) { return g !== "all"; });
+      body = "<div class=\"cw-chips g-crops\">" + groups.map(function (g) {
+        var inGroup = (window.GT_LOCAL_CROPS || []).filter(function (crop) { return crop.group === g; });
+        if (!inGroup.length) return "";
+        return "<div class=\"cw-chip-group\"><span>" + esc(L.crop_groups[g]) + "</span>" + inGroup.map(function (crop) {
+          return "<button type=\"button\" class=\"cw-chip" + (cropWaterKey(crop) ? "" : " nocalc") + "\" data-g-crop=\"" + crop.id + "\">" +
+            esc(crop[state.lang] || crop.es) + "</button>";
+        }).join("") + "</div>";
+      }).join("") + "</div><p class=\"help\">" + esc(L.g_crops_hint) + "</p>";
+    } else if (kind === "month") {
       body = "<p class=\"g-label\">" + L.g_month + "</p><div class=\"g-months\">" + MONTHS_SHORT[state.lang].map(function (m, i) {
         return "<button type=\"button\" data-g-month=\"" + (i + 1) + "\">" + m + "</button>";
       }).join("") + "</div><p class=\"help\" id=\"g-month-help\"></p><p class=\"g-label\">" + L.g_area + "</p>" +
         "<div class=\"g-area\"><button type=\"button\" data-g-area=\"-10\" aria-label=\"-10\">−</button>" +
         "<input id=\"g-area\" type=\"number\" min=\"1\" max=\"20000\" inputmode=\"decimal\">" +
         "<button type=\"button\" data-g-area=\"10\" aria-label=\"+10\">+</button></div>";
-    } else if (step === 2) {
+    } else if (kind === "soil") {
       body = "<div class=\"g-options\">" + ["clay", "loam", "sandy"].map(function (key) {
         return "<button type=\"button\" class=\"g-option\" data-g-soil=\"" + key + "\">" + SOIL_ART[key] + "<b>" + L.soils[key] + "</b></button>";
       }).join("") + "</div><p class=\"help\" id=\"g-soil-help\"></p>" +
         "<label class=\"check\"><input id=\"g-salty\" type=\"checkbox\"><span>" + L.salty + "</span></label>" +
         "<details class=\"more\"><summary>" + L.g_soil_link + "</summary>" + soilGuide() + "</details>";
-    } else if (step === 3) {
+    } else if (kind === "water") {
       body = "<div class=\"g-water\"><div class=\"g-tank\" aria-hidden=\"true\"><div class=\"g-level\" id=\"g-level\">" +
         "<svg class=\"g-wave\" viewBox=\"0 0 240 16\" preserveAspectRatio=\"none\"><path d=\"M0 8c20-8 40-8 60 0s40 8 60 0 40-8 60 0 40 8 60 0v8H0z\"/></svg></div>" +
         "<b id=\"g-pct\"></b></div><div class=\"g-water-side\"><input id=\"g-alloc\" type=\"range\" min=\"0\" max=\"100\" step=\"5\" aria-label=\"" + esc(L.allocation) + "\">" +
         "<div class=\"light\" id=\"g-light\"></div><p class=\"help\" id=\"g-water-help\"></p><p class=\"g-fit\" id=\"g-fit\"></p></div></div>";
-    } else if (step === 4) {
+    } else if (kind === "priority") {
       body = "<div class=\"g-options\">" + ["water", "soil", "income"].map(function (key) {
         return "<button type=\"button\" class=\"g-option\" data-g-priority=\"" + key + "\"><i>" + PRIORITY_ICONS[key] + "</i><b>" +
           L.priorities[key] + "</b><span>" + esc(L.priority_help[key]) + "</span></button>";
       }).join("") + "</div>";
+    } else if (!growsRice()) {
+      // Not a rice farmer: the rice rotation plan does not apply; rank their own crops by water.
+      body = "<div class=\"stamp\" aria-hidden=\"true\"><span>" + L.stamp + "</span></div>" +
+        "<div class=\"g-mine\"><p class=\"lead\">" + esc(L.g_mine_intro) + "</p><div class=\"cw-rec\" id=\"g-mine-rec\"></div>" +
+        "<div class=\"actions\"><button type=\"button\" class=\"btn primary\" data-go=\"crops\">" + esc(L.g_mine_more) + "</button>" +
+        "<button type=\"button\" class=\"btn\" data-g-restart>" + L.g_restart + "</button></div></div>";
     } else {
       var cells = "";
       for (var i = 0; i < 100; i++) {
@@ -1344,55 +1378,68 @@
         "<div class=\"plan-side\"><div class=\"mix\" id=\"g-mix\"></div><div class=\"impact\" id=\"g-impact\"></div><div class=\"actions\">" +
         "<button type=\"button\" class=\"btn primary\" data-go=\"plan\">" + L.g_full + "</button>" +
         "<button type=\"button\" class=\"btn\" data-go=\"rotation\">" + L.g_rot + "</button>" +
-        "<button type=\"button\" class=\"btn\" data-g-restart>" + L.g_restart + "</button></div></div></div>";
+        "<button type=\"button\" class=\"btn\" data-g-restart>" + L.g_restart + "</button></div></div></div>" +
+        "<div class=\"g-mine-extra\" id=\"g-mine-extra\"></div>";
     }
-    stage.innerHTML = "<h2 class=\"g-q\">" + (step < 5 ? questions[step] : L.g_result) + "</h2><p class=\"g-sub\" id=\"g-sub\">" +
-      (step < 5 ? esc(explanations[step]) : "") + "</p><div class=\"g-body\">" + body + "</div>";
+    stage.innerHTML = "<h2 class=\"g-q\">" + (step < RESULT_STEP ? questions[step] : L.g_result) + "</h2><p class=\"g-sub\" id=\"g-sub\">" +
+      (step < RESULT_STEP ? esc(explanations[step]) : "") + "</p><div class=\"g-body\">" + body + "</div>";
     stage.setAttribute("data-step", tag);
     $("guide").setAttribute("data-step", step);
   }
 
   // Fills the current screen with the farmer's answers and their consequences.
   function updateGuide(result, best, byKey) {
-    var L = T[state.lang], step = state.gstep;
-    $("g-count").textContent = step < 5 ? tr("g_step", { n: step + 1 }) : L.g_done;
-    $("g-bar").style.width = (100 * Math.min(step + 1, 6) / 6) + "%";
+    var L = T[state.lang], step = state.gstep, kind = stepKind(step);
+    $("g-count").textContent = step < RESULT_STEP ? tr("g_step", { n: step + 1 }) : L.g_done;
+    $("g-bar").style.width = (100 * Math.min(step + 1, RESULT_STEP + 1) / (RESULT_STEP + 1)) + "%";
     var back = document.querySelector("[data-g-back]"), next = document.querySelector("[data-g-next]");
     back.textContent = L.g_back;
-    next.textContent = step === 4 ? L.g_see : L.g_next;
-    next.hidden = step >= 5;
+    next.textContent = step === RESULT_STEP - 1 ? L.g_see : L.g_next;
+    next.hidden = step >= RESULT_STEP;
+    next.disabled = kind === "crops" && !state.myCrops.length;
     function mark(selector, attribute, value) {
       document.querySelectorAll(selector).forEach(function (el) {
         el.classList.toggle("on", el.getAttribute(attribute) === String(value));
       });
     }
-    if (step === 0) {
+    if (kind === "zone") {
       $("g-zone").textContent = zone().name;
       $("g-pick-note").textContent = pickNoteText();
       $("g-pick-note").hidden = !pickNoteText();
-    } else if (step === 1) {
+    } else if (kind === "crops") {
+      document.querySelectorAll("[data-g-crop]").forEach(function (el) {
+        var on = state.myCrops.indexOf(el.getAttribute("data-g-crop")) >= 0;
+        el.classList.toggle("on", on); el.setAttribute("aria-pressed", String(on));
+      });
+    } else if (kind === "month") {
       mark("[data-g-month]", "data-g-month", state.month);
       $("g-month-help").textContent = $("month-help").textContent;
       if (document.activeElement !== $("g-area")) $("g-area").value = state.area;
-    } else if (step === 2) {
+    } else if (kind === "soil") {
       mark("[data-g-soil]", "data-g-soil", state.soil);
       $("g-soil-help").textContent = L.soil_help[state.soil];
       $("g-salty").checked = state.salty;
-    } else if (step === 3) {
+    } else if (kind === "water") {
       $("g-level").style.height = (100 * state.allocation) + "%";
       $("g-pct").textContent = Math.round(state.allocation * 100) + "%";
       $("g-alloc").value = Math.round(state.allocation * 100);
       $("g-water-help").textContent = L.water_help[waterStatus()];
       var rice = byKey.current.plots.length ? byKey.current.plots[0].tareas : 0;
-      $("g-fit").textContent = state.riceAllowed
-        ? tr("g_fit", { n: tareasText(rice), area: tareasText(state.area) }) : L.g_fit_ban;
-    } else if (step === 4) {
+      $("g-fit").textContent = !growsRice()
+        ? tr("g_fit_mine", { n: tareasText(Math.min(1, state.allocation) * state.area), area: tareasText(state.area) })
+        : state.riceAllowed ? tr("g_fit", { n: tareasText(rice), area: tareasText(state.area) }) : L.g_fit_ban;
+    } else if (kind === "priority") {
       mark("[data-g-priority]", "data-g-priority", state.priority);
+    } else if (!growsRice()) {
+      $("g-sub").textContent = L.g_mine_title;
+      $("g-mine-rec").innerHTML = recommendationsHtml();
     } else {
       $("g-sub").innerHTML = $("headline").innerHTML;
       paintCells($("g-parcel").children, best, true);
       $("g-mix").innerHTML = $("plan-mix").innerHTML;
       $("g-impact").innerHTML = $("impact").innerHTML;
+      var others = state.myCrops.filter(function (id) { return id !== "rice"; });
+      $("g-mine-extra").innerHTML = others.length ? "<p class=\"note\">" + esc(L.g_mine_rice_note) + "</p><div class=\"cw-rec\">" + recommendationsHtml() + "</div>" : "";
     }
   }
 
@@ -1930,6 +1977,7 @@
     $("map").onkeydown = exploreZone;
     $("h-map").onkeydown = exploreZone;
     $("z-plan").onclick = function () {
+      if (!state.myCrops.length) state.myCrops = ["rice"];
       state.farmPlaced = true;
       state.guideWithScene = true;
       state.gstep = 1;
@@ -1946,6 +1994,11 @@
         state.zone = +el.getAttribute("data-zone"); state.guideWithScene = true; state.pickNote = null;
         draw(); startScene(); return;
       }
+      if ((el = target.closest("[data-g-crop]"))) {
+        var cropId = el.getAttribute("data-g-crop"), at = state.myCrops.indexOf(cropId);
+        if (at >= 0) state.myCrops.splice(at, 1); else state.myCrops.push(cropId);
+        draw(); return;
+      }
       if ((el = target.closest("[data-g-month]"))) { state.month = +el.getAttribute("data-g-month"); draw(); return; }
       if ((el = target.closest("[data-g-soil]"))) { state.soil = el.getAttribute("data-g-soil"); draw(); return; }
       if ((el = target.closest("[data-g-priority]"))) {
@@ -1961,7 +2014,8 @@
         state.area = Math.max(1, Math.min(20000, state.area + (+el.getAttribute("data-g-area")))); draw(); return;
       }
       if (target.closest("[data-g-next]")) {
-        remember(); state.gstep = Math.min(5, state.gstep + 1); draw();
+        if (stepKind(state.gstep) === "crops" && !state.myCrops.length) return;
+        remember(); state.gstep = Math.min(RESULT_STEP, state.gstep + 1); draw();
         if (state.guideWithScene) startScene();
         window.scrollTo(0, 0); return;
       }
@@ -2005,6 +2059,7 @@
     };
     $("start").onclick = function () {
       state.gstep = 0;
+      if (!state.myCrops.length) state.myCrops = ["rice"];
       state.easyMode = false;
       state.guideWithScene = false;
       draw();
@@ -2012,6 +2067,7 @@
     };
     $("start-easy").onclick = function () {
       state.gstep = 0;
+      if (!state.myCrops.length) state.myCrops = ["rice"];
       state.easyMode = true;
       state.guideWithScene = false;
       draw();

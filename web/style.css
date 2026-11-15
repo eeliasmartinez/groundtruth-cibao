@@ -840,3 +840,12 @@ details.more .soil-table { margin-top: 8px; }
 .wq-nav button[disabled] { opacity: .45; cursor: not-allowed; }
 @media (max-width: 760px) { .wq-row { grid-template-columns: 1fr; gap: 4px; } }
 .w-frost { display: block; margin-top: 4px; padding: 4px 8px; border-left: 4px solid var(--red); background: #fdecea; color: var(--ink); font-size: 13px; }
+
+/* Walkthrough: "What do you grow now?" and the result for farmers who don't grow rice */
+.g-crops { max-height: 52vh; overflow: auto; padding-right: 4px; }
+.g-mine { display: grid; gap: 14px; }
+.g-mine .lead { margin: 0; font-weight: 700; }
+.g-mine .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.g-mine-extra { display: grid; gap: 10px; margin-top: 18px; }
+.g-mine-extra:empty { display: none; }
+.guide [data-g-next][disabled] { opacity: .45; cursor: not-allowed; }

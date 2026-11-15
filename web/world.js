@@ -623,7 +623,7 @@
         "<p class=\"wq-picked\">" + esc(st.mine.length ? tr("wq_picked", { n: st.mine.length, list: mineNames() }) : Lx.wq_pick_one) + "</p>" +
         "<p class=\"help\">" + esc(Lx.wq_crop_long) + "</p>";
     } else if (step === 1) {
-      html = "<h2>" + esc(Lx.g_q[1]) + "</h2><p class=\"g-label\">" + esc(Lx.cw_month) + "</p><div class=\"wq-chips\">" + MONTHS.map(function (m, i) {
+      html = "<h2>" + esc(Lx.g_q[2]) + "</h2><p class=\"g-label\">" + esc(Lx.cw_month) + "</p><div class=\"wq-chips\">" + MONTHS.map(function (m, i) {
         return "<button type=\"button\" class=\"cw-chip" + (i + 1 === st.month ? " on" : "") + "\" data-wq-month=\"" + (i + 1) + "\">" + esc(m) + "</button>";
       }).join("") + "</div><p class=\"g-label\">" + esc(Lx.wq_area) + "</p><div class=\"wq-rows\">" + st.mine.map(function (m) {
         return "<div class=\"wq-row\"><span>" + esc(profileName(m.key)) + "</span><div class=\"wq-area\"><button type=\"button\" data-wq-ha=\"" + m.key + "\" data-step=\"-1\" aria-label=\"-1\">−</button>" +
@@ -631,7 +631,7 @@
           "<button type=\"button\" data-wq-ha=\"" + m.key + "\" data-step=\"1\" aria-label=\"+1\">+</button></div></div>";
       }).join("") + "</div><p class=\"help\" id=\"wq-total\">" + esc(tr("wq_total", { ha: num(mineArea(), 1) })) + " " + esc(Lx.wq_area_help) + "</p>";
     } else if (step === 2) {
-      html = "<h2>" + esc(Lx.g_q[2]) + "</h2><div class=\"wq-chips\">" + ["clay", "loam", "sandy"].map(function (s) {
+      html = "<h2>" + esc(Lx.g_q[3]) + "</h2><div class=\"wq-chips\">" + ["clay", "loam", "sandy"].map(function (s) {
         return "<button type=\"button\" class=\"cw-chip big" + (s === st.soil ? " on" : "") + "\" data-wq-soil=\"" + s + "\">" + esc(Lx.soils[s]) + "</button>";
       }).join("") + "</div><p class=\"help\">" + esc(Lx.soil_help[st.soil]) + "</p><p class=\"help\">" + esc(Lx.wq_soil_note) + "</p>";
     } else if (step === 3) {
@@ -641,7 +641,7 @@
         }).join("") + "</div><div class=\"cw-range wq-range\"><input id=\"wq-pct\" type=\"range\" min=\"0\" max=\"100\" step=\"5\" value=\"" + Math.round(st.pct * 100) +
         "\" aria-label=\"" + esc(Lx.wq_q_water) + "\"><output id=\"wq-pct-out\">" + Math.round(st.pct * 100) + "%</output></div>";
     } else if (step === 4) {
-      html = "<h2>" + esc(Lx.g_q[4]) + "</h2><div class=\"wq-chips col\">" + ["water", "soil", "known"].map(function (k) {
+      html = "<h2>" + esc(Lx.g_q[5]) + "</h2><div class=\"wq-chips col\">" + ["water", "soil", "known"].map(function (k) {
         return "<button type=\"button\" class=\"cw-chip big" + (k === st.priority ? " on" : "") + "\" data-wq-prio=\"" + k + "\"><b>" + esc(Lx["wq_p_" + k]) + "</b><span>" + esc(Lx["wq_p_" + k + "_help"]) + "</span></button>";
       }).join("") + "</div>";
     } else if (!st.climate) {
