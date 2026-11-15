@@ -39,6 +39,7 @@ and soil wetness. From it the engine computes:
 | `nasa_power.py` | Downloads NASA POWER data and keeps a saved copy in `data/` |
 | `water.py` | Crop water needs (FAO-56) |
 | `crops.py` | Crop table with its sources |
+| `crops_fao.py` | 23 more crops for the water calculator (FAO-56 Tables 11 and 12, row chosen for each) |
 | `rotation.py` | Builds and scores the rotation strategies |
 | `build_web.py` | Runs the engine and writes the data the page uses |
 | `build_provinces.py` | Simplifies the 32 province outlines for the offline map |

@@ -54,7 +54,7 @@
   var MAP = { w: 760, h: 546, lon0: -72.1, lat0: 20.05, k: 206, cos: 0.947 };
   var NAV_VIEWS = ["home", "plan", "rotation", "options", "map", "data", "help"];
   var VIEWS = NAV_VIEWS.concat(["guide", "zone", "crops"]); // crops opens from Home, outside the main farm-planning tabs
-  var selectedLocalCrop = "plantain";
+  var selectedLocalCrop = "cacao";
   // Small drawings for the soil question: water stays on clay, sinks through sand.
   var SOIL_ART = {
     clay: '<svg viewBox="0 0 120 64" aria-hidden="true"><rect width="120" height="64" rx="10" fill="#7a4a2b"/><path d="M0 26h120M0 46h120" stroke="#5d3518" stroke-width="2"/><path d="M34 8v18M72 26v20M98 46v18M18 46v18" stroke="#5d3518" stroke-width="2"/><ellipse cx="60" cy="9" rx="38" ry="6" fill="#6db8f7"/></svg>',
@@ -136,8 +136,10 @@
 
   var SOURCES = [
     ["NASA POWER (Prediction Of Worldwide Energy Resources), NASA Langley Research Center", "https://power.larc.nasa.gov/"],
+    ["ONE, Boletín de Estadísticas Agropecuarias enero–diciembre 2025 (cacao y otros rubros)", "https://www.one.gob.do/media/njpkonqj/bolet%C3%ADn-estad%C3%ADstico-agropecuario-enero-diciembre-2025.pdf"],
     ["Province boundaries: geoBoundaries ADM1, Dominican Republic, represented 2022 (public domain)", "https://www.geoboundaries.org/api/current/gbOpen/DOM/ADM1/"],
     ["FAO Irrigation and Drainage Paper 56: Crop evapotranspiration (Allen et al., 1998)", "https://www.fao.org/4/x0490e/x0490e00.htm"],
+    ["FAO-56 chapter 6, Tables 11 and 12: crop stage lengths and Kc used by the water calculator", "https://www.fao.org/4/x0490e/x0490e0b.htm"],
     ["FAO Irrigation Water Management Training Manual No. 3: Irrigation water needs (1986)", "https://www.fao.org/4/s2022e/s2022e00.htm"],
     ["FAO Irrigation and Drainage Paper 29: Water quality for agriculture (Ayers & Westcot, 1985)", "https://www.fao.org/4/t0234e/t0234e00.htm"],
     ["elDinero, 25 Mar 2026: La región Norte concentra el 91.5% de la producción nacional de arroz", "https://eldinero.com.do/359496/la-region-norte-concentra-el-91-5-de-la-produccion-nacional-de-arroz/"],
@@ -151,6 +153,9 @@
     ["Typefaces: Big Shoulders Display and Archivo (SIL Open Font License), via Fontsource", "https://fontsource.org/"],
     ["Satellite photo: NASA Worldview Snapshots, MODIS Terra corrected reflectance, 18 Feb 2026", "https://wvs.earthdata.nasa.gov/"],
     ["Elevation: Terrain Tiles on AWS Open Data (Mapzen), derived mainly from NASA SRTM", "https://registry.opendata.aws/terrain-tiles/"],
+    ["Named peak elevations: Instituto Geográfico Nacional GNSS survey (2021)", "https://ign.gob.do/medicion-por-sistema-global-de-navegacion-por-satelite-gnss-de-los-tres-picos-mas-altos-de-las-antillas/"],
+    ["Mountain names and reference coordinates: GeoNames / NGA gazetteer", "https://www.geonames.org/advanced-search.html?country=DO&featureClass=T"],
+    ["Regional mountain heights and hydrography: Instituto Geográfico Nacional", "https://ign.gob.do/wp-content/uploads/2024/11/RECURSOS-HIDROGRAFICOS-SUPERFICIALESDE-REP.-DOM-digital-op_compressed.pdf"],
     ["Soil by feel: USDA NRCS, Guide to Texture by Feel (S. J. Thien, 1979)", "https://www.nrcs.usda.gov/resources/education-and-teaching-materials/guide-to-texture-by-feel"]
   ];
 
@@ -304,6 +309,7 @@
       }).join("");
     modelSelect.innerHTML = "<option value=\"all\">" + esc(L.crop_models.all) + "</option>" +
       "<option value=\"modeled\">" + esc(L.crop_models.modeled) + "</option>" +
+      "<option value=\"water\">" + esc(L.crop_models.water) + "</option>" +
       "<option value=\"pending\">" + esc(L.crop_models.pending) + "</option>";
     groupSelect.value = group;
     modelSelect.value = model;
@@ -311,14 +317,18 @@
       var name = crop[state.lang] || crop.es;
       var searchMatch = !query || (name + " " + crop.es + " " + crop.en).toLocaleLowerCase().indexOf(query) >= 0;
       return searchMatch && (group === "all" || crop.group === group) &&
-        (model === "all" || (model === "modeled") === !!crop.modelKey);
+        (model === "all" || cropStatus(crop) === model);
     });
     if (!filtered.some(function (crop) { return crop.id === selectedLocalCrop; }) && filtered.length)
       selectedLocalCrop = filtered[0].id;
     $("crop-total").textContent = rows.length;
     $("crop-result-count").textContent = L.crop_results.replace("{n}", filtered.length);
-    $("crop-overview").innerHTML = L.crop_overview.map(function (item) {
-      return "<div><b>" + esc(item[1]) + "</b><span>" + esc(item[0]) + "</span></div>";
+    // Counts come from the directory itself, so they always add up.
+    var withWater = rows.filter(function (crop) { return cropWaterKey(crop); }).length;
+    var inEngine = rows.filter(function (crop) { return crop.modelKey; }).length;
+    $("crop-overview").innerHTML = [[rows.length, L.crop_ov_total], [withWater, L.crop_ov_water],
+      [inEngine, L.crop_ov_engine], [waterCropKeys().length, L.crop_ov_profiles]].map(function (item) {
+      return "<div><b>" + item[0] + "</b><span>" + esc(item[1]) + "</span></div>";
     }).join("");
     $("crop-list").innerHTML = filtered.length ? filtered.map(function (crop) {
       var name = crop[state.lang] || crop.es;
@@ -326,9 +336,64 @@
       return "<button type=\"button\" class=\"crop-row" + (crop.id === selectedLocalCrop ? " selected" : "") +
         "\" data-crop-id=\"" + crop.id + "\"><span class=\"crop-row-main\"><b>" + esc(name) +
         "</b><small>" + esc(L.crop_groups[crop.group]) + "</small></span><span class=\"crop-row-stat\">" +
-        esc(metric) + "</span><span class=\"crop-row-mark\" aria-hidden=\"true\">" + (crop.modelKey ? "●" : "○") + "</span></button>";
+        esc(metric) + "</span><span class=\"crop-row-mark\" aria-hidden=\"true\">" + ({ modeled: "●", water: "◐", pending: "○" })[cropStatus(crop)] + "</span></button>";
     }).join("") : "<p class=\"crop-empty\">" + esc(L.crop_empty) + "</p>";
     renderCropProfile(rows.filter(function (crop) { return crop.id === selectedLocalCrop; })[0]);
+    drawCropWater();
+  }
+
+  // ---------------- Water calculator for every crop with an FAO-56 profile ----------------
+  // Rotation-engine crops use the engine's own needs (rice depends on the soil); the other
+  // crops use crops_fao.py through build_web.py. Values are m3 per tarea [typical, dry year].
+  function cropStatus(crop) { return crop.modelKey ? "modeled" : (crop.water ? "water" : "pending"); }
+  function cropWaterKey(crop) { return crop.modelKey || crop.water || null; }
+  function waterCropKeys() { return Object.keys(D.crops).concat(Object.keys(D.other_crops)); }
+  function waterCropName(key) { return D.crops[key] ? cropName(key) : D.other_crops[key][state.lang]; }
+  function waterCropDays(key) {
+    return D.crops[key] ? D.crops[key].stages.reduce(function (a, b) { return a + b; }, 0) : D.other_crops[key].days;
+  }
+  function cropWater(key) {
+    if (D.crops[key]) {
+      var n = D.needs[zone().name + "|" + state.soil + "|" + state.month][key];
+      return [n.typical_m3, n.dry_m3];
+    }
+    var other = D.other_needs[zone().name + "|" + state.month];
+    return other && other[key];
+  }
+  function waterBudget() {
+    return state.allocation * cropWater("rice")[0] * state.area;
+  }
+  function drawCropWater() {
+    var L = T[state.lang];
+    if (!$("cw-zone")) return;
+    if (!$("cw-zone").options.length || $("cw-zone").getAttribute("data-lang") !== state.lang) {
+      $("cw-zone").innerHTML = D.zones.map(function (z, i) { return "<option value=\"" + i + "\">" + esc(z.name) + "</option>"; }).join("");
+      $("cw-month").innerHTML = MONTHS[state.lang].map(function (m, i) { return "<option value=\"" + (i + 1) + "\">" + esc(m) + "</option>"; }).join("");
+      $("cw-soil").innerHTML = ["clay", "loam", "sandy"].map(function (s) { return "<option value=\"" + s + "\">" + esc(L.soils[s]) + "</option>"; }).join("");
+      $("cw-zone").setAttribute("data-lang", state.lang);
+    }
+    $("cw-zone").value = state.zone; $("cw-month").value = state.month; $("cw-soil").value = state.soil;
+    if (document.activeElement !== $("cw-area")) $("cw-area").value = state.area;
+    $("cw-alloc").value = Math.round(state.allocation * 100);
+    $("cw-alloc-out").textContent = Math.round(state.allocation * 100) + "%";
+    var budget = waterBudget();
+    $("cw-budget").textContent = tr("cw_budget", { m3: num(budget), pct: Math.round(state.allocation * 100), area: tareasText(state.area) });
+    var rows = waterCropKeys().map(function (key) {
+      var w = cropWater(key);
+      return { key: key, typical: w[0], dry: w[1], fits: w[1] > 0 ? budget / w[1] : Infinity };
+    }).sort(function (a, b) { return a.dry - b.dry; });
+    var most = Math.max.apply(null, rows.map(function (r) { return r.dry; }));
+    var linked = {};
+    (window.GT_LOCAL_CROPS || []).forEach(function (crop) { var k = cropWaterKey(crop); if (k && !linked[k]) linked[k] = crop.id; });
+    $("cw-table").innerHTML = "<div class=\"cw-head\"><span>" + esc(L.cw_crop) + "</span><span>" + esc(L.cw_typical) +
+      "</span><span>" + esc(L.cw_dry) + "</span><span>" + esc(L.cw_fits) + "</span></div>" + rows.map(function (r) {
+      var whole = r.fits >= state.area;
+      var fitsText = whole ? L.cw_all : tareasText(Math.floor(r.fits * 10) / 10);
+      return "<button type=\"button\" class=\"cw-row" + (whole ? " whole" : "") + "\"" + (linked[r.key] ? " data-crop-id=\"" + linked[r.key] + "\"" : "") +
+        "><span class=\"cw-name\"><b>" + esc(waterCropName(r.key)) + "</b><small>" + tr("cw_days", { n: waterCropDays(r.key) }) + "</small>" +
+        "<i style=\"width:" + Math.max(2, 100 * r.dry / most).toFixed(1) + "%\"></i></span><span>" + num(r.typical) + "</span><span>" + num(r.dry) +
+        "</span><span class=\"cw-fit\">" + esc(fitsText) + "</span></button>";
+    }).join("");
   }
 
   function renderCropProfile(crop) {
@@ -338,11 +403,20 @@
       "</b><span>" + esc(L.crop_tonnes_2025) + "</span></div>";
     var exportLine = crop.exportShare == null ? "" : "<p class=\"crop-export\">" +
       esc(L.crop_export_share.replace("{n}", cropNumber(crop.exportShare))) + "</p>";
-    var modelCopy = crop.modelKey ? L.crop_modelled_detail : L.crop_pending_detail;
+    if (crop.exportTonnes != null) exportLine += "<p class=\"crop-export\"><b>" + esc(L.crop_export_volume) + "</b> " +
+      cropNumber(crop.exportTonnes) + " t · USD " + cropNumber(crop.exportUsdM) + " M (2025)</p>";
+    var modelCopy = crop.modelKey ? L.crop_modelled_detail : (crop.water ? L.crop_water_detail : L.crop_pending_detail);
+    var waterKey = cropWaterKey(crop), waterLine = "";
+    if (waterKey) {
+      var w = cropWater(waterKey);
+      waterLine = "<div class=\"crop-stat\"><b>" + num(w[0]) + " m³</b><span>" + esc(tr("crop_water_line", {
+        zone: zone().name, month: lower(MONTHS[state.lang][state.month - 1]), dry: num(w[1]), days: waterCropDays(waterKey) })) + "</span></div>";
+      if (D.other_crops[waterKey]) waterLine += "<p class=\"crop-export\">" + esc(L.crop_water_source) + " " + esc(D.other_crops[waterKey].row) + "</p>";
+    }
     $("crop-profile").innerHTML = "<p class=\"crop-profile-kicker\">" + esc(L.crop_profile_kicker) + "</p>" +
       "<h3>" + esc(name) + "</h3><p class=\"crop-profile-group\">" + esc(L.crop_groups[crop.group]) + "</p>" +
-      stat + exportLine + "<div class=\"crop-model-note " + (crop.modelKey ? "available" : "pending") + "\"><b>" +
-      esc(crop.modelKey ? L.crop_models.modeled : L.crop_models.pending) + "</b><p>" + esc(modelCopy) + "</p></div>" +
+      stat + exportLine + waterLine + "<div class=\"crop-model-note " + (waterKey ? "available" : "pending") + "\"><b>" +
+      esc(L.crop_models[cropStatus(crop)]) + "</b><p>" + esc(modelCopy) + "</p></div>" +
       "<a href=\"https://www.one.gob.do/media/njpkonqj/bolet%C3%ADn-estad%C3%ADstico-agropecuario-enero-diciembre-2025.pdf\" target=\"_blank\" rel=\"noopener\">" +
       esc(L.crop_open_source) + "</a>";
   }
@@ -420,6 +494,7 @@
     drawBasin(selected, result, byKey);
     drawLimits();
     drawStorageStatus();
+    if (state.view === "crops") drawCropDirectory();
   }
 
   function drawStorageStatus() {
@@ -1361,6 +1436,9 @@
         if (run.length > 1) rivers.push({ main: river.main, points: run });
       });
     });
+    var peaks = (window.GT_PEAKS || []).filter(function (peak) { return inside(peak.lon, peak.lat); }).map(function (peak) {
+      var spot = place(peak.lon, peak.lat, 22); spot.name = peak.name; return spot;
+    });
     var dams = window.GT_GEO.dams.filter(function (dam) { return inside(dam.lon, dam.lat); }).map(function (dam) {
       var spot = place(dam.lon, dam.lat, 30); spot.name = dam.name; return spot;
     });
@@ -1369,7 +1447,7 @@
       if (!inside(other.lon, other.lat)) return;
       var spot = place(other.lon, other.lat, 30); spot.name = shortName(other.name); spot.mine = n === index; zones.push(spot);
     });
-    return { points: points, quads: quads, provinceLines: provinceLines, rivers: rivers, dams: dams, zones: zones, riverNames: names,
+    return { points: points, quads: quads, provinceLines: provinceLines, rivers: rivers, peaks: peaks, dams: dams, zones: zones, riverNames: names,
       highest: highest, widthKm: 2 * WINDOW.lon * kmLon };
   }
 
@@ -1435,6 +1513,20 @@
       ctx.lineWidth = 3.5 * ratio; ctx.strokeStyle = "#fff"; ctx.strokeText(text, x, y);
       ctx.fillStyle = "#10131a"; ctx.fillText(text, x, y);
     }
+    // Spread the four neighboring Sierra peaks apart so their labels do not stack.
+    var peakOffsets = [[12,-12],[14,16],[-14,-14],[-14,17],[18,0]];
+    var peakLabelOffsets = {
+      "Pico Duarte": [36,-34], "La Pelona": [-112,-30],
+      "La Rucilla": [38,30], "Pico del Yaque": [-128,30]
+    };
+    m.peaks.forEach(function (peak, i) {
+      var q = project(peak), offset = peakLabelOffsets[peak.name] || peakOffsets[i % peakOffsets.length], dx = offset[0] * ratio, dy = offset[1] * ratio;
+      ctx.beginPath(); ctx.arc(q[0], q[1], 3.2 * ratio, 0, Math.PI * 2);
+      ctx.fillStyle = "#e2231a"; ctx.fill(); ctx.lineWidth = 1.5 * ratio; ctx.strokeStyle = "#fff"; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(q[0], q[1]); ctx.lineTo(q[0] + dx * .65, q[1] + dy * .65);
+      ctx.strokeStyle = "rgba(16,19,26,.72)"; ctx.lineWidth = 1 * ratio; ctx.stroke();
+      label(peak.name, q[0] + dx, q[1] + dy, false);
+    });
     m.dams.forEach(function (dam) {
       var q = project(dam), size = 23 * ratio;
       if (scene.damIcon && scene.damIcon.complete && scene.damIcon.naturalWidth) {
@@ -1644,7 +1736,14 @@
         esc(L.soils[state.soil]) + "</small></span></div>" +
         "<div class=\"scene-context-water\"><div><b>" + esc(L.field_water) + "</b><strong>" + Math.round(state.allocation * 100) + "%</strong></div>" +
         "<i><u style=\"width:" + Math.round(state.allocation * 100) + "%\"></u></i></div>" +
-        "<div class=\"scene-context-area\"><b>" + esc(L.field_area) + "</b><span>" + tareasText(state.area) + " " + esc(tr("tareas")) + "</span></div>";
+        "<div class=\"scene-context-area\"><b>" + esc(L.field_area) + "</b><span>" + tareasText(state.area) + " " + esc(tr("tareas")) + "</span></div>" +
+        "<div class=\"scene-context-extra\"><b>" + esc(L.field_nasa_context) + "</b>" +
+        "<div><span>" + esc(L.field_et0) + "</span><strong>" + num(climate.et0[monthIndex]) + " mm/mes</strong></div>" +
+        "<div><span>" + esc(L.field_root_wetness) + "</span><strong>" + num(climate.soil[monthIndex]) + "%</strong></div>" +
+        "<div><span>" + esc(L.field_surface_wetness) + "</span><strong>" + num(climate.soil_surface[monthIndex]) + "%</strong></div>" +
+        "<div><span>" + esc(L.field_humidity) + "</span><strong>" + num(climate.humidity[monthIndex]) + "%</strong></div>" +
+        "<div><span>" + esc(L.field_wind) + "</span><strong>" + num(climate.wind[monthIndex], 1) + " m/s</strong></div>" +
+        "<small>" + esc(L.field_nasa_note) + "</small></div>";
     });
   }
 
@@ -1653,6 +1752,19 @@
   // ------------------------------------------------------------------
   function listen() {
     $("crop-search").oninput = drawCropDirectory;
+    $("cw-zone").onchange = function () { state.zone = +this.value; state.farmPlaced = false; state.pickNote = null; draw(); };
+    $("cw-month").onchange = function () { state.month = +this.value; draw(); };
+    $("cw-soil").onchange = function () { state.soil = this.value; draw(); };
+    $("cw-area").oninput = function () { var v = parseFloat(this.value); if (v > 0) { state.area = Math.min(v, 20000); draw(); } };
+    $("cw-alloc").oninput = function () { state.allocation = this.value / 100; draw(); };
+    $("cw-table").onclick = function (event) {
+      var row = event.target.closest("[data-crop-id]");
+      if (!row) return;
+      selectedLocalCrop = row.getAttribute("data-crop-id");
+      $("crop-search").value = ""; $("crop-group").value = "all"; $("crop-model").value = "all";
+      drawCropDirectory();
+      $("crop-profile").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    };
     $("crop-group").onchange = drawCropDirectory;
     $("crop-model").onchange = drawCropDirectory;
     $("crop-list").onclick = function (event) {
@@ -1852,6 +1964,7 @@
     if (VIEWS.indexOf(view) < 0) view = "home";
     if (ready && !returning && view !== state.view) remember();
     state.view = view;
+    if (view === "crops") drawCropDirectory();
     document.body.setAttribute("data-view", view);
     var farmSettings = $("farm-settings");
     if (farmSettings) farmSettings.open = view === "plan";

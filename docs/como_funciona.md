@@ -113,3 +113,22 @@ cuidado y conservar las verificaciones de equivalencia del motor.
 En el plan se etiquetan tres procedencias: clima histórico de NASA POWER, datos que el
 productor selecciona (suelo, agua y tamaño) y zona de mapa de referencia. El relieve y la
 marca de finca siguen siendo ilustrativos; no se modificaron los parámetros de cultivos.
+
+## Capa adicional del mapa: variables NASA POWER
+
+El menú de datos del relieve muestra, para el mes seleccionado, lluvia y temperatura
+máxima, ET₀ mensual, humedad modelada de la capa de raíces y de la superficie, humedad
+del aire y viento medio. La ET₀ se calcula con el método FAO-56; temperatura, radiación,
+humedad y viento forman parte de esa estimación. La capa de raíces participa además como
+contexto, no sustituye una medición de campo ni el tipo de suelo que el usuario selecciona.
+
+Los promedios corresponden a 2001–2025 y a la cuadrícula regional de NASA POWER. No son
+condiciones en vivo ni mediciones de la parcela. En el motor de riego, el cálculo sigue
+basado en ET₀, coeficientes de cultivo y lluvia aprovechable. La humedad superficial y
+la humedad de raíces se presentan para contexto; no se usaron para alterar la puntuación
+ni recomendar cultivos.
+
+No se añadieron todavía datos de GPM, SMAP, MODIS NDVI/EVI, ECOSTRESS ni GRACE como
+factores. La lista de conjuntos de datos y el plan de integración están en
+[`capas_nasa.md`](capas_nasa.md). Esta separación evita llamar “NASA” a indicadores que
+no se han descargado, armonizado y validado para las zonas dominicanas.

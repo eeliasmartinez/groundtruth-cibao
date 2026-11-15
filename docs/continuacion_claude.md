@@ -158,6 +158,30 @@ agente pueda continuar sin volver a investigar ni asumir que los dibujos son dat
 
 ## Pendiente para el equipo
 
+## Actualización Codex (15-nov): cumbres, cacao y capas NASA
+
+- Se añadió `web/peaks.js` con 10 referencias de cumbres nombradas, dibujadas como puntos
+  con líneas y etiquetas en el relieve 3D. No se muestran alturas en esos rótulos: las
+  elevaciones publicadas varían según fuente y el relieve SRTM del prototipo no basta para
+  asignarlas con precisión. Coordenadas de referencia, no levantamientos.
+- El directorio se mantiene en 39 rubros con varios frutales (lechosa, aguacate, piña,
+  coco, zapote, naranja, mango, limón, entre otros) y cacao destacado al inicio. La ficha
+  de cacao separa exportaciones 2025 de la producción agrícola. Fuente y advertencias en
+  `docs/catalogo_cultivos.md`.
+- El resumen del relieve añade ET₀ mensual, humedad modelada de raíces y superficie,
+  humedad del aire y viento medio, junto a temperatura y lluvia. Se genera la nueva serie
+  de humedad superficial desde `build_web.py`; no altera el motor ni el ranking.
+- `docs/capas_nasa.md` documenta lo que sí se integra y las fuentes candidatas GPM, SMAP,
+  MODIS NDVI/EVI, ECOSTRESS y GRACE. Ninguna de esas cinco fuentes está conectada al
+  cálculo actual.
+- Recomendación sobre deforestación: investigar la pérdida de cobertura como contexto de
+  cuenca/erosión, pero no usarla aún como score de cultivo. Una alerta futura debe
+  distinguir deforestación de pérdida de árboles, mostrar periodo y resolución y pasar
+  validación local.
+- Se añadió `peaks.js` al precache y se subió la versión de PWA a `plan-b-v19`.
+- Cambios de esta ronda no tocan `crops.py`, `rotation.py` ni `web/engine.js`; conservar
+  los cambios paralelos de Claude. No se publicaron desde esta ronda.
+
 1. Abrir `web/index.html`, elegir una zona, colocar la finca y pulsar “Continuar con esta
    finca”; confirmar que el 3D sigue al lado y gira en desktop y móvil.
 2. Comprobar que la Autopista Duarte se ve en Inicio, Mapa y paso de ubicación, y que los

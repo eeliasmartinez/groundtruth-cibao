@@ -105,13 +105,13 @@ def kc_curve(crop):
     )
 
 
-def season_needs(daily, et0, rain, crop_key, soil, planting_month):
+def season_needs(daily, et0, rain, crop_key, soil, planting_month, crop=None):
     """Irrigation need of one crop for every year on record.
 
     Returns a table with one row per planting year: crop water use, usable rain,
     net irrigation need (all in mm) and the average daily maximum temperature.
     """
-    crop = CROPS[crop_key]
+    crop = crop or CROPS[crop_key]
     kc = kc_curve(crop)
     percolation = RICE_PERCOLATION_MM_PER_DAY[soil] if crop["flooded"] else 0
     rows = []
@@ -165,3 +165,29 @@ def crop_needs(daily, zone, soil, planting_month, et0=None, rain=None):
             "years": len(years),
         }
     return summary
+
+
+def summarize(years, crop):
+    """Typical-year and dry-year water per tarea from the per-year table."""
+    crop_use = years["crop_use_mm"].median()
+    return {
+        "days": sum(crop["stages"]),
+        "typical_m3": years["net_mm"].median() * M3_PER_TAREA_PER_MM,
+        "dry_m3": years["net_mm"].quantile(0.8) * M3_PER_TAREA_PER_MM,
+        "crop_use_mm": crop_use,
+        "usable_rain_mm": years["usable_rain_mm"].median(),
+        "rain_share": min(1.0, years["usable_rain_mm"].median() / crop_use),
+        "tmax": years["tmax"].median(),
+        "years": len(years),
+    }
+
+
+def other_crop_needs(daily, planting_month, et0, rain, crops):
+    """Same calculation for the extra FAO-56 crops of the water calculator.
+
+    None of them is flooded, so the soil type does not change the result.
+    """
+    return {
+        key: summarize(season_needs(daily, et0, rain, key, "loam", planting_month, crop), crop)
+        for key, crop in crops.items()
+    }

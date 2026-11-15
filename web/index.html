@@ -97,6 +97,20 @@
       <div class="crop-count"><b id="crop-total">39</b><span data-t="crop_count_label"></span></div>
     </div>
     <div class="crop-overview" id="crop-overview"></div>
+    <section class="cw" aria-labelledby="cw-title">
+      <h3 id="cw-title" data-t="cw_title"></h3>
+      <p class="sub" data-t="cw_intro"></p>
+      <div class="crop-controls cw-controls">
+        <label><span data-t="cw_zone"></span><select id="cw-zone"></select></label>
+        <label><span data-t="cw_month"></span><select id="cw-month"></select></label>
+        <label><span data-t="cw_soil"></span><select id="cw-soil"></select></label>
+        <label><span data-t="cw_area"></span><input id="cw-area" type="number" min="1" max="20000" inputmode="decimal"></label>
+        <label><span data-t="cw_alloc"></span><span class="cw-range"><input id="cw-alloc" type="range" min="0" max="100" step="5"><output id="cw-alloc-out"></output></span></label>
+      </div>
+      <p class="cw-budget" id="cw-budget" aria-live="polite"></p>
+      <div class="cw-table" id="cw-table"></div>
+      <p class="note" data-t="cw_note"></p>
+    </section>
     <div class="crop-controls">
       <label><span data-t="crop_search_label"></span><input id="crop-search" type="search" data-t-placeholder="crop_search_placeholder"></label>
       <label><span data-t="crop_group_label"></span><select id="crop-group"></select></label>
@@ -368,6 +382,7 @@
   <script src="geo.js"></script>
   <script src="provinces.js"></script>
   <script src="relief.js"></script>
+  <script src="peaks.js"></script>
   <script src="crops_local.js"></script>
   <script src="copy.js"></script>
   <script src="storage.js"></script>

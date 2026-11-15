@@ -103,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v17`).
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v19`).
 - **Datos del relieve:** el resumen del clima, suelo, agua y área está cerrado inicialmente
   dentro de “Datos del mapa”; se abre solo si el usuario lo elige.
 - **Continuar desde una zona:** “Continuar con esta finca” coloca la marca ilustrativa y
@@ -169,6 +169,22 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
 - Evaluación crítica por aspecto: `docs/evaluacion.md`.
 - Continuación para Claude Code: `docs/continuacion_claude.md`.
 
+## Calculadora de agua para todos los cultivos (15-nov)
+- El equipo pidió no limitarse al arroz. Se añadió en la sección Cultivos una calculadora:
+  agua de riego por tarea (año típico y año seco) para 31 cultivos en cada zona y mes, y
+  cuántas tareas alcanza el agua asignada.
+- Los 8 cultivos del motor usan sus valores de `crops.py`. Los otros 23 están en
+  `crops_fao.py` con días por etapa (tabla 11) y Kc (tabla 12) de FAO-56, y la fila elegida
+  anotada en cada uno. `build_web.py` los calcula con el mismo `water.season_needs` y los
+  guarda en `other_needs` de `web/data.js`.
+- **No entran en las 4 estrategias de rotación**: falta revisar con un técnico su límite de
+  calor, tolerancia al suelo arrocero y mercado. La página lo dice en cada ficha.
+- Los mosaicos de arriba del catálogo ahora cuentan cultivos del propio directorio; se
+  quitaron los totales por grupo (frutales, musáceas, vegetales) porque no cuadraban con
+  la suma de sus cultivos y no se pudieron cotejar con el boletín de la ONE.
+- Sin cifra todavía: cacao, café, aguacate y mango tienen Kc en la tabla 12, pero la
+  tabla 11 no da sus etapas; por eso no tienen cálculo.
+
 ## Correcciones de la revisión (15-nov)
 - El mapa solo se redibuja cuando cambia la zona, la capa o el idioma (antes se rehacían
   cuatro copias en cada movimiento de un control).
@@ -226,6 +242,23 @@ Si `.venv` no existe: `python3 -m venv .venv && .venv/bin/pip install -r require
   agronómica local. Ver `docs/catalogo_cultivos.md`.
 - La estadística ONE agrupa parte de los productos como "otros"; el directorio no es una
   lista botánica exhaustiva de cada especie o variedad cultivada en el país.
+
+## Actualización Codex (15-nov): picos, cacao y contexto NASA
+- `web/peaks.js` agrega 10 cumbres con nombres y coordenadas de referencia al relieve 3D.
+  El mapa no imprime alturas porque las fuentes y resoluciones no coinciden de forma
+  suficiente para atribuir una elevación precisa a cada punto. Las posiciones son
+  aproximadas; consultar el IGN/GeoNames antes de ampliar o mover etiquetas.
+- El catálogo sigue teniendo 39 rubros e incluye frutas y cacao. Cacao aparece primero;
+  su tarjeta muestra exportaciones de cacao en grano (77,058.7 t; USD 668.9 millones,
+  2025), no producción de finca ni precio pagado al productor. Ver `docs/catalogo_cultivos.md`.
+- El relieve muestra más contexto ya procesado de NASA POWER: ET₀, humedad modelada en
+  zona radicular y superficie, humedad del aire y viento; lluvia y temperatura ya
+  aparecían. La humedad de suelo es indicativa y no cambia el motor de rotación. Los
+  promedios son 2001–2025 y regionales, no en vivo ni a nivel parcela.
+- `docs/capas_nasa.md` enumera GPM, SMAP, MODIS, ECOSTRESS y GRACE como fuentes candidatas,
+  no como capas integradas. Recomienda estudiar pérdida de cobertura forestal como
+  contexto de cuenca y erosión; no añadirla aún al puntaje ni llamarla deforestación sin
+  validar producto, escala, periodo y relación local.
 
 ## Límites conocidos (decirlos con honestidad en el pitch)
 - NASA POWER usa cuadros de ~50 km; Valverde y Montecristi comparten datos.

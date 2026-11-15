@@ -15,6 +15,7 @@ import nasa_power
 import rotation
 import water
 from crops import CASH_CROPS, CROPS, LEGUMES
+from crops_fao import FAO_CROPS
 
 WEB = Path(__file__).parent / "web"
 SOILS = ("clay", "loam", "sandy")
@@ -27,7 +28,7 @@ def rounded(value, digits=2):
 
 def main():
     WEB.mkdir(exist_ok=True)
-    zones, all_needs = [], {}
+    zones, all_needs, other_needs = [], {}, {}
 
     for zone_name, zone in nasa_power.ZONES.items():
         daily, info = nasa_power.load(zone_name)
@@ -39,9 +40,12 @@ def main():
         monthly_et0 = et0.resample("MS").sum()["2001":"2025"]
         monthly_tmax = daily["tmax"].resample("MS").mean()["2001":"2025"]
         monthly_soil = 100 * daily["soil_root"].resample("MS").mean()["2001":"2025"]
+        monthly_surface_soil = 100 * daily["soil_top"].resample("MS").mean()["2001":"2025"]
         climate = {
             # root-zone soil wetness, % of saturation (NASA POWER GWETROOT)
             "soil": [rounded(v, 0) for v in monthly_soil.groupby(monthly_soil.index.month).mean()],
+            # surface-layer soil wetness, % of saturation (NASA POWER GWETTOP)
+            "soil_surface": [rounded(v, 0) for v in monthly_surface_soil.groupby(monthly_surface_soil.index.month).mean()],
             "rain": [rounded(v, 0) for v in monthly_rain.groupby(monthly_rain.index.month).mean()],
             "et0": [rounded(v, 0) for v in monthly_et0.groupby(monthly_et0.index.month).mean()],
             "tmax": [rounded(v, 1) for v in monthly_tmax.groupby(monthly_tmax.index.month).mean()],
@@ -78,11 +82,20 @@ def main():
                     }
                     for crop, n in needs.items()
                 }
+        for month in MONTHS:
+            other = water.other_crop_needs(daily, month, et0, usable, FAO_CROPS)
+            other_needs[f"{zone_name}|{month}"] = {
+                crop: [rounded(n["typical_m3"], 1), rounded(n["dry_m3"], 1)] for crop, n in other.items()
+            }
         print("computed", zone_name)
 
     data = {
         "zones": zones,
         "needs": all_needs,
+        # Extra crops for the water calculator: {zone|month: {crop: [typical, dry]}} in m3 per tarea
+        "other_needs": other_needs,
+        "other_crops": {k: {"es": v["es"], "en": v["en"], "days": sum(v["stages"]), "row": v["row"]}
+                        for k, v in FAO_CROPS.items()},
         "crops": CROPS,
         "legumes": LEGUMES,
         "cash_crops": CASH_CROPS,
