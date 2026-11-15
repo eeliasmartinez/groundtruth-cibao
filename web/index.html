@@ -256,6 +256,15 @@
     <div id="wro-body"></div>
   </section>
 
+  <section class="page world-page" data-view="wdata">
+    <div class="world-head">
+      <p class="wq-where" id="wd-where"></p>
+      <h2 data-t="data_title"></h2>
+      <p class="sub" data-t="data_sub"></p>
+    </div>
+    <div id="wd-body"></div>
+  </section>
+
   <!-- ===================== GUIDED WALKTHROUGH ===================== -->
   <section class="guide" id="guide" data-view="guide">
     <div class="g-top">
@@ -474,7 +483,15 @@
       <p class="sub" data-t="soilg_sub"></p>
       <div id="soil-guide"></div>
     </div>
-    <div class="panel">
+    <div class="panel world-only">
+      <h2 data-t="wh_title"></h2>
+      <p class="sub" data-t="wh_sub"></p>
+      <h3 data-t="wh_how_title"></h3>
+      <ul id="wh-how"></ul>
+      <h3 data-t="wh_limits_title"></h3>
+      <ul id="wh-limits"></ul>
+    </div>
+    <div class="panel rd-only">
       <h2 data-t="faq_title"></h2>
       <p class="sub" data-t="faq_sub"></p>
       <div id="faq"></div>
@@ -482,11 +499,11 @@
     <div class="panel trust">
       <h2 data-t="trust_title"></h2>
       <p class="sub" data-t="trust_fx"></p>
-      <details open>
+      <details class="rd-only" open>
         <summary data-t="limits_title"></summary>
         <ul id="limits"></ul>
       </details>
-      <details>
+      <details class="rd-only">
         <summary data-t="method_title"></summary>
         <ul id="method"></ul>
       </details>

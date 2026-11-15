@@ -162,6 +162,7 @@ h2 { font-size: clamp(26px, 3vw, 36px); line-height: 1; }
 .layout { display: grid; grid-template-columns: minmax(280px, 330px) minmax(0, 1fr); gap: 24px; align-items: start; padding: 24px var(--edge) 40px; max-width: calc(1480px + 2 * var(--edge)); margin: 0 auto; }
 .results { display: grid; gap: 22px; min-width: 0; }
 .page { max-width: calc(1100px + 2 * var(--edge)); margin: 0 auto; padding: 24px var(--edge) 40px; display: grid; gap: 22px; }
+.page > * { min-width: 0; } /* wide tables scroll inside their panel instead of widening the page */
 
 /* ---- farm controls: full editor in My Plan, compact context bar elsewhere ---- */
 .farm-settings { position: sticky; top: 70px; min-width: 0; background: var(--paper); border: 2px solid var(--ink); }
@@ -360,10 +361,12 @@ details.more p { margin-top: 6px; max-width: 75ch; }
 
 /* ---- rotation calendar ---- */
 .cal { margin-top: 16px; display: grid; gap: 8px; }
-.cal-row { display: grid; grid-template-columns: 9.5em 1fr; gap: 10px; align-items: center; }
+.cal-row { display: grid; grid-template-columns: 9.5em minmax(0, 1fr); gap: 10px; align-items: center; }
 .cal-name { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-2); }
-.cal-months { display: grid; grid-template-columns: repeat(12, 1fr); font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--muted); }
-.cal-months span { border-left: 2px solid var(--hair); padding-left: 4px; }
+.cal-months { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--muted); }
+.cal-months span { border-left: 2px solid var(--hair); padding-left: 4px; overflow: hidden; }
+@media (max-width: 560px) { .cal-row { grid-template-columns: 5.8em minmax(0, 1fr); gap: 6px; } .cal-months { font-size: 9px; } .cal-months span { padding-left: 2px; }
+  .cal .cal-cycles .cal-track { height: 30px; } .cal .cal-cycles b { font-size: 10.5px; line-height: 1.15; white-space: normal; max-width: 47%; } }
 .cal-track { position: relative; height: 46px; background: var(--ground); overflow: hidden; }
 .cal-cycles .cal-track { height: 20px; background: none; }
 .cal-cycles b { position: absolute; top: 0; font-size: 13px; color: var(--blue); white-space: nowrap; }
@@ -988,3 +991,8 @@ details.more .soil-table { margin-top: 8px; }
 /* Rotation and Options before the questionnaire is answered */
 #nav button.locked { opacity: .35; }
 #nav button.locked:hover { color: inherit; }
+
+/* the world version hides the Dominican-only help and shows its own */
+.world-only { display: none; }
+body.world-mode .world-only { display: block; }
+body.world-mode .rd-only { display: none; }

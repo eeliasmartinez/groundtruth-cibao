@@ -103,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v39`). Desde el
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v40`). Desde el
   15-nov el service worker pide **primero la red** (la página y el código siempre
   completos) y usa la copia guardada solo sin conexión o si la red tarda más de 4 s; al
   activarse una versión nueva, la página se recarga una vez sola.
@@ -322,6 +322,17 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   su ficha. Necesita internet. En las capas de datos cada provincia lleva su cifra pequeña
   (si cabe) y debajo hay una lista con el valor de todas. Los ríos se recortan con la forma
   del país (no se dibujan sobre los países vecinos).
+- **Modo mundo sin datos de RD (15-nov, tarde):** con el modo mundo activo, todas las pestañas
+  muestran el país elegido: Inicio → globo, Mi plan → resultado del cuestionario mundial,
+  Rotación → `wrot`, Opciones → `wplan`, Mapa → `wmap`, Datos → `wdata` (agua de riego por
+  cultivo y clima mes a mes de la provincia, `renderWData` en `web/world.js`) y Ayuda oculta
+  lo dominicano (clase `body.world-mode`, `.rd-only` / `.world-only`) y muestra cómo calcula
+  la versión mundial y sus límites. El botón "República Dominicana" del globo vuelve a RD.
+- La rotación mundial también usa solo los cultivos del agricultor (su leguminosa si tiene;
+  si no, sus cultivos cambian de lugar; con uno solo, se repite).
+- Sin cultivos marcados, el plan de RD trata a la persona como arrocera (solo arroz).
+- Celular: `.page > * { min-width: 0 }` evita que la tabla de suelos corte la Ayuda; el
+  calendario de rotación y sus títulos de ciclo caben en 375 px.
 - **Rotación y Opciones bloqueadas** hasta terminar el cuestionario (`updateLocks` y
   `state.formDone` en `web/app.js`; un plan guardado cuenta como hecho). Si se tocan antes,
   abren el cuestionario. En el modo mundo llevan a la rotación (`wrot`) y a los planes

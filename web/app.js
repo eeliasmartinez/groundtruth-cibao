@@ -57,8 +57,8 @@
   var MAP = { w: 760, h: 546, lon0: -72.1, lat0: 20.05, k: 206, cos: 0.947 };
   var NAV_VIEWS = ["home", "plan", "rotation", "options", "map", "data", "help"];
   // crops opens from Home, outside the main farm-planning tabs
-  var VIEWS = NAV_VIEWS.concat(["guide", "zone", "crops", "world", "country", "region", "wquiz", "wplan", "wrot", "wmap"]);
-  var WORLD_VIEWS = ["world", "country", "region", "wquiz", "wplan", "wrot", "wmap"];
+  var VIEWS = NAV_VIEWS.concat(["guide", "zone", "crops", "world", "country", "region", "wquiz", "wplan", "wrot", "wmap", "wdata"]);
+  var WORLD_VIEWS = ["world", "country", "region", "wquiz", "wplan", "wrot", "wmap", "wdata"];
   var worldMode = false; // the last screens were the whole-world version
   var selectedLocalCrop = "cacao";
   // Small drawings for the soil question: water stays on clay, sinks through sand.
@@ -255,7 +255,9 @@
     var short = [], long = [];
     (window.GT_LOCAL_CROPS || []).forEach(function (crop) {
       var key = cropWaterKey(crop);
-      if (!key || state.myCrops.indexOf(crop.id) < 0 || short.indexOf(key) >= 0 || long.indexOf(key) >= 0) return;
+      // nothing marked yet: a rice farmer, as everywhere else in this tool (growsRice)
+      var ids = state.myCrops.length ? state.myCrops : ["rice"];
+      if (!key || ids.indexOf(crop.id) < 0 || short.indexOf(key) >= 0 || long.indexOf(key) >= 0) return;
       if (key === "rice" && !state.riceAllowed) return;
       if (key === "sesbania") return;
       (waterCropDays(key) <= LONG_CYCLE ? short : long).push(key);
@@ -317,7 +319,6 @@
   // of the farmer-only splits plants more land, that split. More land first, then more of
   // their crops kept, then less water. Plans with other crops stay as secondary options.
   function mainPlan(result) {
-    if (!state.myCrops.length) return result.ranked[0];
     var short = myWaterCrops().short;
     var plans = farmerPlans();
     // the engine plans assume rice land (rice comes back in cycle 2), so only for rice farmers
@@ -1201,6 +1202,9 @@
         adjust: (z.temp_adjustment > 0 ? "+" : "") + num(z.temp_adjustment, 1), cell: num(z.cell_elev), elev: z.elev
       })) + "</li>";
     }).join("");
+    ["how", "limits"].forEach(function (k) {
+      if ($("wh-" + k)) $("wh-" + k).innerHTML = T[state.lang]["wh_" + k].map(function (text) { return "<li>" + esc(text) + "</li>"; }).join("");
+    });
   }
 
   // ------------------------------------------------------------------
@@ -2029,7 +2033,7 @@
         "<i><u style=\"width:" + Math.round(state.allocation * 100) + "%\"></u></i></div>" +
         "<div class=\"scene-context-area\"><b>" + esc(L.field_area) + "</b><span>" + tareasText(state.area) + " " + esc(tr("tareas")) + "</span></div>" +
         "<div class=\"scene-context-extra\"><b>" + esc(L.field_nasa_context) + "</b>" +
-        "<div><span>" + esc(L.field_et0) + "</span><strong>" + num(climate.et0[monthIndex]) + " mm/mes</strong></div>" +
+        "<div><span>" + esc(L.field_et0) + "</span><strong>" + num(climate.et0[monthIndex]) + " " + esc(L.unit_mm_month) + "</strong></div>" +
         "<div><span>" + esc(L.field_root_wetness) + "</span><strong>" + num(climate.soil[monthIndex]) + "%</strong></div>" +
         "<div><span>" + esc(L.field_surface_wetness) + "</span><strong>" + num(climate.soil_surface[monthIndex]) + "%</strong></div>" +
         "<div><span>" + esc(L.field_humidity) + "</span><strong>" + num(climate.humidity[monthIndex]) + "%</strong></div>" +
@@ -2288,7 +2292,7 @@
   function updateLocks() {
     var locked = worldMode ? !(window.GTWorld && window.GTWorld.planReady()) : !state.formDone;
     document.querySelectorAll("#nav [data-go], #tabbar [data-go]").forEach(function (b) {
-      var go = b.getAttribute("data-go"), off = locked && (go === "rotation" || go === "options");
+      var go = b.getAttribute("data-go"), off = locked && (go === "rotation" || go === "options" || (worldMode && go === "plan"));
       b.classList.toggle("locked", off);
       if (off) { b.setAttribute("aria-disabled", "true"); b.title = tr("nav_locked"); }
       else { b.removeAttribute("aria-disabled"); b.removeAttribute("title"); }
@@ -2332,7 +2336,13 @@
     // In the world version, Map shows the chosen country with the same layers as the Dominican map.
     if (WORLD_VIEWS.indexOf(view) >= 0) worldMode = true;
     else if (["home", "guide", "zone"].indexOf(view) >= 0) worldMode = false;
-    if (view === "map" && worldMode) view = "wmap";
+    // In the world version every tab shows the chosen country, never the Dominican farm.
+    if (worldMode) {
+      var GW = window.GTWorld, start = GW && GW.country() ? "country" : "world";
+      if (view === "map") view = "wmap";
+      else if (view === "data") view = "wdata";
+      else if (view === "plan") view = GW && GW.planReady() ? "wquiz" : start;
+    }
     // Rotation and Options open only after the questionnaire. In the world version they show
     // the world plan's rotation and plans.
     if ((view === "rotation" || view === "options") && worldMode) {
@@ -2351,6 +2361,7 @@
       b.setAttribute("aria-pressed", String((b.getAttribute("data-mode") === "world") === world));
     });
     document.body.setAttribute("data-view", view);
+    document.body.classList.toggle("world-mode", worldMode);
     var farmSettings = $("farm-settings");
     if (farmSettings) farmSettings.open = view === "plan";
     document.querySelectorAll("[data-view]").forEach(function (el) {
@@ -2358,7 +2369,8 @@
     });
     document.querySelectorAll("[data-go]").forEach(function (b) {
       var go = b.getAttribute("data-go");
-      b.classList.toggle("on", go === view || (view === "wmap" && go === "map") || (view === "wrot" && go === "rotation") || (view === "wplan" && go === "options"));
+      var same = { wmap: "map", wrot: "rotation", wplan: "options", wdata: "data", wquiz: "plan", world: "home" };
+      b.classList.toggle("on", go === view || same[view] === go);
     });
     if (changed) playEntrance();
     try { history.replaceState(history.state || { step: 0 }, "", "#" + view); } catch (e) { /* not allowed on some file:// pages */ }
@@ -2369,7 +2381,14 @@
   }
   document.addEventListener("click", function (event) {
     var go = event.target.closest("[data-go]");
-    if (go) { event.preventDefault(); setView(go.getAttribute("data-go")); }
+    if (go) {
+      event.preventDefault();
+      var target = go.getAttribute("data-go");
+      if (go.getAttribute("data-mode") === "local") worldMode = false;
+      // Home in the top bar keeps the world version on its globe; the mode switch changes version.
+      if (worldMode && target === "home" && go.closest("#nav, #tabbar")) target = "world";
+      setView(target);
+    }
   });
   var typedLink = false;
   window.addEventListener("hashchange", function () {

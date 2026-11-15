@@ -1084,10 +1084,21 @@
       allProfiles().forEach(function (k) { need2[k] = { m3: cropNeedMm(k, st.climate) * 10, frost: frostMonths(k, st.climate).length > 0 }; });
     });
     function cheapest(list) { return list.filter(function (k) { return !need2[k].frost; }).sort(function (a, b) { return need2[a].m3 - need2[b].m3; })[0] || list[0]; }
-    var legume2 = cheapest(LEGUMES_ALL.filter(function (k) { return profile(k) && quizCrop(k); }));
-    var mineKeys = st.mine.map(function (m) { return m.key; });
-    var other2 = cheapest(mineKeys.filter(function (k) { return LEGUMES_ALL.indexOf(k) < 0; }).concat(mineKeys.length ? [] : ["maize"])) || mineKeys[0];
-    var lots = p.parts.map(function (q) { return { ha: q.ha, first: q.key, second: LEGUMES_ALL.indexOf(q.key) >= 0 ? (other2 || q.key) : legume2 }; });
+    // Only the farmer's own crops: after a cereal or vegetable their legume (the one that asks
+    // for the least water), after a legume their other crop; with no legume, their crops swap.
+    var mineKeys = st.mine.map(function (m) { return m.key; }).filter(quizCrop);
+    function legume(k) { return LEGUMES_ALL.indexOf(k) >= 0; }
+    var myLegumes = mineKeys.filter(legume), myOthers = mineKeys.filter(function (k) { return !legume(k); });
+    var legume2 = myLegumes.length ? cheapest(myLegumes) : null, other2 = myOthers.length ? cheapest(myOthers) : null;
+    var story = "same";
+    var lots = p.parts.map(function (q) {
+      var second;
+      if (legume(q.key) && other2) { second = other2; story = "legume"; }
+      else if (!legume(q.key) && legume2) { second = legume2; story = "legume"; }
+      else if (mineKeys.length > 1) { second = mineKeys[(mineKeys.indexOf(q.key) + 1) % mineKeys.length]; if (story === "same") story = "swap"; }
+      else second = q.key;
+      return { ha: q.ha, first: q.key, second: second };
+    });
     var free = r.area - p.planted;
     if (free > 0.005) lots.push({ ha: free, first: null, second: null });
     function bar(k, startDay) {
@@ -1109,7 +1120,8 @@
         return "<div class=\"cal-row\"><div class=\"cal-name\">" + esc(tr("wro_lot", { n: String.fromCharCode(65 + i), area: areaText(lot.ha) })) + "</div><div class=\"cal-track\">" +
           bar(lot.first, 14) + bar(lot.second, 197) + "</div></div>";
       }).join("") + "</div>" +
-      "<p class=\"rot-story\">" + esc(tr("wro_story", { legume: legume2 ? profileName(legume2).toLowerCase() : "—" })) + "</p>" +
+      "<p class=\"rot-story\">" + esc(story === "legume" ? tr("wro_story", { legume: profileName(legume2 || myLegumes[0]).toLowerCase() })
+        : story === "swap" ? Lx.wro_story_swap : Lx.wro_story_same) + "</p>" +
       "<div class=\"impact rot-water\"><div><b>" + num(p.used) + "</b><span>" + esc(tr("wro_water", { c: 1, used: num(p.used), budget: num(r.budget) })) + "</span></div>" +
       "<div><b>" + num(water2) + "</b><span>" + esc(tr("wro_water", { c: 2, used: num(water2), budget: num(budget2) })) + (water2 > budget2 * 1.02 ? " " + esc(Lx.wro_over) : "") + "</span></div></div>" +
       lots.filter(function (lot) { return lot.second && need2[lot.second].frost; }).map(function (lot) {
@@ -1119,10 +1131,10 @@
       "<button type=\"button\" class=\"btn\" data-wq-go=\"wquiz\">" + esc(Lx.wp_back) + "</button></div>";
   }
   function listenPlanPages() {
-    ["wp-body", "wro-body"].forEach(function (id) {
+    ["wp-body", "wro-body", "wd-body"].forEach(function (id) {
       $(id).onclick = function (event) {
         var el = event.target.closest("[data-wq-unit]");
-        if (el) { st.unit = el.getAttribute("data-wq-unit"); renderWPlan(); renderWRot(); renderQuiz(); return; }
+        if (el) { st.unit = el.getAttribute("data-wq-unit"); renderWPlan(); renderWRot(); renderQuiz(); renderWData(); return; }
         el = event.target.closest("[data-wq-go]");
         if (el && window.GTApp) window.GTApp.go(el.getAttribute("data-wq-go"));
       };
@@ -1334,6 +1346,41 @@
     };
   }
 
+  // ------------------------------------------------------------------ data page of the world version
+  // The same "Understand the data" page as the Dominican version, for the chosen province:
+  // irrigation water per crop (average year) and the climate month by month.
+  function renderWData() {
+    if (!$("wd-body")) return;
+    var Lx = L(), MONTHS = window.GTApp ? window.GTApp.months() : [];
+    var place = st.province ? st.province.name + (st.country ? ", " + countryName(st.country) : "") : "";
+    $("wd-where").textContent = place;
+    if (!st.province || !st.climate) {
+      $("wd-body").innerHTML = "<div class=\"panel\"><p>" + esc(!st.province ? Lx.wd_pick
+        : st.climateStatus === "failed" ? Lx.w_failed_climate : Lx.w_loading_climate) + "</p>" +
+        (!st.province ? "<p><button type=\"button\" class=\"btn primary\" data-go=\"" + (st.country ? "wmap" : "world") + "\">" +
+          esc(st.country ? Lx.wd_pick_btn : Lx.wm_pick_btn) + "</button></p>" : "") + "</div>";
+      return;
+    }
+    var keys = countryKeys();
+    (st.mine || []).forEach(function (m) { if (keys.indexOf(m.key) < 0) keys.push(m.key); });
+    var rows = keys.filter(quizCrop).map(function (k) {
+      return { key: k, need: cropNeedMm(k, st.climate) * 10, frost: frostMonths(k, st.climate).length > 0 };
+    }).sort(function (a, b) { return b.need - a.need; });
+    var max = rows.length ? Math.max(1, rows[0].need) : 1;
+    var bars = rows.map(function (r) {
+      return "<div class=\"need-row\"><span>" + esc(profileName(r.key)) + (r.frost ? " ❄" : "") + "</span><div class=\"track\"><i style=\"width:" +
+        (100 * r.need / max).toFixed(1) + "%\"></i></div><b>" + num(perUnit(r.need)) + " m³</b></div>";
+    }).join("");
+    var cycles = [st.month, (st.month - 1 + 6) % 12 + 1];
+    $("wd-body").innerHTML =
+      "<details class=\"panel fold\" open><summary><span><b>" + esc(tr("wd_needs_title", { unit: unitWord() })) + "</b><small>" +
+        esc(Lx.wd_needs_fx) + "</small></span></summary>" + unitToggle() +
+        "<p class=\"sub\">" + esc(tr("wd_needs_sub", { place: place, month: MONTHS[st.month - 1] })) + "</p>" + bars +
+        "<p class=\"note\">" + esc(Lx.wd_needs_note) + "</p></details>" +
+      "<details class=\"panel fold\"><summary><span><b>" + esc(Lx.w_climate_title) + "</b><small>" + esc(Lx.wd_climate_fx) +
+        "</small></span></summary>" + climateTable(cycles) + "</details>";
+  }
+
   // ------------------------------------------------------------------ wiring
   function listenPages() {
     $("wc-map").onclick = $("wc-list").onclick = function (event) {
@@ -1376,6 +1423,7 @@
       if (view === "wplan") renderWPlan();
       if (view === "wrot") renderWRot();
       if (view === "wmap") renderWMap();
+      if (view === "wdata") renderWData();
     },
     country: function () { return st.country; },
     planReady: function () { return !!st.planDone; },
@@ -1387,6 +1435,7 @@
       if (view === "wplan") renderWPlan();
       if (view === "wrot") renderWRot();
       if (view === "wmap") renderWMap();
+      if (view === "wdata") renderWData();
     },
     // for checks: the monthly water calculation for a set of monthly climate values
     _need: function (key, climate, month, soil) {
