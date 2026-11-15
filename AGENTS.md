@@ -103,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v37`). Desde el
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v38`). Desde el
   15-nov el service worker pide **primero la red** (la página y el código siempre
   completos) y usa la copia guardada solo sin conexión o si la red tarda más de 4 s; al
   activarse una versión nueva, la página se recarga una vez sola.
@@ -319,7 +319,12 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   del modo mundo, "Mapa" muestra el país elegido con 5 capas como RD: ríos (Natural Earth;
   no hay presas mundiales), foto NASA (GIBS), falta de agua, humedad del suelo y calor
   (NASA POWER en el centro de cada provincia, 4 pedidos a la vez). Tocar una provincia abre
-  su ficha. Necesita internet.
+  su ficha. Necesita internet. En las capas de datos cada provincia lleva su cifra pequeña
+  (si cabe) y debajo hay una lista con el valor de todas.
+- **Rotación y Opciones bloqueadas** hasta terminar el cuestionario (`updateLocks` y
+  `state.formDone` en `web/app.js`; un plan guardado cuenta como hecho). Si se tocan antes,
+  abren el cuestionario. En el modo mundo llevan a la rotación (`wrot`) y a los planes
+  (`wplan`) del cuestionario mundial cuando ya hay resultado; si no, al país o al globo.
 
 ## Botón Atrás general
 - El botón "← Atrás" (barra superior; en celular flota sobre la barra de pestañas)

@@ -865,6 +865,7 @@
     var steps = quizSteps(), total = steps.length;
     if (st.qstep > total) st.qstep = total;
     var Lx = L(), MONTHS = window.GTApp ? window.GTApp.months() : [], step = st.qstep, kind = step < total ? steps[step] : "result";
+    if (kind === "result" && st.climate && !st.planDone) { st.planDone = true; if (window.GTApp) window.GTApp.locks(); }
     $("wq-where").textContent = st.province.name + " · " + countryName(st.country);
     $("wq-count").textContent = step < total ? tr("wq_count", { n: step + 1, total: total }) : Lx.wq_result_label;
     $("wq-bar").style.width = (100 * Math.min(step + 1, total + 1) / (total + 1)) + "%";
@@ -1187,6 +1188,27 @@
     if (layer === "soil") return num(value) + "%";
     return num(value, 1) + " °C";
   }
+  // Far islands and territories (Alaska, Hawaii, Galápagos...) shrink the main land to a
+  // corner, so the frame fits the provinces near the middle when only a few lie far away.
+  function mainUnits(units) {
+    if (units.length < 4) return units;
+    units.forEach(function (p) { if (!p.center) p.center = centroid(p.rings); });
+    function mid(list) { list = list.slice().sort(function (a, b) { return a - b; }); return list[Math.floor(list.length / 2)]; }
+    var lon = mid(units.map(function (p) { return p.center[0]; })), lat = mid(units.map(function (p) { return p.center[1]; }));
+    var dist = units.map(function (p) {
+      var dx = Math.abs(p.center[0] - lon); if (dx > 180) dx = 360 - dx;
+      return Math.sqrt(dx * dx + Math.pow(p.center[1] - lat, 2));
+    });
+    var sorted = dist.slice().sort(function (a, b) { return a - b; });
+    var limit = Math.max(5, 2.5 * sorted[Math.floor(sorted.length * 0.75)]);
+    var keep = units.filter(function (p, i) { return dist[i] <= limit; });
+    return keep.length < units.length && units.length - keep.length <= 0.1 * units.length ? keep : units;
+  }
+  function shortValue(value, layer) {
+    if (layer === "balance") return num(value);
+    if (layer === "soil") return num(value) + "%";
+    return num(value) + "°";
+  }
   function riverPaths(f) {
     if (!window.GT_WORLD_RIVERS) return "";
     var b = f.box, pad = 0.5, out = [];
@@ -1239,10 +1261,12 @@
         (mapQueue.failed ? " " + tr("wm_failed", { n: mapQueue.failed }) : "") : "";
     $("wm-status").textContent = loading;
     var width = 800, height = 560;
-    var outline = units.length ? [].concat.apply([], units.map(function (p) { return p.rings; })) : c.rings;
+    var focus = mainUnits(units);
+    var outline = focus.length ? [].concat.apply([], focus.map(function (p) { return p.rings; })) : c.rings;
     var f = fitter(outline, width, height);
     var svg = "<svg viewBox=\"0 0 " + width + " " + height + "\" role=\"img\" aria-label=\"" + esc(countryName(c)) + "\">";
     if (layer === "sat") svg += nasaImage(f, width, height);
+    $("wm-far").textContent = focus.length < units.length ? tr("wm_far", { n: units.length - focus.length }) : "";
     svg += units.map(function (p, i) {
       var v = values[i], fill = data && v !== null ? " style=\"fill:" + color(v) + ";fill-opacity:.92\"" : "";
       var tip = esc(p.name) + (data && v !== null ? " · " + layerText(v, layer) : "");
@@ -1251,7 +1275,26 @@
     }).join("");
     if (!units.length) svg += "<path class=\"w-prov solo\" d=\"" + f.path(c.rings) + "\"/>";
     if (layer === "basins") svg += riverPaths(f);
+    // small numbers on each province big enough to hold them; every value is also in the list below
+    if (data) svg += units.map(function (p, i) {
+      if (values[i] === null) return "";
+      var x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      p.rings.forEach(function (ring) {
+        for (var k = 0; k < ring.length; k += Math.max(1, Math.floor(ring.length / 60))) {
+          var x = f.x(ring[k][0]), y = f.y(ring[k][1]);
+          if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+        }
+      });
+      if (x1 - x0 < 28 || y1 - y0 < 14) return "";
+      return "<text class=\"wm-num\" x=\"" + f.x(p.center[0]).toFixed(1) + "\" y=\"" + f.y(p.center[1]).toFixed(1) + "\">" +
+        esc(shortValue(values[i], layer)) + "</text>";
+    }).join("");
     $("wm-map").innerHTML = svg + "</svg>";
+    $("wm-values").innerHTML = data && known.length ? "<h3>" + esc(tr("wm_values_title", { layer: Lx.layers[layer] })) + "</h3><ol>" +
+      units.map(function (p, i) { return { name: p.name, v: values[i] }; }).filter(function (r) { return r.v !== null; })
+        .sort(function (a, b) { return layer === "balance" ? a.v - b.v : b.v - a.v; })
+        .map(function (r) { return "<li><span>" + esc(r.name) + "</span><b>" + esc(layerText(r.v, layer)) + "</b></li>"; }).join("") +
+      "</ol>" : "";
     var key;
     if (data) {
       key = known.length ? "<span class=\"k-ramp\">" + layerText(layer === "balance" ? high : low, layer) + " " + RAMPS[layer].map(function (col) {
@@ -1331,6 +1374,7 @@
       if (view === "wmap") renderWMap();
     },
     country: function () { return st.country; },
+    planReady: function () { return !!st.planDone; },
     render: function (view) {
       if (view === "world") { fillCountrySelect(); if (!st.hover) $("w-hover").textContent = L().w_hover_hint; }
       if (view === "country") renderCountry();

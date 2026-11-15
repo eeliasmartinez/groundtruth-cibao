@@ -43,6 +43,7 @@
     // Every visit opens in English (global judging); a saved plan keeps everything else.
     Object.keys(storedPlan.plan).forEach(function (key) { if (key !== "lang") state[key] = storedPlan.plan[key]; });
     state.savedOnDevice = true;
+    state.formDone = true;
   }
   state.storageError = storedPlan.error;
   // Every screen the person leaves is remembered here so "Back" can return to it.
@@ -55,9 +56,10 @@
   // placed by hand from general geographic knowledge: good for orientation, not surveyed.
   var MAP = { w: 760, h: 546, lon0: -72.1, lat0: 20.05, k: 206, cos: 0.947 };
   var NAV_VIEWS = ["home", "plan", "rotation", "options", "map", "data", "help"];
+  // crops opens from Home, outside the main farm-planning tabs
   var VIEWS = NAV_VIEWS.concat(["guide", "zone", "crops", "world", "country", "region", "wquiz", "wplan", "wrot", "wmap"]);
   var WORLD_VIEWS = ["world", "country", "region", "wquiz", "wplan", "wrot", "wmap"];
-  var worldMode = false; // the last screens were the whole-world version // crops opens from Home, outside the main farm-planning tabs
+  var worldMode = false; // the last screens were the whole-world version
   var selectedLocalCrop = "cacao";
   // Small drawings for the soil question: water stays on clay, sinks through sand.
   var SOIL_ART = {
@@ -366,6 +368,7 @@
     $("tabbar").innerHTML = NAV_VIEWS.map(function (view) {
       return "<button type=\"button\" data-go=\"" + view + "\"><i>" + VIEW_ICONS[view] + "</i>" + T[state.lang].nav[view] + "</button>";
     }).join("");
+    updateLocks();
 
     $("zone").innerHTML = D.zones.map(function (z, i) {
       return "<option value=\"" + i + "\">" + esc(z.name) + "</option>";
@@ -1512,6 +1515,7 @@
       (step < RESULT_STEP ? esc(explanations[step]) : "") + "</p><div class=\"g-body\">" + body + "</div>";
     stage.setAttribute("data-step", tag);
     if (step === RESULT_STEP) { wipe(); setTimeout(function () { countUp(stage); }, 0); }
+    if (step === RESULT_STEP && !state.formDone) { state.formDone = true; updateLocks(); }
     $("guide").setAttribute("data-step", step);
   }
 
@@ -2231,7 +2235,8 @@
     lang: function () { return state.lang; },
     months: function () { return MONTHS[state.lang]; },
     monthsShort: function () { return MONTHS_SHORT[state.lang]; },
-    icon: function (crop) { return ICONS[crop] ? cropIcon(crop) : null; }
+    icon: function (crop) { return ICONS[crop] ? cropIcon(crop) : null; },
+    locks: function () { updateLocks(); }
   };
 
   window.onbeforeprint = function () { document.body.classList.add("sheet-mode"); };
@@ -2279,6 +2284,16 @@
     });
   }
   window.GTCountUp = countUp;
+  // Rotation and Options look switched off until the farm questions are answered.
+  function updateLocks() {
+    var locked = worldMode ? !(window.GTWorld && window.GTWorld.planReady()) : !state.formDone;
+    document.querySelectorAll("#nav [data-go], #tabbar [data-go]").forEach(function (b) {
+      var go = b.getAttribute("data-go"), off = locked && (go === "rotation" || go === "options");
+      b.classList.toggle("locked", off);
+      if (off) { b.setAttribute("aria-disabled", "true"); b.title = tr("nav_locked"); }
+      else { b.removeAttribute("aria-disabled"); b.removeAttribute("title"); }
+    });
+  }
   window.GTWipe = function () { wipe(); };
   // A blue band with a red edge sweeps off the screen and uncovers the new one, like a print plate.
   function wipe() {
@@ -2286,6 +2301,8 @@
     var band = $("wipe");
     if (!band) { band = document.createElement("div"); band.id = "wipe"; band.setAttribute("aria-hidden", "true"); document.body.appendChild(band); }
     band.classList.remove("run"); void band.offsetWidth; band.classList.add("run");
+    clearTimeout(wipe.timer); // never leave the curtain over the page, even if animations pause
+    wipe.timer = setTimeout(function () { band.classList.remove("run"); }, 700);
   }
   // The blue "Plan B" curtain plays only when a plan is revealed, not on every screen change.
   function playEntrance() {
@@ -2316,6 +2333,14 @@
     if (WORLD_VIEWS.indexOf(view) >= 0) worldMode = true;
     else if (["home", "guide", "zone"].indexOf(view) >= 0) worldMode = false;
     if (view === "map" && worldMode) view = "wmap";
+    // Rotation and Options open only after the questionnaire. In the world version they show
+    // the world plan's rotation and plans.
+    if ((view === "rotation" || view === "options") && worldMode) {
+      var W = window.GTWorld;
+      view = W && W.planReady() ? (view === "rotation" ? "wrot" : "wplan") : W && W.country() ? "country" : "world";
+    } else if ((view === "rotation" || view === "options") && !state.formDone) {
+      view = "guide";
+    }
     if (ready && !returning && view !== state.view) remember();
     var changed = ready && view !== state.view;
     state.view = view;
@@ -2332,13 +2357,15 @@
       if (el !== document.body) el.hidden = el.getAttribute("data-view").split(" ").indexOf(view) < 0;
     });
     document.querySelectorAll("[data-go]").forEach(function (b) {
-      b.classList.toggle("on", b.getAttribute("data-go") === view || (view === "wmap" && b.getAttribute("data-go") === "map"));
+      var go = b.getAttribute("data-go");
+      b.classList.toggle("on", go === view || (view === "wmap" && go === "map") || (view === "wrot" && go === "rotation") || (view === "wplan" && go === "options"));
     });
     if (changed) playEntrance();
     try { history.replaceState(history.state || { step: 0 }, "", "#" + view); } catch (e) { /* not allowed on some file:// pages */ }
     if (!keepScroll) window.scrollTo(0, 0);
     if (sceneVisible()) startScene(); else stopScene();
     if (window.GTWorld) window.GTWorld.show(view);
+    updateLocks();
   }
   document.addEventListener("click", function (event) {
     var go = event.target.closest("[data-go]");
