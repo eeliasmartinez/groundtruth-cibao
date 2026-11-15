@@ -2,7 +2,7 @@
 // internet. It answers from the saved copy at once and refreshes that copy in
 // the background, so a new version shows up the next time the app is opened.
 // Code written with the assistance of Claude Code (Anthropic) and OpenAI Codex.
-var CACHE = "plan-b-v24";
+var CACHE = "plan-b-v25";
 var FILES = ["./", "index.html", "style.css", "app.js", "copy.js", "crops_local.js", "world_data.js", "world.js", "earth.jpg", "peaks.js", "storage.js", "engine.js", "data.js", "geo.js", "provinces.js", "relief.js", "sat.jpg",
   "manifest.webmanifest", "icon.svg", "dam.svg", "icon-192.png", "icon-512.png",
   "fonts/big-shoulders.woff2", "fonts/archivo.woff2"];

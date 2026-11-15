@@ -833,3 +833,10 @@ details.more .soil-table { margin-top: 8px; }
 .wq-plans li span:last-child { color: var(--ink-2); font-size: 14px; }
 .wq-actions { display: flex; flex-wrap: wrap; gap: 10px; }
 @media (max-width: 760px) { .wq-result .lead { padding-right: 0; padding-top: 44px; } }
+.wq-picked { margin: 0; font-weight: 800; color: var(--blue); }
+.wq-rows { display: grid; gap: 8px; max-width: 560px; }
+.wq-row { display: grid; grid-template-columns: minmax(0, 1fr) 220px; align-items: center; gap: 12px; }
+.wq-row span { font-weight: 700; }
+.wq-nav button[disabled] { opacity: .45; cursor: not-allowed; }
+@media (max-width: 760px) { .wq-row { grid-template-columns: 1fr; gap: 4px; } }
+.w-frost { display: block; margin-top: 4px; padding: 4px 8px; border-left: 4px solid var(--red); background: #fdecea; color: var(--ink); font-size: 13px; }

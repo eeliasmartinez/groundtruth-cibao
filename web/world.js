@@ -20,7 +20,7 @@
     climate: null, climateStatus: "", month: (new Date().getMonth() + 1) % 12 + 1, soil: "loam",
     lon0: -40, lat0: 12, hover: null, picked: null,
     // the farmer's questionnaire (same five questions as the Dominican walkthrough)
-    quizMode: false, qstep: 0, current: null, area: 1, pct: 0.6, priority: "water"
+    quizMode: false, qstep: 0, mine: [], pct: 0.6, priority: "water"
   };
   var cache = { provinces: {}, climate: {} };
 
@@ -368,20 +368,26 @@
     var key = center[0].toFixed(2) + "," + center[1].toFixed(2);
     st.climate = cache.climate[key] || null;
     st.climateStatus = st.climate ? "" : "loading";
-    if (st.quizMode) { st.qstep = 0; st.current = defaultCrop(); }
+    if (st.quizMode) { st.qstep = 0; st.mine = defaultMine(); }
     if (window.GTApp) window.GTApp.go(st.quizMode ? "wquiz" : "region");
     renderRegion(); renderQuiz();
     if (st.climate) return;
-    fetch("https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M_MAX,T2M_MIN,PRECTOTCORR,ALLSKY_SFC_SW_DWN,RH2M,WS2M" +
+    fetch("https://power.larc.nasa.gov/api/temporal/climatology/point?parameters=T2M,T2M_RANGE,PRECTOTCORR,ALLSKY_SFC_SW_DWN,RH2M,WS2M" +
       "&community=AG&longitude=" + center[0].toFixed(3) + "&latitude=" + center[1].toFixed(3) + "&format=JSON")
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (json) {
         var P = json.properties.parameter, months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
         function series(name) { return months.map(function (m) { var v = P[name][m]; return v === -999 ? null : v; }); }
-        var climate = { tmax: series("T2M_MAX"), tmin: series("T2M_MIN"), rain: series("PRECTOTCORR"), solar: series("ALLSKY_SFC_SW_DWN"),
+        // In this climatology T2M_MAX and T2M_MIN are the month's extremes, not averages.
+        // The average daily maximum and minimum are taken as mean ± half the average daily
+        // range (T2M_RANGE): an approximation, since days are not perfectly symmetric.
+        var mean = series("T2M"), range = series("T2M_RANGE");
+        var climate = { tmax: mean.map(function (t, m) { return t === null || range[m] === null ? null : t + range[m] / 2; }),
+          tmin: mean.map(function (t, m) { return t === null || range[m] === null ? null : t - range[m] / 2; }),
+          rain: series("PRECTOTCORR"), solar: series("ALLSKY_SFC_SW_DWN"),
           rh: series("RH2M"), wind: series("WS2M"), elev: json.geometry.coordinates[2] || 0, lat: center[1],
           range: (json.header && json.header.range) || "" };
-        if (climate.tmax.some(function (v) { return v === null; })) throw new Error("missing");
+        if (climate.tmax.concat(climate.rain, climate.solar, climate.rh, climate.wind).some(function (v) { return v === null; })) throw new Error("missing");
         climate.et0 = monthlyEt0(climate);
         climate.usable = usableRain(climate.rain);
         cache.climate[key] = climate;
@@ -427,6 +433,20 @@
     return out;
   }
   function monthOfDoy(doy) { var m = 0; while (m < 11 && doy >= DAYS[m]) { doy -= DAYS[m]; m++; } return m; }
+  // Months of the crop's season whose average minimum temperature (NASA POWER) is below
+  // 0 °C, the freezing point of water: a plain physical warning, not a crop limit.
+  function frostMonths(key, climate) {
+    var start = DAYS.slice(0, st.month - 1).reduce(function (a, b) { return a + b; }, 0) + 14, out = [];
+    for (var d = 0; d < seasonDays(key); d += 5) {
+      var m = monthOfDoy((start + d) % 365);
+      if (climate.tmin[m] < 0 && out.indexOf(m) < 0) out.push(m);
+    }
+    return out;
+  }
+  function frostText(months) {
+    var names = window.GTApp ? window.GTApp.months() : [];
+    return tr("w_frost", { months: months.map(function (m) { return names[m]; }).join(", ") });
+  }
   function cropNeedMm(key, climate) {
     var p = profile(key), kc = kcCurve(p), perc = p.flooded ? PERCOLATION[st.soil] : 0;
     var start = DAYS.slice(0, st.month - 1).reduce(function (a, b) { return a + b; }, 0) + 14, need = 0;
@@ -477,17 +497,19 @@
       var mm = needs[key], days = seasonDays(key);
       var text = days > LONG_CYCLE ? tr("w_rec_long", { n: days, m3: num(mm * 10) })
         : mm < 1 ? Lx.w_rec_rain : tr("w_rec_need", { m3: num(mm * 10), mm: num(mm), n: days });
+      var frost = frostMonths(key, cl);
       return "<li" + (best ? " class=\"best\"" : "") + "><b>" + esc(label) + "</b>" + (hectares ? "<em>" + num(hectares) + " ha</em>" : "") +
-        "<span>" + esc(text) + "</span></li>";
+        "<span>" + esc(text) + "</span>" + (frost.length ? "<span class=\"w-frost\">" + esc(frostText(frost)) + "</span>" : "") + "</li>";
     }
+    function frosty(k) { return frostMonths(k, cl).length ? 1 : 0; }
     var ranked = allProfiles().filter(function (k) { return k !== "sesbania" && seasonDays(k) <= LONG_CYCLE; })
-      .sort(function (a, b) { return needs[a] - needs[b]; });
+      .sort(function (a, b) { return frosty(a) - frosty(b) || needs[a] - needs[b]; });
     var html = "<div class=\"cw-rec-box\"><h4>" + esc(Lx.w_rec_all) + "</h4><p class=\"help\">" + esc(tr("w_rec_all_help", { n: ranked.length })) +
       "</p><ol>" + ranked.slice(0, 3).map(function (k, i) { return line(k, profileName(k), i === 0); }).join("") + "</ol></div>";
     var grown = c.crops.map(function (cr) { return { item: W.items[cr[0]], ha: cr[1] }; });
     var withCalc = grown.filter(function (g) { return g.item.w && profile(g.item.w); });
     var shortOnes = withCalc.filter(function (g) { return seasonDays(g.item.w) <= LONG_CYCLE; })
-      .sort(function (a, b) { return needs[a.item.w] - needs[b.item.w]; });
+      .sort(function (a, b) { return frosty(a.item.w) - frosty(b.item.w) || needs[a.item.w] - needs[b.item.w]; });
     var longOnes = withCalc.filter(function (g) { return seasonDays(g.item.w) > LONG_CYCLE; });
     var best = shortOnes[0];
     html += "<div class=\"cw-rec-box mine\"><h4>" + esc(tr("w_rec_country", { country: countryName(c) })) + "</h4>" +
@@ -502,9 +524,10 @@
 
 
   // ------------------------------------------------------------------ the farmer's questionnaire
-  // Water only, average year: the allocation is a share of what the farmer's usual crop
-  // needs here (as the Dominican tool uses rice). Three plans are compared: keep the usual
-  // crop on the land the water covers, switch it all, or mix both so all land is planted.
+  // Water only, average year. The farmer marks one or more crops with their hectares; the
+  // water allocation is a share of what those crops need here (the Dominican tool uses
+  // rice for this). Plans compared: keep the same crops on less land, put all land in the
+  // farmer's least thirsty crop, switch to another crop, or mix so all land is planted.
   var LEGUMES_ALL = ["beans", "pigeon_pea", "cowpea", "green_bean", "peanut", "soybean", "lentil", "peas_dry", "broad_bean"];
   function countryKeys() {
     var keys = [];
@@ -514,54 +537,69 @@
     });
     return keys;
   }
-  function defaultCrop() {
-    var short = countryKeys().filter(function (k) { return seasonDays(k) <= LONG_CYCLE; });
-    return short[0] || "maize";
+  function quizCrop(k) { return k !== "sesbania" && seasonDays(k) <= LONG_CYCLE; }
+  function defaultMine() {
+    var first = countryKeys().filter(quizCrop)[0] || "maize";
+    return [{ key: first, ha: 1 }];
   }
+  function mineIndex(k) {
+    for (var i = 0; i < st.mine.length; i++) if (st.mine[i].key === k) return i;
+    return -1;
+  }
+  function mineArea() { return st.mine.reduce(function (a, m) { return a + m.ha; }, 0); }
+  function mineNames() { return st.mine.map(function (m) { return profileName(m.key).toLowerCase(); }).join(", "); }
   function quizPlans() {
     var cl = st.climate, need = {};
     allProfiles().forEach(function (k) { need[k] = cropNeedMm(k, cl) * 10; }); // m3 per hectare
-    var cur = st.current, area = st.area, budget = st.pct * need[cur] * area;
-    var known = countryKeys();
-    var pool = allProfiles().filter(function (k) {
-      return k !== cur && k !== "sesbania" && seasonDays(k) <= LONG_CYCLE;
-    });
+    var area = mineArea(), base = st.mine.reduce(function (a, m) { return a + m.ha * need[m.key]; }, 0);
+    var budget = st.pct * base, known = countryKeys(), mineKeys = st.mine.map(function (m) { return m.key; });
+    var pool = allProfiles().filter(function (k) { return quizCrop(k) && mineKeys.indexOf(k) < 0; });
+    function frosty(k) { return frostMonths(k, cl).length ? 1 : 0; }
     function rank(k) {
       var group = st.priority === "soil" ? (LEGUMES_ALL.indexOf(k) >= 0 ? 0 : 1)
         : st.priority === "known" ? (known.indexOf(k) >= 0 ? 0 : 1) : 0;
-      return group * 1e9 + need[k];
+      return frosty(k) * 1e12 + group * 1e9 + need[k];
     }
-    pool.sort(function (a, b) { return rank(a) - rank(b); });
+    pool.sort(function (x, y) { return rank(x) - rank(y); });
     var alt = pool[0];
     function plan(kind, parts) {
       var used = 0, planted = 0;
       parts.forEach(function (p) { used += p.ha * need[p.key]; planted += p.ha; });
       return { kind: kind, parts: parts.filter(function (p) { return p.ha > 0.005; }), used: used, planted: planted };
     }
-    var keep = plan("keep", [{ key: cur, ha: need[cur] > 0 ? Math.min(area, budget / need[cur]) : area }]);
-    var swap = plan("swap", [{ key: alt, ha: need[alt] > 0 ? Math.min(area, budget / need[alt]) : area }]);
-    var mixCur = 0;
-    if (need[cur] > need[alt]) mixCur = Math.max(0, Math.min(area, (budget - area * need[alt]) / (need[cur] - need[alt])));
-    var mixAlt = need[alt] > 0 ? Math.min(area - mixCur, Math.max(0, (budget - mixCur * need[cur]) / need[alt])) : area - mixCur;
-    var mix = plan("mix", [{ key: cur, ha: mixCur }, { key: alt, ha: mixAlt }]);
-    // A mix with one crop is just "switch" or "keep": show each different plan once.
-    var plans = [keep, swap, mix].filter(function (p, i, all) {
+    function fill(key) { return need[key] > 0 ? Math.min(area, budget / need[key]) : area; }
+    var share = base > 0 ? Math.min(1, budget / base) : 1;
+    var list = [plan("keep", st.mine.map(function (m) { return { key: m.key, ha: m.ha * share }; }))];
+    if (st.mine.length > 1) {
+      var thrifty = mineKeys.slice().sort(function (x, y) { return need[x] - need[y]; })[0];
+      list.push(plan("own", [{ key: thrifty, ha: fill(thrifty) }]));
+    }
+    list.push(plan("swap", [{ key: alt, ha: fill(alt) }]));
+    if (area > 0 && base / area > need[alt]) { // keep part of the farmer's crops, the rest in the thriftier crop
+      var x = Math.max(0, Math.min(1, (budget - area * need[alt]) / (base - area * need[alt])));
+      var altHa = need[alt] > 0 ? Math.min(area * (1 - x), Math.max(0, (budget - x * base) / need[alt])) : area * (1 - x);
+      list.push(plan("mix", st.mine.map(function (m) { return { key: m.key, ha: m.ha * x }; }).concat([{ key: alt, ha: altHa }])));
+    }
+    var plans = list.filter(function (p, i, all) { // show each different plan once
       return all.slice(0, i).every(function (q) { return partsText(q) !== partsText(p); });
     });
-    function legumeHa(p) { return p.parts.reduce(function (a, x) { return a + (LEGUMES_ALL.indexOf(x.key) >= 0 ? x.ha : 0); }, 0); }
-    function knownHa(p) { return p.parts.reduce(function (a, x) { return a + (x.key === cur || known.indexOf(x.key) >= 0 ? x.ha : 0); }, 0); }
-    var best = plans.slice().sort(function (a, b) {
-      var land = Math.round(b.planted * 10) - Math.round(a.planted * 10);
+    function legumeHa(p) { return p.parts.reduce(function (s2, q) { return s2 + (LEGUMES_ALL.indexOf(q.key) >= 0 ? q.ha : 0); }, 0); }
+    function knownHa(p) { return p.parts.reduce(function (s2, q) { return s2 + (mineKeys.indexOf(q.key) >= 0 || known.indexOf(q.key) >= 0 ? q.ha : 0); }, 0); }
+    function planFrost(p) { return p.parts.some(function (q) { return frosty(q.key); }) ? 1 : 0; }
+    var best = plans.slice().sort(function (p, q) {
+      var cold = planFrost(p) - planFrost(q);
+      if (cold) return cold;
+      var land = Math.round(q.planted * 10) - Math.round(p.planted * 10);
       if (land) return land;
-      if (st.priority === "soil") return legumeHa(b) - legumeHa(a) || a.used - b.used;
-      if (st.priority === "known") return knownHa(b) - knownHa(a) || a.used - b.used;
-      return a.used - b.used;
+      if (st.priority === "soil") return legumeHa(q) - legumeHa(p) || p.used - q.used;
+      if (st.priority === "known") return knownHa(q) - knownHa(p) || p.used - q.used;
+      return p.used - q.used;
     })[0];
-    return { plans: plans, best: best, budget: budget, need: need, alt: alt };
+    return { plans: plans, best: best, budget: budget, area: area };
   }
   function partsText(p) {
     if (!p.parts.length) return L().wq_nothing;
-    return p.parts.map(function (x) { return tr("wq_part", { ha: num(x.ha, x.ha < 10 ? 1 : 0), crop: profileName(x.key).toLowerCase() }); }).join(" + ");
+    return p.parts.map(function (q) { return tr("wq_part", { ha: num(q.ha, q.ha < 10 ? 1 : 0), crop: profileName(q.key).toLowerCase() }); }).join(" + ");
   }
   function renderQuiz() {
     if (!$("wq-stage") || !st.province || !st.country) return;
@@ -571,27 +609,33 @@
     $("wq-bar").style.width = (100 * Math.min(step + 1, 5) / 5) + "%";
     var back = document.querySelector("[data-wq-back]"), next = document.querySelector("[data-wq-next]");
     back.textContent = Lx.g_back; next.textContent = step === 4 ? Lx.g_see : Lx.g_next; next.hidden = step >= 5;
+    next.disabled = step === 0 && !st.mine.length;
     var html = "";
     if (step === 0) {
-      var known = countryKeys(), others = allProfiles().filter(function (k) { return known.indexOf(k) < 0 && k !== "sesbania"; });
+      var known = countryKeys().filter(quizCrop), others = allProfiles().filter(function (k) { return quizCrop(k) && known.indexOf(k) < 0; });
       function chip(k) {
-        return "<button type=\"button\" class=\"cw-chip" + (k === st.current ? " on" : "") + "\" data-wq-crop=\"" + k + "\" aria-pressed=\"" + (k === st.current) + "\">" + esc(profileName(k)) + "</button>";
+        var on = mineIndex(k) >= 0;
+        return "<button type=\"button\" class=\"cw-chip" + (on ? " on" : "") + "\" data-wq-crop=\"" + k + "\" aria-pressed=\"" + on + "\">" + esc(profileName(k)) + "</button>";
       }
       html = "<h2>" + esc(Lx.wq_q_crop) + "</h2><p class=\"help\">" + esc(tr("wq_crop_help", { country: countryName(st.country) })) + "</p>" +
         (known.length ? "<p class=\"g-label\">" + esc(tr("wq_crop_country", { country: countryName(st.country) })) + "</p><div class=\"wq-chips\">" + known.map(chip).join("") + "</div>" : "") +
-        "<p class=\"g-label\">" + esc(Lx.wq_crop_other) + "</p><div class=\"wq-chips\">" + others.map(chip).join("") + "</div>";
+        "<p class=\"g-label\">" + esc(Lx.wq_crop_other) + "</p><div class=\"wq-chips\">" + others.map(chip).join("") + "</div>" +
+        "<p class=\"wq-picked\">" + esc(st.mine.length ? tr("wq_picked", { n: st.mine.length, list: mineNames() }) : Lx.wq_pick_one) + "</p>" +
+        "<p class=\"help\">" + esc(Lx.wq_crop_long) + "</p>";
     } else if (step === 1) {
       html = "<h2>" + esc(Lx.g_q[1]) + "</h2><p class=\"g-label\">" + esc(Lx.cw_month) + "</p><div class=\"wq-chips\">" + MONTHS.map(function (m, i) {
         return "<button type=\"button\" class=\"cw-chip" + (i + 1 === st.month ? " on" : "") + "\" data-wq-month=\"" + (i + 1) + "\">" + esc(m) + "</button>";
-      }).join("") + "</div><p class=\"g-label\">" + esc(Lx.wq_area) + "</p><div class=\"wq-area\"><button type=\"button\" data-wq-area=\"-1\" aria-label=\"-1\">−</button>" +
-        "<input id=\"wq-area\" type=\"number\" min=\"0.1\" max=\"100000\" step=\"0.1\" inputmode=\"decimal\" value=\"" + st.area + "\"><button type=\"button\" data-wq-area=\"1\" aria-label=\"+1\">+</button></div>" +
-        "<p class=\"help\">" + esc(Lx.wq_area_help) + "</p>";
+      }).join("") + "</div><p class=\"g-label\">" + esc(Lx.wq_area) + "</p><div class=\"wq-rows\">" + st.mine.map(function (m) {
+        return "<div class=\"wq-row\"><span>" + esc(profileName(m.key)) + "</span><div class=\"wq-area\"><button type=\"button\" data-wq-ha=\"" + m.key + "\" data-step=\"-1\" aria-label=\"-1\">−</button>" +
+          "<input type=\"number\" min=\"0.1\" max=\"100000\" step=\"0.1\" inputmode=\"decimal\" data-wq-ha-input=\"" + m.key + "\" value=\"" + m.ha + "\" aria-label=\"" + esc(profileName(m.key)) + "\">" +
+          "<button type=\"button\" data-wq-ha=\"" + m.key + "\" data-step=\"1\" aria-label=\"+1\">+</button></div></div>";
+      }).join("") + "</div><p class=\"help\" id=\"wq-total\">" + esc(tr("wq_total", { ha: num(mineArea(), 1) })) + " " + esc(Lx.wq_area_help) + "</p>";
     } else if (step === 2) {
       html = "<h2>" + esc(Lx.g_q[2]) + "</h2><div class=\"wq-chips\">" + ["clay", "loam", "sandy"].map(function (s) {
         return "<button type=\"button\" class=\"cw-chip big" + (s === st.soil ? " on" : "") + "\" data-wq-soil=\"" + s + "\">" + esc(Lx.soils[s]) + "</button>";
       }).join("") + "</div><p class=\"help\">" + esc(Lx.soil_help[st.soil]) + "</p><p class=\"help\">" + esc(Lx.wq_soil_note) + "</p>";
     } else if (step === 3) {
-      html = "<h2>" + esc(Lx.wq_q_water) + "</h2><p class=\"help\">" + esc(tr("wq_water_help", { crop: profileName(st.current).toLowerCase() })) + "</p>" +
+      html = "<h2>" + esc(Lx.wq_q_water) + "</h2><p class=\"help\">" + esc(tr("wq_water_help", { crop: mineNames() })) + "</p>" +
         "<div class=\"wq-chips\">" + [[1, "wq_w_normal"], [0.6, "wq_w_cut"], [0.3, "wq_w_severe"]].map(function (o) {
           return "<button type=\"button\" class=\"cw-chip big" + (Math.abs(st.pct - o[0]) < 0.001 ? " on" : "") + "\" data-wq-pct=\"" + o[0] + "\">" + esc(Lx[o[1]]) + "</button>";
         }).join("") + "</div><div class=\"cw-range wq-range\"><input id=\"wq-pct\" type=\"range\" min=\"0\" max=\"100\" step=\"5\" value=\"" + Math.round(st.pct * 100) +
@@ -605,13 +649,17 @@
     } else {
       var r = quizPlans(), best = r.best;
       html = "<div class=\"wq-result\"><p class=\"wq-stamp\">PLAN B</p><h2>" + esc(Lx.g_result) + "</h2><p class=\"lead\">" + esc(tr("wq_lead", {
-        pct: Math.round(st.pct * 100), crop: profileName(st.current).toLowerCase(), plan: partsText(best) })) + "</p>" +
-        "<p class=\"wq-budget\">" + esc(tr("wq_budget", { m3: num(r.budget), ha: num(st.area, st.area < 10 ? 1 : 0) })) + "</p><ol class=\"wq-plans\">" +
+        pct: Math.round(st.pct * 100), crop: mineNames(), plan: partsText(best) })) + "</p>" +
+        "<p class=\"wq-budget\">" + esc(tr("wq_budget", { m3: num(r.budget), ha: num(r.area, r.area < 10 ? 1 : 0) })) + "</p><ol class=\"wq-plans\">" +
         r.plans.map(function (p) {
-          var free = Math.max(0, st.area - p.planted);
+          var free = Math.max(0, r.area - p.planted);
           return "<li class=\"" + (p === best ? "best" : "") + "\"><b>" + esc(Lx["wq_plan_" + p.kind]) + (p === best ? " · " + esc(Lx.wq_recommended) : "") + "</b>" +
             "<span class=\"wq-what\">" + esc(partsText(p)) + "</span><span>" + esc(tr("wq_plan_use", { used: num(p.used), budget: num(r.budget) })) +
-            (free > 0.05 ? " · " + esc(tr("wq_free", { ha: num(free, free < 10 ? 1 : 0) })) : " · " + esc(Lx.wq_all_planted)) + "</span></li>";
+            (free > 0.05 ? " · " + esc(tr("wq_free", { ha: num(free, free < 10 ? 1 : 0) })) : " · " + esc(Lx.wq_all_planted)) + "</span>" +
+            p.parts.map(function (q) {
+              var f = frostMonths(q.key, st.climate);
+              return f.length ? "<span class=\"w-frost\">" + esc(profileName(q.key) + ": " + frostText(f)) + "</span>" : "";
+            }).join("") + "</li>";
         }).join("") + "</ol><p class=\"note\">" + esc(Lx.wq_note) + "</p>" +
         "<div class=\"wq-actions\"><button type=\"button\" class=\"btn primary\" data-wq-sheet=\"1\">" + esc(Lx.wq_see_sheet) + "</button>" +
         "<button type=\"button\" class=\"btn\" data-wq-restart=\"1\">" + esc(Lx.g_restart) + "</button></div></div>";
@@ -621,13 +669,24 @@
   function listenQuiz() {
     $("wq-section").onclick = function (event) {
       var t = event.target, el;
-      if ((el = t.closest("[data-wq-crop]"))) { st.current = el.getAttribute("data-wq-crop"); renderQuiz(); return; }
+      if ((el = t.closest("[data-wq-crop]"))) {
+        var k = el.getAttribute("data-wq-crop"), at = mineIndex(k);
+        if (at >= 0) st.mine.splice(at, 1); else st.mine.push({ key: k, ha: 1 });
+        renderQuiz(); return;
+      }
       if ((el = t.closest("[data-wq-month]"))) { st.month = +el.getAttribute("data-wq-month"); renderQuiz(); return; }
-      if ((el = t.closest("[data-wq-area]"))) { st.area = Math.max(0.1, Math.round((st.area + +el.getAttribute("data-wq-area")) * 10) / 10); renderQuiz(); return; }
+      if ((el = t.closest("[data-wq-ha]"))) {
+        var m = st.mine[mineIndex(el.getAttribute("data-wq-ha"))];
+        if (m) m.ha = Math.max(0.1, Math.round((m.ha + +el.getAttribute("data-step")) * 10) / 10);
+        renderQuiz(); return;
+      }
       if ((el = t.closest("[data-wq-soil]"))) { st.soil = el.getAttribute("data-wq-soil"); renderQuiz(); return; }
       if ((el = t.closest("[data-wq-pct]"))) { st.pct = +el.getAttribute("data-wq-pct"); renderQuiz(); return; }
       if ((el = t.closest("[data-wq-prio]"))) { st.priority = el.getAttribute("data-wq-prio"); renderQuiz(); return; }
-      if (t.closest("[data-wq-next]")) { st.qstep = Math.min(5, st.qstep + 1); renderQuiz(); window.scrollTo(0, 0); return; }
+      if (t.closest("[data-wq-next]")) {
+        if (st.qstep === 0 && !st.mine.length) return;
+        st.qstep = Math.min(5, st.qstep + 1); renderQuiz(); window.scrollTo(0, 0); return;
+      }
       if (t.closest("[data-wq-back]")) {
         if (st.qstep > 0) { st.qstep -= 1; renderQuiz(); } else if (window.GTApp) window.GTApp.go("country");
         return;
@@ -636,14 +695,18 @@
       if (t.closest("[data-wq-restart]")) { st.qstep = 0; renderQuiz(); window.scrollTo(0, 0); }
     };
     $("wq-section").oninput = function (event) {
-      if (event.target.id === "wq-area") { var v = parseFloat(event.target.value); if (v > 0) st.area = Math.min(v, 100000); }
+      var key = event.target.getAttribute("data-wq-ha-input");
+      if (key) {
+        var v = parseFloat(event.target.value), m = st.mine[mineIndex(key)];
+        if (m && v > 0) { m.ha = Math.min(v, 100000); $("wq-total").textContent = tr("wq_total", { ha: num(mineArea(), 1) }) + " " + L().wq_area_help; }
+      }
       if (event.target.id === "wq-pct") { st.pct = event.target.value / 100; $("wq-pct-out").textContent = event.target.value + "%";
         document.querySelectorAll("[data-wq-pct]").forEach(function (b) { b.classList.toggle("on", Math.abs(+b.getAttribute("data-wq-pct") - st.pct) < 0.001); }); }
     };
     document.querySelectorAll("[data-wq-start]").forEach(function (b) {
       b.onclick = function () {
         st.quizMode = true;
-        if (st.country && b.hasAttribute("data-wq-here") && st.province) { st.qstep = 0; st.current = defaultCrop(); window.GTApp.go("wquiz"); renderQuiz(); return; }
+        if (st.country && b.hasAttribute("data-wq-here") && st.province) { st.qstep = 0; st.mine = defaultMine(); window.GTApp.go("wquiz"); renderQuiz(); return; }
         $("w-hover").textContent = L().wq_pick_country;
         $("w-globe").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
       };

@@ -103,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v24`).
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v25`).
 - **Datos del relieve:** el resumen del clima, suelo, agua y área está cerrado inicialmente
   dentro de “Datos del mapa”; se abre solo si el usuario lo elige.
 - **Continuar desde una zona:** “Continuar con esta finca” coloca la marca ilustrativa y
@@ -196,18 +196,26 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   **Necesita internet**; si falla, la página lo dice. El globo y los cultivos sí funcionan
   sin internet (en `file://` el globo se dibuja sin foto, solo con fronteras).
 - Agua: FAO-56 con promedios mensuales (mismas fórmulas que `water.py`, que usa datos
-  diarios). Solo da año promedio, no año seco. Comprobado en Santiago (Navarrete): entre
-  0 y 11% de diferencia con el motor diario para arroz, habichuela y maíz.
+  diarios). Solo da año promedio, no año seco. **Ojo:** en la climatología de POWER,
+  `T2M_MAX` y `T2M_MIN` son los extremos del mes, no promedios; por eso se usan `T2M` y
+  `T2M_RANGE` (máxima y mínima promedio ≈ media ± rango/2, una aproximación). Comprobado
+  en Santiago, Cotuí y Mao (enero, mayo, septiembre; arroz, habichuela y maíz): entre
+  0 y 11% menos que el motor diario.
+- Aviso de helada: si la mínima promedio de algún mes del ciclo baja de 0 °C (punto de
+  congelación del agua, no un límite de cultivo), el cultivo lo muestra y pasa al final de
+  las recomendaciones.
 - 8 perfiles más de FAO-56 solo para el mundo (`WORLD_CROPS` en `crops_fao.py`: trigo,
   mijo, algodón, girasol, remolacha, lenteja, arveja, haba). Cultivos de FAOSTAT sin
   perfil (olivo, café, cacao, palma, uva…) se muestran "sin cálculo de agua".
 - Es un prototipo: tablas FAO-56 de otros climas, sin validación agronómica por país, sin
   suelo, calor ni mercado. Decirlo así en el pitch.
 - **Cuestionario mundial** (vista `wquiz` en `web/world.js`): "Empezar con mi finca" en el
-  modo mundo → país → provincia → 5 preguntas (cultivo habitual, mes y hectáreas, suelo,
-  agua como % de la que usa su cultivo, prioridad: agua / suelo / lo que ya se siembra en
-  el país). Compara tres planes (seguir, cambiar todo, mezcla) y recomienda el que siembra
-  más tierra; en empate decide la prioridad. Solo agua, año promedio, en hectáreas.
+  modo mundo → país → provincia → 5 preguntas (uno o **varios** cultivos que siembra, mes y
+  hectáreas de cada uno, suelo, agua como % de la que usan sus cultivos, prioridad: agua /
+  suelo / lo que ya se siembra en el país). Solo cultivos de 180 días o menos. Compara
+  seguir con sus cultivos, toda la tierra con su cultivo que menos agua pide, cambiar
+  todo y mezcla; recomienda el que siembra más tierra sin helada; en empate decide la
+  prioridad. Solo agua, año promedio, en hectáreas.
 
 ## Mis cultivos y dos recomendaciones (15-nov)
 - En "Agua y cultivos" el agricultor marca qué cultivos tiene (los 48 del directorio; los
