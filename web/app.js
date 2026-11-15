@@ -2180,6 +2180,11 @@
 
   // Installable app: keep a copy of the page on the device so it opens without internet.
   if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
+    // When a newer version takes over, reload once so the page shown is the new one.
+    var hadController = !!navigator.serviceWorker.controller, reloadedForUpdate = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (hadController && !reloadedForUpdate) { reloadedForUpdate = true; location.reload(); }
+    });
     navigator.serviceWorker.register("sw.js");
   }
   var installEvent = null;
