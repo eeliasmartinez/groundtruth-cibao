@@ -20,7 +20,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   La página pública se actualiza sola en uno o dos minutos.
 
 ## Fechas
-- Pitch local: domingo 15-nov-2026 desde las 4:00 PM, 6 minutos ante 3 jueces (falta
+- Pitch local: domingo 15-nov-2026 desde las 4:00 PM, **4 minutos** (antes se dijo 6) ante 3 jueces (falta
   confirmar el turno del equipo).
 - Envío global en spaceappschallenge.org: domingo 15-nov, 11:59 PM. Todo en inglés.
   Demo: video de máximo 30 s o máximo 7 slides.
@@ -369,7 +369,7 @@ Si `.venv` no existe: `python3 -m venv .venv && .venv/bin/pip install -r require
    `crops.py` (campos `heavy_soil`, `heat_limit`, `market`, `nitrogen`).
 2. **Publicar:** crear repositorio en GitHub, subir todo y activar GitHub Pages
    apuntando a la carpeta `web/` para tener un enlace público.
-3. **Pitch de 6 minutos** (gancho, problema, solución con datos NASA, demo, impacto)
+3. **Pitch de 4 minutos** (guion en `docs/pitch.md`) (gancho, problema, solución con datos NASA, demo, impacto)
    y **demo global** (video de 30 s o 7 slides, en inglés).
 4. **Página del proyecto en inglés** en spaceappschallenge.org, con declaración de IA.
 5. Cotejar los coeficientes de `crops.py` con las tablas 11 y 12 de FAO-56.
