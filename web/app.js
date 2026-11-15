@@ -40,7 +40,8 @@
   var ZONE_NAMES = D.zones.map(function (z) { return z.name; });
   var storedPlan = window.GTStorage.load(ZONE_NAMES, STRATEGY_ORDER);
   if (storedPlan.plan) {
-    Object.keys(storedPlan.plan).forEach(function (key) { state[key] = storedPlan.plan[key]; });
+    // Every visit opens in English (global judging); a saved plan keeps everything else.
+    Object.keys(storedPlan.plan).forEach(function (key) { if (key !== "lang") state[key] = storedPlan.plan[key]; });
     state.savedOnDevice = true;
   }
   state.storageError = storedPlan.error;
