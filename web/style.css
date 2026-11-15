@@ -889,3 +889,18 @@ details.more .soil-table { margin-top: 8px; }
 .wr-mapdata .note { margin: 8px 0 0; font-size: 12px; }
 .wr-controls { grid-template-columns: repeat(3, minmax(0, 260px)); align-items: end; }
 @media (max-width: 760px) { .wq-top { grid-template-columns: 1fr auto; } .wq-unit-slot { grid-column: 1 / -1; } .wr-controls { grid-template-columns: 1fr 1fr; } }
+
+/* World result: own crops, best overall, two cycles */
+.wq-unit-inline { display: flex; align-items: center; gap: 10px; }
+.wq-unit-inline > span { font-weight: 800; color: var(--ink-2); }
+.wq-sec { display: grid; gap: 10px; padding-top: 6px; }
+.wq-sec h3 { margin: 0; font-family: var(--display); font-size: 26px; text-transform: uppercase; }
+.wq-sec .help { margin: 0; }
+.wq-top { margin: 0; padding: 0 0 0 22px; display: grid; gap: 8px; }
+.wq-top li b { font-size: 17px; }
+.wq-top li em { margin-left: 8px; color: var(--blue); font-size: 12px; font-style: normal; font-weight: 800; }
+.wq-top li span { display: block; color: var(--ink-2); font-size: 14px; }
+.wq-top li.best b { color: var(--red); }
+.wq-fold { background: #fff; border: 2px solid var(--ink); padding: 10px 14px; }
+.wq-fold summary { cursor: pointer; font-weight: 800; color: var(--blue); }
+.wq-fold[open] summary { margin-bottom: 10px; }

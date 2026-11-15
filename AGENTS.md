@@ -103,7 +103,7 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
   suelo elegido manualmente y porcentaje de agua indicado por el usuario. No son
   mediciones puntuales de la parcela.
 - **PWA:** `web/manifest.webmanifest`, `web/sw.js` e iconos. Si se cambian archivos de
-  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v28`).
+  la página, subir el número de `CACHE` en `web/sw.js` (ahora `plan-b-v29`).
 - **Datos del relieve:** el resumen del clima, suelo, agua y área está cerrado inicialmente
   dentro de “Datos del mapa”; se abre solo si el usuario lo elige.
 - **Continuar desde una zona:** “Continuar con esta finca” coloca la marca ilustrativa y
@@ -219,10 +219,15 @@ agua de riego que le asignan, comparando 4 estrategias de rotación con datos de
 - Medida: selector **Hectáreas | Tareas** (1 tarea = 628.86 m², como en `water.py`); las
   áreas se guardan en hectáreas. La tierra se pregunta **en total** y se reparte por igual;
   "Repartir la tierra por cultivo" es opcional.
-- El resultado tiene pestañas como el plan de RD: **Planes**, **Dos ciclos** (ciclo 2 seis
-  meses después), **Mejor mes** (menos riego sin helada) y **Clima del año** (lluvia, ET₀,
-  máxima, mínima, humedad del aire y del suelo `GWETROOT` de NASA POWER). El relieve tiene
-  su plegable "Datos del mapa".
+- Tocar una provincia abre directamente el cuestionario. La pregunta del suelo solo sale si
+  marca arroz (aquí el suelo solo cambia el agua del arroz inundado). El selector de medida
+  está también en la pregunta de la tierra.
+- El resultado va en este orden: **con lo que tú siembras** (recomendación principal),
+  **lo mejor en total** (3 cultivos y cambiar todo/mezcla), **tus dos ciclos** (ciclo 2 seis
+  meses después) y, plegados, **mejor mes** (menos riego sin helada) y **clima del año**
+  (lluvia, ET₀, máxima, mínima, humedad del aire y del suelo `GWETROOT` de NASA POWER).
+- La ficha de la provincia solo muestra relieve, clima y el botón del cuestionario. El
+  relieve tiene su plegable "Datos del mapa".
 
 ## Cuestionario de RD: "¿Qué siembras ahora?" (15-nov)
 - El recorrido tiene 6 preguntas: zona, **cultivos que siembra (varios)**, mes y tareas,
